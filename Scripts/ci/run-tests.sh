@@ -3,7 +3,7 @@ set -euo pipefail
 
 DESTINATION="${1:?destination required}"
 
-PROJECT="${CI_XCODE_PROJECT:-BudgetLeagueTracker.xcodeproj}"
+PROJECT="${CI_XCODE_PROJECT:-League Keeper.xcodeproj}"
 SCHEME="${CI_XCODE_SCHEME:-BudgetLeagueTrackerCI}"
 PACKAGES_ROOT="${CI_PACKAGES_ROOT:-.packages}"
 LOG_FILE="${CI_XCODE_TEST_LOG:-xcodebuild-test.log}"
