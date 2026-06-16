@@ -172,11 +172,12 @@ enum LeagueEngine {
         tournament.weeklyPointsByPlayer = weeklyPoints
         
         tournament.podHistorySnapshots = []
-        
+
         // Clear any leftover round data
         tournament.roundPlacements = [:]
         tournament.roundAchievementChecks = []
-        
+        tournament.roundPods = []
+
         if let state = fetchLeagueState(context: context) {
             state.screen = .pods
         }
@@ -333,10 +334,12 @@ enum LeagueEngine {
         var playerDeltas: [String: PlayerDelta] = [:]
         var weeklyDeltas: [String: WeeklyPlayerPoints] = [:]
         var checkRecords: [AchievementCheck] = []
-        
-        // Generate a pod ID for this group of results (for head-to-head tracking)
-        let podId = UUID().uuidString
-        
+
+        // Assign a distinct pod ID per pod so head-to-head and game counts only
+        // pair up players who actually shared a pod. Falls back to a single shared
+        // pod ID when pod groupings weren't recorded (e.g. legacy/manual flows).
+        let podIdByPlayer = podIds(forPlacements: placements, podGroups: tournament.roundPods)
+
         // Process each player with a placement
         for (playerId, place) in placements {
             let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
@@ -384,7 +387,7 @@ enum LeagueEngine {
                 placementPoints: placementPts,
                 achievementPoints: achievementPts,
                 achievementIds: earnedAchievementIds,
-                podId: podId
+                podId: podIdByPlayer[playerId] ?? UUID().uuidString
             )
             context.insert(gameResult)
         }
@@ -409,32 +412,73 @@ enum LeagueEngine {
         }
         tournament.weeklyPointsByPlayer = weeklyPoints
         
-        // Push snapshot for undo
+        // Push snapshot for undo. Record the week/round so edit/undo can locate the
+        // exact GameResults later even after the tournament has advanced.
         var snapshots = tournament.podHistorySnapshots
         snapshots.append(PodSnapshot(
             playerIds: Array(placements.keys),
             placements: placements,
             achievementChecks: checkRecords,
             playerDeltas: playerDeltas,
-            weeklyDeltas: weeklyDeltas
+            weeklyDeltas: weeklyDeltas,
+            week: tournament.currentWeek,
+            round: tournament.currentRound
         ))
         tournament.podHistorySnapshots = snapshots
-        
+
         // Clear round data
         tournament.roundPlacements = [:]
         tournament.roundAchievementChecks = []
-        
+        tournament.roundPods = []
+
         try? context.save()
+    }
+
+    /// Maps each placed player to a pod identifier.
+    /// Players sharing a pod group get the same identifier; any players not covered
+    /// by a recorded pod group share a single fallback identifier (legacy behavior).
+    private static func podIds(
+        forPlacements placements: [String: Int],
+        podGroups: [[String]]
+    ) -> [String: String] {
+        var podIdByPlayer: [String: String] = [:]
+        for group in podGroups {
+            let groupPodId = UUID().uuidString
+            for playerId in group {
+                podIdByPlayer[playerId] = groupPodId
+            }
+        }
+        let uncovered = placements.keys.filter { podIdByPlayer[$0] == nil }
+        if !uncovered.isEmpty {
+            let fallbackPodId = UUID().uuidString
+            for playerId in uncovered {
+                podIdByPlayer[playerId] = fallbackPodId
+            }
+        }
+        return podIdByPlayer
     }
     
     /// Clears the current round's placements and achievements without applying them.
     /// - Parameter context: The SwiftData model context
     static func clearRoundData(context: ModelContext) {
         guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+
         tournament.roundPlacements = [:]
         tournament.roundAchievementChecks = []
-        
+        tournament.roundPods = []
+
+        try? context.save()
+    }
+
+    /// Records the pod groupings for the current round so that finalization can
+    /// assign a distinct pod identifier per pod (needed for accurate head-to-head
+    /// statistics when more than one pod plays in a round).
+    /// - Parameters:
+    ///   - context: The SwiftData model context
+    ///   - pods: Pod groupings as arrays of player IDs
+    static func recordRoundPods(context: ModelContext, pods: [[String]]) {
+        guard let tournament = fetchActiveTournament(context: context) else { return }
+        tournament.roundPods = pods
         try? context.save()
     }
     
@@ -470,16 +514,19 @@ enum LeagueEngine {
         tournament.weeklyPointsByPlayer = weeklyPoints
         
         tournament.podHistorySnapshots = snapshots
-        
-        // Delete the corresponding GameResults
-        // We need to find GameResults that match this pod's players, week, and round
+
+        // Delete the corresponding GameResults. Use the week/round stored on the
+        // snapshot so undo still targets the right records after the tournament has
+        // advanced past the round being undone.
+        let snapshotWeek = lastSnapshot.week ?? tournament.currentWeek
+        let snapshotRound = lastSnapshot.round ?? tournament.currentRound
         let gameResultDescriptor = FetchDescriptor<GameResult>()
         if let allResults = try? context.fetch(gameResultDescriptor) {
             for playerId in lastSnapshot.playerIds {
                 let matchingResults = allResults.filter {
                     $0.tournamentId == tournament.id &&
-                    $0.week == tournament.currentWeek &&
-                    $0.round == tournament.currentRound &&
+                    $0.week == snapshotWeek &&
+                    $0.round == snapshotRound &&
                     $0.playerId == playerId
                 }
                 for result in matchingResults {
@@ -487,7 +534,7 @@ enum LeagueEngine {
                 }
             }
         }
-        
+
         try? context.save()
     }
     
@@ -594,55 +641,67 @@ enum LeagueEngine {
         }
         tournament.weeklyPointsByPlayer = weeklyPoints
         
-        // Step 6: Delete old GameResults and create new ones
+        // Step 6: Delete old GameResults and create new ones. Use the snapshot's
+        // recorded week/round so the edit targets the original records even after the
+        // tournament has advanced. Preserve each player's existing pod ID so editing
+        // doesn't merge separate pods into one (which would corrupt head-to-head).
+        let snapshotWeek = lastSnapshot.week ?? tournament.currentWeek
+        let snapshotRound = lastSnapshot.round ?? tournament.currentRound
+
+        var existingPodIdByPlayer: [String: String] = [:]
         let gameResultDescriptor = FetchDescriptor<GameResult>()
         if let allResults = try? context.fetch(gameResultDescriptor) {
             for playerId in lastSnapshot.playerIds {
                 let matchingResults = allResults.filter {
                     $0.tournamentId == tournament.id &&
-                    $0.week == tournament.currentWeek &&
-                    $0.round == tournament.currentRound &&
+                    $0.week == snapshotWeek &&
+                    $0.round == snapshotRound &&
                     $0.playerId == playerId
+                }
+                if let podId = matchingResults.first?.podId {
+                    existingPodIdByPlayer[playerId] = podId
                 }
                 for result in matchingResults {
                     context.delete(result)
                 }
             }
         }
-        
-        // Create new GameResults with a new pod ID
-        let podId = UUID().uuidString
+
+        // Fallback pod ID for any player without a pre-existing result (shared).
+        let fallbackPodId = UUID().uuidString
         for (playerId, place) in newPlacements {
             let delta = newPlayerDeltas[playerId]!
             let earnedAchievementIds = newCheckRecords
                 .filter { $0.playerId == playerId }
                 .map { $0.achievementId }
-            
+
             let gameResult = GameResult(
                 tournamentId: tournament.id,
-                week: tournament.currentWeek,
-                round: tournament.currentRound,
+                week: snapshotWeek,
+                round: snapshotRound,
                 playerId: playerId,
                 placement: place,
                 placementPoints: delta.placementPoints,
                 achievementPoints: delta.achievementPoints,
                 achievementIds: earnedAchievementIds,
-                podId: podId
+                podId: existingPodIdByPlayer[playerId] ?? fallbackPodId
             )
             context.insert(gameResult)
         }
-        
-        // Step 7: Replace snapshot in history with updated one
+
+        // Step 7: Replace snapshot in history with updated one (keeping week/round)
         let newSnapshot = PodSnapshot(
             playerIds: Array(newPlacements.keys),
             placements: newPlacements,
             achievementChecks: newCheckRecords,
             playerDeltas: newPlayerDeltas,
-            weeklyDeltas: newWeeklyDeltas
+            weeklyDeltas: newWeeklyDeltas,
+            week: snapshotWeek,
+            round: snapshotRound
         )
         snapshots.append(newSnapshot)
         tournament.podHistorySnapshots = snapshots
-        
+
         try? context.save()
     }
     

@@ -60,9 +60,14 @@ final class Tournament: Identifiable {
     
     /// JSON-encoded dictionary of current round placements (playerId -> place 1-4)
     var roundPlacementsData: Data?
-    
+
     /// JSON-encoded set of current round achievement checks ("playerId:achievementId")
     var roundAchievementChecksData: Data?
+
+    /// JSON-encoded array of pod groupings for the current round ([[playerId]]).
+    /// Each inner array is the set of players in one pod, used to assign a distinct
+    /// pod identifier per pod when the round is finalized (head-to-head tracking).
+    var roundPodsData: Data?
     
     // MARK: - Initialization
     
@@ -176,6 +181,17 @@ final class Tournament: Identifiable {
         }
         set {
             roundAchievementChecksData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    /// Decodes and returns the current round pod groupings ([[playerId]])
+    var roundPods: [[String]] {
+        get {
+            guard let data = roundPodsData else { return [] }
+            return (try? JSONDecoder().decode([[String]].self, from: data)) ?? []
+        }
+        set {
+            roundPodsData = try? JSONEncoder().encode(newValue)
         }
     }
     

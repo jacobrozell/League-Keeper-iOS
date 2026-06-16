@@ -67,8 +67,10 @@ final class EditLastRoundViewModel {
         guard let snapshot = tournament.podHistorySnapshots.last else { return }
         
         originalSnapshot = snapshot
-        weekNumber = tournament.currentWeek
-        roundNumber = tournament.currentRound
+        // Prefer the week/round stored on the snapshot so the title/subtitle and the
+        // edited records stay correct even after the tournament has advanced.
+        weekNumber = snapshot.week ?? tournament.currentWeek
+        roundNumber = snapshot.round ?? tournament.currentRound
         achievementsEnabled = tournament.achievementsOnThisWeek
         
         // Load placements from snapshot

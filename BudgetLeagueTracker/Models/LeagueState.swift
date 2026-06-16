@@ -58,22 +58,31 @@ struct WeeklyPlayerPoints: Codable, Equatable {
     }
 }
 
-/// Snapshot of a saved pod for undo functionality
+/// Snapshot of a saved round (one or more pods) for undo/edit functionality
 struct PodSnapshot: Codable, Equatable {
-    /// Player IDs in this pod
+    /// Player IDs in this round
     var playerIds: [String]
-    
+
     /// Placement for each player (playerId -> place 1-4)
     var placements: [String: Int]
-    
+
     /// Achievement checks (array of (playerId, achievementId) tuples)
     var achievementChecks: [AchievementCheck]
-    
+
     /// Delta applied to each player's cumulative stats
     var playerDeltas: [String: PlayerDelta]
-    
+
     /// Delta applied to each player's weekly points
     var weeklyDeltas: [String: WeeklyPlayerPoints]
+
+    /// Week this round was recorded in. Optional for backward compatibility with
+    /// snapshots persisted before this field existed; callers fall back to the
+    /// tournament's current week when nil.
+    var week: Int?
+
+    /// Round number this snapshot was recorded for. Optional for backward
+    /// compatibility; callers fall back to the tournament's current round when nil.
+    var round: Int?
 }
 
 /// Represents a checked achievement for a player

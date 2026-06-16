@@ -234,7 +234,10 @@ final class TournamentDetailViewModel {
         
         // Clear any previous round data first
         LeagueEngine.clearRoundData(context: context)
-        
+
+        // Record pod groupings so finalization can assign one pod ID per pod
+        LeagueEngine.recordRoundPods(context: context, pods: pods.map { $0.map(\.id) })
+
         // Initialize placements with defaults and auto-save
         for pod in pods {
             for (index, player) in pod.enumerated() {
