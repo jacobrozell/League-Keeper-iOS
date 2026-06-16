@@ -24,15 +24,7 @@ struct DashboardView: View {
 @MainActor
 enum PreviewContainer {
     static let shared: ModelContainer = {
-        let schema = Schema([
-            Player.self,
-            Achievement.self,
-            LeagueState.self,
-            Tournament.self,
-            GameResult.self
-        ])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: schema, configurations: [config])
+        let container = try! LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
         
         // Bootstrap default data
         let context = container.mainContext

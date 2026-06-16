@@ -38,14 +38,16 @@ Declare for **Release** builds:
 
 ## 4. Screenshots
 
-Required sizes per ASC (6.7", 6.5", iPad Pro). Capture from simulator:
+Required sizes per ASC (6.7", 6.5", **iPad Pro 12.9"/13"**). Capture from simulator:
 
 - Tournaments list with active tournament
 - Tournament detail / pod scoring
 - Stats charts
 - Achievements
 
-Store in `marketing-screenshots/` (create when preparing submission).
+**iPad:** Follow layout QA in [iPadLayoutSpec.md](iPadLayoutSpec.md) §8 before capturing; store under `marketing-screenshots/ipad/`.
+
+Store iPhone shots in `marketing-screenshots/` (create when preparing submission).
 
 ---
 

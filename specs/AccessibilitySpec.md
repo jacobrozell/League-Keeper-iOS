@@ -9,7 +9,7 @@ Define accessibility requirements for League Keeper. WCAG 2.1 Level AA is the ta
 ## 2. Scope
 
 - iPhone and iPad (universal binary)
-- Portrait and landscape for core flows
+- Portrait and landscape for core flows — layout requirements in [iPadLayoutSpec.md](iPadLayoutSpec.md)
 - English UI in v1.0
 - VoiceOver, Dynamic Type, Reduce Motion, Increase Contrast
 

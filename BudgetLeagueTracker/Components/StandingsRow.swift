@@ -19,6 +19,7 @@ struct StandingsRow: View {
     var wins: Int = 0
     let mode: StandingsMode
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -32,11 +33,33 @@ struct StandingsRow: View {
 
             Spacer(minLength: 8)
 
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(totalPoints) pts")
-                    .font(.system(.body, design: .serif).weight(.semibold))
-                    .foregroundStyle(rank == 1 ? Color(hex: palette.gold) : .primary)
+            pointsColumn
+        }
+        .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+    }
 
+    @ViewBuilder
+    private var pointsColumn: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text("\(totalPoints) pts")
+                .font(.system(.body, design: .serif).weight(.semibold))
+                .foregroundStyle(rank == 1 ? Color(hex: palette.gold) : .primary)
+
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Placement: \(placementPoints)")
+                    Text("Achievements: \(achievementPoints)")
+                    if case .tournament = mode {
+                        Text("Wins: \(wins)")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.trailing)
+            } else {
                 HStack(spacing: 4) {
                     Text("P: \(placementPoints)")
                     Text("A: \(achievementPoints)")
@@ -50,10 +73,6 @@ struct StandingsRow: View {
                 .minimumScaleFactor(0.8)
             }
         }
-        .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
-        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityDescription)
     }
 
     @ViewBuilder

@@ -12,11 +12,15 @@ Central index for all project documentation. Start here when onboarding, prepari
 |------------|------|
 | Build and run the app | [development.md](development.md) |
 | Understand architecture | [architecture.md](architecture.md) → [specs/ArchitectureSpec.md](../specs/ArchitectureSpec.md) |
+| Plan iPad / landscape polish | [ipad-layout-plan.md](ipad-layout-plan.md) → [specs/iPadLayoutSpec.md](../specs/iPadLayoutSpec.md) |
 | Learn domain terms | [domain-glossary.md](domain-glossary.md) |
 | See what ships vs planned | [feature-inventory.md](feature-inventory.md) |
+| Plan 1.0 polish (post–tournament UX) | [polish-plan.md](polish-plan.md) |
+| Plan achievement v2 (icons, templates) | [achievement-improvements-plan.md](achievement-improvements-plan.md) |
 | Run tests / CI | [testing.md](testing.md) → [infrastructure.md](infrastructure.md) |
 | Ship to TestFlight / App Store | [release/README.md](release/README.md) |
-| Fix accessibility | [../accessibility/wcag-2.1-aa/README.md](../accessibility/wcag-2.1-aa/README.md) |
+| See build-phase status (0 → ship) | [agent-build-checklist.md](agent-build-checklist.md) |
+| Fix accessibility | [../accessibility/wcag-2.1-aa/README.md](../accessibility/wcag-2.1-aa/README.md) · [accessibility-layout-plan.md](accessibility-layout-plan.md) |
 | Contribute a PR | [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 
 ---
@@ -31,6 +35,11 @@ Central index for all project documentation. Start here when onboarding, prepari
 | [data-model.md](data-model.md) | SwiftData entities, relationships, persistence rules |
 | [navigation.md](navigation.md) | Tabs, screen enum, sheets, and navigation state |
 | [feature-inventory.md](feature-inventory.md) | Shipped vs partial vs planned features |
+| [tournament-ux-improvements.md](tournament-ux-improvements.md) | Tournament host UX review (sprints 1–3, complete) |
+| [polish-plan.md](polish-plan.md) | 1.0 polish backlog and sprints 4–6 implementation plan |
+| [achievement-improvements-plan.md](achievement-improvements-plan.md) | Achievement v2: icons, templates, tiers, exclusivity (spec: [AchievementSpec.md](../specs/AchievementSpec.md)) |
+| [ipad-layout-plan.md](ipad-layout-plan.md) | iPad & landscape polish checklist (spec: [iPadLayoutSpec.md](../specs/iPadLayoutSpec.md)) |
+| [accessibility-layout-plan.md](accessibility-layout-plan.md) | Dynamic Type / AXXXL layout reflow (segmented → menu, progress header, standings) |
 
 ---
 
@@ -44,6 +53,7 @@ Central index for all project documentation. Start here when onboarding, prepari
 | [testing.md](testing.md) | Unit, integration, snapshot, UI, accessibility tests |
 | [test-coverage.md](test-coverage.md) | Source → test mapping and coverage gaps |
 | [infrastructure.md](infrastructure.md) | CI/CD, Firebase, SwiftLint, GitHub Pages |
+| [agent-build-checklist.md](agent-build-checklist.md) | Phase checklist (0 → ship) with progress log |
 | [logging-analytics.md](logging-analytics.md) | AppLog, allowlisted events, Crashlytics |
 
 ---
@@ -63,6 +73,7 @@ Authoritative requirements for behavior, data, and quality gates. See [specs/REA
 | [LoggingAnalyticsSpec.md](../specs/LoggingAnalyticsSpec.md) | Telemetry allowlist |
 | [TechStackSpec.md](../specs/TechStackSpec.md) | Languages, frameworks, tooling |
 | [AppStoreConnectSpec.md](../specs/AppStoreConnectSpec.md) | Store metadata and URLs |
+| [iPadLayoutSpec.md](../specs/iPadLayoutSpec.md) | iPad + landscape layout requirements |
 | [SpecGovernance.md](../specs/SpecGovernance.md) | How specs stay in sync with code |
 
 ---

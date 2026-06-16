@@ -150,6 +150,8 @@ struct PieChartView: View {
         }
         .frame(height: height)
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). No data available.")
     }
     
     // MARK: - Helpers

@@ -22,6 +22,23 @@ final class AttendanceViewModel {
     var canConfirmAttendance: Bool {
         !presentPlayerIds.isEmpty
     }
+
+    var presentCountLabel: String {
+        let present = presentPlayerIds.count
+        let total = players.count
+        guard total > 0 else { return "0 present" }
+        return "\(present) of \(total) present"
+    }
+
+    var podLayoutHint: String? {
+        PodLayoutHint.message(presentCount: presentPlayerIds.count)
+    }
+
+    /// True when attendance has already been saved for the active tournament week.
+    var isAttendanceConfirmed: Bool {
+        guard let tournament = LeagueEngine.fetchActiveTournament(context: context) else { return false }
+        return !tournament.presentPlayerIds.isEmpty
+    }
     
     // MARK: - Initialization
     
@@ -58,6 +75,20 @@ final class AttendanceViewModel {
     /// Toggles a player's presence.
     func togglePresence(for playerId: String) {
         presentStatus[playerId] = !(presentStatus[playerId] ?? false)
+    }
+
+    /// Marks every league player as present for this week.
+    func markAllPresent() {
+        for player in players {
+            presentStatus[player.id] = true
+        }
+    }
+
+    /// Clears presence for every league player.
+    func markAllAbsent() {
+        for player in players {
+            presentStatus[player.id] = false
+        }
     }
     
     /// Returns whether a player is present.

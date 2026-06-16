@@ -63,3 +63,9 @@ Engine operations assume active tournament for attendance/pods.
 - `NavigationStateTests` — screen routing logic
 - UI tests — `CreateTournamentFlowTests`, `WeeklyRoundFlowTests`
 - [docs/navigation.md](../docs/navigation.md) — diagrams
+
+---
+
+## 7. iPad & landscape
+
+Universal app; tab bar uses iOS 18 `Tab` API (floating on iPad). Layout requirements: [iPadLayoutSpec.md](iPadLayoutSpec.md). Tournament detail hides tab bar during live scoring (unchanged on iPad).

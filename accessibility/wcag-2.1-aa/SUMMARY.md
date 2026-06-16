@@ -29,18 +29,18 @@
 
 | Criterion ID | Global status | Primary fix |
 |--------------|---------------|-------------|
-| P-1.1.1 / LKX-CHART-A11Y | Partial | Chart VoiceOver summaries in `Components/Charts/` |
+| P-1.1.1 / LKX-CHART-A11Y | Partial | Chart summaries + empty states; manual Stats VO spot-check open |
 | P-1.3.2 / O-2.4.3 | Untested | Manual VoiceOver pass on core flow |
 | P-1.4.4 | Partial | AXXXL walkthrough; audit caps on `.dynamicTypeSize` |
-| P-1.4.10 | Untested | Landscape reflow on tournament detail + stats |
-| LKX-A11Y-IDS | Partial | Identifiers on Stats segmented control, tournament detail tabs |
+| P-1.4.10 | Untested | Landscape reflow — see [iPadLayoutSpec.md](../../specs/iPadLayoutSpec.md) §9 |
+| LKX-A11Y-IDS | Partial | Tab/section identifiers + contextual host-action labels |
 
 ## Evidence checklist (release / TestFlight)
 
 - [ ] VoiceOver — core tournament flow (`accessibility/Manual_todo.md`)
 - [ ] Dynamic Type — AXXXL on new tournament, tournament detail, stats
 - [ ] Contrast — semantic token audit (`evidence/contrast/semantic-colors-2026-06-16.md`)
-- [ ] Orientation — portrait + landscape on tournaments and tournament detail
+- [ ] Orientation — portrait + landscape on tournaments and tournament detail ([iPadLayoutSpec.md](../../specs/iPadLayoutSpec.md) §11)
 - [ ] Reduce Motion — verify no essential info in motion-only UI
 
 ## Changelog
@@ -48,3 +48,4 @@
 | Date | Change |
 |------|--------|
 | 2026-06-16 | Initial tracker from codebase + UI test audit |
+| 2026-06-16 | VoiceOver: announcements, contextual host actions, section picker values, pod expand labels |

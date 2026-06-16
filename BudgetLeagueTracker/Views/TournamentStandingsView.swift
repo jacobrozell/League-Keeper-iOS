@@ -5,7 +5,24 @@ import SwiftUI
 struct TournamentStandingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: TournamentStandingsViewModel
-    
+
+    private var shareText: String {
+        let rows = viewModel.sortedPlayers.enumerated().map { index, player in
+            StandingsShareFormatter.TournamentStanding(
+                rank: index + 1,
+                name: player.name,
+                totalPoints: player.totalPoints,
+                placementPoints: player.placementPoints,
+                achievementPoints: player.achievementPoints,
+                wins: player.wins
+            )
+        }
+        return StandingsShareFormatter.finalStandings(
+            tournamentName: viewModel.tournamentName,
+            standings: rows
+        )
+    }
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -27,7 +44,7 @@ struct TournamentStandingsView: View {
                     }
                     .listStyle(.insetGrouped)
                 }
-                
+
                 ModalActionBar(
                     primaryTitle: "Close",
                     primaryAction: {
@@ -37,6 +54,21 @@ struct TournamentStandingsView: View {
                 )
             }
             .navigationTitle(viewModel.isFinal ? "Final Rankings" : "Tournament Rankings")
+            .toolbar {
+                if !viewModel.sortedPlayers.isEmpty {
+                    ToolbarItem(placement: .primaryAction) {
+                        ShareLink(
+                            item: shareText,
+                            subject: Text("\(viewModel.tournamentName) — Final standings"),
+                            message: Text(shareText)
+                        ) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        .accessibilityLabel("Share final tournament standings")
+                        .accessibilityIdentifier("shareFinalStandings")
+                    }
+                }
+            }
             .onAppear {
                 viewModel.refresh()
             }

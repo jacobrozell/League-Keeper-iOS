@@ -5,7 +5,7 @@ import SwiftData
 /// Handles achievement creation with name, points, and always-on setting.
 @Observable
 final class NewAchievementViewModel {
-    private let context: ModelContext
+    let context: ModelContext
     
     // MARK: - Published State
     
@@ -47,7 +47,11 @@ final class NewAchievementViewModel {
             context: context,
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             points: points,
-            alwaysOn: alwaysOn
+            alwaysOn: alwaysOn,
+            achievementDescription: nil,
+            category: .custom,
+            iconName: AppConstants.Achievement.defaultIconName,
+            exclusivity: .unlimited
         )
         
         onAdd?()

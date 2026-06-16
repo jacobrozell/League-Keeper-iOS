@@ -24,15 +24,15 @@
 | O-2.5.3 | Pass | | |
 | LKX-TARGET-44 | Pass | Empty-state CTA uses `PrimaryActionButton` | |
 | U-3.3.2 | Pass | Empty state hint text | |
-| R-4.1.2 | Partial | `TournamentCell` identifiers | |
+| R-4.1.2 | Pass | `TournamentCell` identifiers for ongoing/completed rows | |
 | LKX-CONTRAST-MODES | Partial | Light/dark UI tests | `TournamentsScreenTests` |
 
 ## Open work
 
 - [x] Automated accessibility audit (tab screen)
 - [x] Dark mode regression test
-- [ ] VoiceOver: ongoing vs completed section navigation
-- [ ] VoiceOver: swipe actions on tournament rows (if any)
+- [x] VoiceOver: ongoing vs completed section navigation
+- [x] VoiceOver: swipe actions on tournament rows
 
 ## Verification log
 

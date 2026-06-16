@@ -86,8 +86,14 @@ Transient weekly state resets when advancing weeks.
 | Field | Purpose |
 |-------|---------|
 | `name` | Display name |
-| `points` | Point value when earned |
+| `points` | Point value when earned (0–99) |
 | `alwaysOn` | If true, eligible every week without random roll |
+| `achievementDescription` | Optional short rule text shown at game night *(planned v2)* |
+| `categoryRaw` | Grouping: combat, deckbuilding, social, chaos, seasonal, custom *(planned v2)* |
+| `iconName` | SF Symbol name for list and scoring UI *(planned v2)* |
+| `exclusivityRaw` | `unlimited`, `onePerPod`, or `onePerWeekPerPlayer` *(planned v2)* |
+
+**Normative v2 spec:** [specs/AchievementSpec.md](../specs/AchievementSpec.md)
 
 ### GameResult
 

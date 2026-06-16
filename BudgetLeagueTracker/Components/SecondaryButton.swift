@@ -7,16 +7,27 @@ struct SecondaryButton: View {
     let action: () -> Void
     var isDisabled: Bool = false
     var accessibilityLabel: String?
+    var accessibilityIdentifier: String?
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     var body: some View {
-        Button(action: action) {
+        let button = Button(action: action) {
             Text(title)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
         }
         .buttonStyle(.bordered)
         .disabled(isDisabled)
         .accessibilityLabel(accessibilityLabel ?? title)
+
+        if let accessibilityIdentifier {
+            button.accessibilityIdentifier(accessibilityIdentifier)
+        } else {
+            button
+        }
     }
 }
 

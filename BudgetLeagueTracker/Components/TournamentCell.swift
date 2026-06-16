@@ -4,10 +4,31 @@ import SwiftUI
 /// Shows different information based on tournament status.
 struct TournamentCell: View {
     let tournament: Tournament
-    let playerCount: Int
+    let subtitle: String
     let winnerName: String?
 
     @Environment(\.palette) private var palette
+
+    init(tournament: Tournament, playerCount: Int, winnerName: String?) {
+        self.tournament = tournament
+        self.winnerName = winnerName
+        switch tournament.status {
+        case .ongoing:
+            self.subtitle = "Week \(tournament.currentWeek) of \(tournament.totalWeeks) · \(playerCount) players"
+        case .completed:
+            if let winner = winnerName {
+                self.subtitle = "Winner: \(winner) · \(tournament.totalWeeks) weeks"
+            } else {
+                self.subtitle = "\(tournament.totalWeeks) weeks · \(tournament.dateRangeString)"
+            }
+        }
+    }
+
+    init(tournament: Tournament, subtitle: String, winnerName: String?) {
+        self.tournament = tournament
+        self.subtitle = subtitle
+        self.winnerName = winnerName
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -64,21 +85,6 @@ struct TournamentCell: View {
             )
             .accessibilityHidden(true)
     }
-
-    // MARK: - Subtitle
-
-    private var subtitle: String {
-        switch tournament.status {
-        case .ongoing:
-            return "Week \(tournament.currentWeek) of \(tournament.totalWeeks) · \(playerCount) players"
-        case .completed:
-            if let winner = winnerName {
-                return "Winner: \(winner) · \(tournament.totalWeeks) weeks"
-            } else {
-                return "\(tournament.totalWeeks) weeks · \(tournament.dateRangeString)"
-            }
-        }
-    }
 }
 
 #Preview("Ongoing Tournament") {
@@ -89,7 +95,7 @@ struct TournamentCell: View {
                 totalWeeks: 8,
                 currentWeek: 3
             ),
-            playerCount: 12,
+            subtitle: "Resume Week 3 · 12 players · 2 achievements",
             winnerName: nil
         )
     }

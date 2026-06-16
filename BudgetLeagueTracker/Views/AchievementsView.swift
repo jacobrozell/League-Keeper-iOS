@@ -14,6 +14,8 @@ struct AchievementsView: View {
             }
         }
         .navigationTitle("Achievements")
+        .brandedScreenBackground()
+        .adaptiveContentWidth()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -25,8 +27,18 @@ struct AchievementsView: View {
                 .accessibilityIdentifier("Add achievement")
             }
         }
-        .sheet(isPresented: $viewModel.isShowingNewAchievement) {
-            NewAchievementView(viewModel: viewModel.makeNewAchievementViewModel())
+        .sheet(isPresented: $viewModel.isShowingTemplatePicker) {
+            AchievementTemplatePickerView(
+                onSelectTemplate: { template in
+                    viewModel.selectTemplate(template)
+                },
+                onCancel: {
+                    viewModel.isShowingTemplatePicker = false
+                }
+            )
+        }
+        .sheet(item: $viewModel.presentedFormMode) { mode in
+            AchievementFormView(viewModel: viewModel.makeFormViewModel(for: mode))
         }
         .onAppear {
             viewModel.refresh()
@@ -39,6 +51,11 @@ struct AchievementsView: View {
     private var achievementsContent: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
+                sectionContainer {
+                    AchievementBalanceSummaryView(summary: viewModel.balanceSummary)
+                        .padding()
+                }
+
                 // Stats Summary Section
                 if viewModel.hasGameResults {
                     statsSummarySection
@@ -188,66 +205,26 @@ struct AchievementsView: View {
         let topEarners = viewModel.topEarners(for: achievement, limit: 3)
         
         VStack(alignment: .leading, spacing: 8) {
-            // Header Row
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(achievement.name)
-                        .font(.headline)
-                    
-                    HStack(spacing: 8) {
-                        Label("\(achievement.points) pts", systemImage: "star.fill")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        if achievement.alwaysOn {
-                            Text("Always On")
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(AppConstants.AccessibleColors.activeStatusBackground)
-                                .foregroundStyle(AppConstants.AccessibleColors.activeStatus)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                // Actions Menu
-                Menu {
-                    Button {
-                        viewModel.toggleAlwaysOn(achievement)
-                    } label: {
-                        Label(
-                            achievement.alwaysOn ? "Disable Always On" : "Enable Always On",
-                            systemImage: achievement.alwaysOn ? "checkmark.circle.fill" : "circle"
-                        )
-                    }
-                    
-                    Button(role: .destructive) {
-                        viewModel.removeAchievement(achievement)
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .foregroundStyle(.secondary)
-                        .frame(minWidth: AppConstants.UI.minTouchTargetHeight, minHeight: AppConstants.UI.minTouchTargetHeight)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Options for \(achievement.name)")
-                .accessibilityIdentifier("Options for \(achievement.name)")
-            }
-            
+            AchievementListRow(
+                achievement: achievement,
+                onEdit: { viewModel.editAchievement(achievement) },
+                onDuplicate: { viewModel.duplicateAchievement(achievement) },
+                onToggleAlwaysOn: { viewModel.toggleAlwaysOn(achievement) },
+                onRemove: { viewModel.removeAchievement(achievement) }
+            )
+            .padding(.horizontal)
+            .padding(.top, 8)
+
             // Stats Row (only if there are game results)
             if viewModel.hasGameResults {
                 HStack {
                     Label("Earned \(totalEarned) times", systemImage: "trophy")
                         .font(.caption)
                         .foregroundStyle(totalEarned > 0 ? .secondary : .tertiary)
-                    
+
                     Spacer()
                 }
+                .padding(.horizontal)
                 
                 // Top Earners (if any)
                 if !topEarners.isEmpty {
@@ -255,7 +232,7 @@ struct AchievementsView: View {
                         Text("Top:")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
-                        
+
                         ForEach(Array(topEarners.enumerated()), id: \.offset) { index, earner in
                             HStack(spacing: 2) {
                                 Circle()
@@ -265,20 +242,21 @@ struct AchievementsView: View {
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
-                            
+
                             if index < topEarners.count - 1 {
                                 Text("·")
                                     .font(.caption2)
                                     .foregroundStyle(.quaternary)
                             }
                         }
-                        
+
                         Spacer()
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
                 }
             }
         }
-        .padding()
         .contentShape(Rectangle())
     }
     

@@ -25,7 +25,7 @@ When player `P` earns achievement `A` in a pod:
 
 - Add `A.points` to `P`'s weekly total for the active tournament.
 - Add `A.points` to `P.achievementPoints` (lifetime).
-- Multiple players may earn the same achievement in one pod.
+- Multiple players may earn the same achievement in one pod **unless** `A.exclusivity` restricts it (see [AchievementSpec.md](AchievementSpec.md) §3.2).
 
 If `achievementsOnThisWeek` is false at attendance, achievement UI is hidden and no achievement points are awarded.
 

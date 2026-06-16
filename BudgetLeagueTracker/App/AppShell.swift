@@ -24,6 +24,7 @@ struct AppShell: View {
         .preferredColorScheme(screenshotColorScheme)
         .task(id: showSplash) {
             guard showSplash else { return }
+            // Brief branded moment so the loader reads as intentional, not a flash.
             try? await Task.sleep(for: .milliseconds(AppInfo.isUITesting ? 0 : 1_400))
             if reduceMotion {
                 showSplash = false

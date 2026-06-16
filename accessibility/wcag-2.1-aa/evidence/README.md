@@ -9,7 +9,8 @@ evidence/
   voiceover/          # VoiceOver spot-check notes
   dynamic-type/       # AXXXL screenshots
   contrast/           # Computed ratio notes
-  orientation/        # Portrait/landscape matrix
+  layout/             # iPad + landscape reflow matrix (P-1.4.10)
+  orientation/        # Portrait/landscape matrix (legacy alias)
 ```
 
 ## Naming convention

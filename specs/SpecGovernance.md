@@ -11,6 +11,7 @@ How specs stay accurate as League Keeper evolves.
 | Architecture | `ArchitectureSpec.md` |
 | Data | `DataSchemaSpec.md` |
 | Scoring | `ScoringSpec.md` |
+| Achievements | `AchievementSpec.md` |
 | Navigation | `NavigationSpec.md` |
 | Accessibility | `AccessibilitySpec.md` + `accessibility/wcag-2.1-aa/` |
 | Tests | `TestPlanSpec.md` |
@@ -24,6 +25,7 @@ How specs stay accurate as League Keeper evolves.
 | Trigger | Action |
 |---------|--------|
 | Scoring / league rule change | `ScoringSpec.md`, `AppConstants`, tests |
+| Achievement catalog / scoring UI change | `AchievementSpec.md`, `ScoringSpec.md` (if awards change), tests |
 | New screen or flow | `NavigationSpec.md`, WCAG screen file, user-flows |
 | New Firebase event | `LoggingAnalyticsSpec.md`, mapping tests |
 | Schema change | `DataSchemaSpec.md`, migration tests |

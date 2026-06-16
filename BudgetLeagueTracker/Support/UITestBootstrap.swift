@@ -11,6 +11,7 @@ enum UITestBootstrap {
     static let seedAttendance = "UI-Testing-Seed-Attendance"
     static let seedTournamentDetail = "UI-Testing-Seed-TournamentDetail"
     static let seedEditRound = "UI-Testing-Seed-EditRound"
+    static let seedWeekCompleteReady = "UI-Testing-Seed-WeekCompleteReady"
 
     /// When set, `ContentView` should push this tournament onto the tournaments navigation stack.
     private(set) static var pendingTournamentNavigationName: String?
@@ -28,6 +29,8 @@ enum UITestBootstrap {
             scenario = .tournamentDetail
         } else if arguments.contains(seedEditRound) {
             scenario = .editRound
+        } else if arguments.contains(seedWeekCompleteReady) {
+            scenario = .weekCompleteReady
         } else {
             scenario = nil
         }
@@ -58,6 +61,7 @@ enum UITestBootstrap {
         case attendance
         case tournamentDetail
         case editRound
+        case weekCompleteReady
     }
 
     private static func seed(_ scenario: Scenario, in context: ModelContext) {
@@ -87,6 +91,14 @@ enum UITestBootstrap {
             seedPodsForCurrentRound(in: context)
             LeagueEngine.nextRound(context: context)
             seedPodsForCurrentRound(in: context)
+            setScreen(.tournaments, in: context)
+            pendingTournamentNavigationName = tournamentName
+        case .weekCompleteReady:
+            confirmAttendance(in: context, playerIds: playerIds)
+            for _ in 1...2 {
+                seedPodsForCurrentRound(in: context)
+                LeagueEngine.nextRound(context: context)
+            }
             setScreen(.tournaments, in: context)
             pendingTournamentNavigationName = tournamentName
         }

@@ -126,15 +126,64 @@ enum AppConstants {
     }
     
     // MARK: - Default Achievement
-    
+
     enum DefaultAchievement {
         /// Name of the default seeded achievement
         static let name = "First Blood"
-        
+
         /// Points for the default achievement
         static let points = 1
-        
+
         /// Whether the default achievement is always on
         static let alwaysOn = false
+
+        /// Default rule description
+        static let achievementDescription = "First player to eliminate another player"
+
+        /// Default category
+        static let category: AchievementCategory = .combat
+
+        /// Default icon
+        static let iconName = "flame.fill"
+
+        /// Default exclusivity
+        static let exclusivity: AchievementExclusivity = .onePerPod
+    }
+
+    // MARK: - Achievement catalog
+
+    enum Achievement {
+        static let nameMaxLength = 80
+        static let descriptionMaxLength = 200
+        static let pointsRange = 0...99
+        static let defaultIconName = "trophy.fill"
+
+        static func pointsTier(for points: Int) -> AchievementPointsTier? {
+            AchievementPointsTier.tier(for: points)
+        }
+
+        static func sanitizedIconName(_ iconName: String) -> String {
+            iconAllowlist.contains(iconName) ? iconName : defaultIconName
+        }
+
+        static let iconAllowlistByCategory: [AchievementCategory: [String]] = [
+            .combat: ["flame.fill", "bolt.fill", "scope", "burst.fill", "shield.fill", "flag.fill", "target"],
+            .deckbuilding: ["rectangle.stack.fill", "square.grid.3x3.fill", "paintpalette.fill", "sparkles", "circle.fill", "square.stack.3d.up.fill"],
+            .social: ["person.3.fill", "hand.wave.fill", "heart.fill", "megaphone.fill", "hand.thumbsup.fill", "bubble.left.and.bubble.right.fill"],
+            .chaos: ["dice.fill", "questionmark.circle.fill", "wand.and.stars", "tornado", "shuffle"],
+            .seasonal: ["leaf.fill", "snowflake", "sun.max.fill", "moon.fill", "calendar"],
+            .custom: ["trophy.fill", "star.fill", "medal.fill", "crown.fill", "rosette", "seal.fill"],
+        ]
+
+        static var iconAllowlist: [String] {
+            Array(Set(iconAllowlistByCategory.values.flatMap { $0 }))
+        }
+
+        static func iconDisplayName(_ iconName: String) -> String {
+            iconName
+                .replacingOccurrences(of: ".fill", with: "")
+                .replacingOccurrences(of: ".", with: " ")
+                .capitalized
+        }
     }
 }

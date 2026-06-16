@@ -270,26 +270,44 @@ struct ComponentSnapshotTests {
         @Test("AlwaysOn true")
         func alwaysOnTrue() {
             let row = AchievementListRow(
-                name: "First Blood",
-                points: 1,
-                alwaysOn: .constant(true),
+                achievement: Achievement(
+                    name: "First Blood",
+                    points: 1,
+                    alwaysOn: true,
+                    achievementDescription: "First elimination",
+                    category: .combat,
+                    iconName: "flame.fill",
+                    exclusivity: .onePerPod
+                ),
+                onEdit: {},
+                onDuplicate: {},
+                onToggleAlwaysOn: {},
                 onRemove: {}
             )
             let view = row.frame(width: 350)
-            
+
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 350, height: 200)), record: SnapshotTestConfiguration.record)
         }
-        
+
         @Test("AlwaysOn false")
         func alwaysOnFalse() {
             let row = AchievementListRow(
-                name: "Rare Win",
-                points: 3,
-                alwaysOn: .constant(false),
+                achievement: Achievement(
+                    name: "Rare Win",
+                    points: 3,
+                    alwaysOn: false,
+                    achievementDescription: "Won from behind",
+                    category: .combat,
+                    iconName: "flag.fill",
+                    exclusivity: .onePerPod
+                ),
+                onEdit: {},
+                onDuplicate: {},
+                onToggleAlwaysOn: {},
                 onRemove: {}
             )
             let view = row.frame(width: 350)
-            
+
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 350, height: 200)), record: SnapshotTestConfiguration.record)
         }
     }

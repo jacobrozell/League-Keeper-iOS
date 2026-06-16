@@ -17,6 +17,7 @@ struct TournamentsView: View {
         }
         .navigationTitle("Tournaments")
         .brandedScreenBackground()
+        .adaptiveContentWidth()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -74,16 +75,30 @@ struct TournamentsView: View {
         List {
             // Ongoing tournaments section
             if viewModel.hasOngoingTournaments {
-                Section("Ongoing") {
+                Section {
                     ForEach(viewModel.ongoingTournaments, id: \.id) { tournament in
                         NavigationLink(value: tournament) {
                             TournamentCell(
                                 tournament: tournament,
-                                playerCount: viewModel.playerCount(for: tournament),
+                                subtitle: viewModel.listSubtitle(for: tournament),
                                 winnerName: nil
                             )
                         }
                         .accessibilityIdentifier("tournament-\(tournament.name)")
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                viewModel.openEdit(tournament)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.accentColor)
+                            
+                            Button(role: .destructive) {
+                                viewModel.requestDelete(tournament)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                         .contextMenu {
                             Button {
                                 viewModel.openEdit(tournament)
@@ -97,23 +112,40 @@ struct TournamentsView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Ongoing")
+                        .accessibilityAddTraits(.isHeader)
                 }
             }
             
             // Completed tournaments section (tap opens standings sheet, not push)
             if viewModel.hasCompletedTournaments {
-                Section("Completed") {
+                Section {
                     ForEach(viewModel.completedTournaments, id: \.id) { tournament in
                         Button {
                             viewModel.openCompletedStandings(tournament)
                         } label: {
                             TournamentCell(
                                 tournament: tournament,
-                                playerCount: viewModel.playerCount(for: tournament),
+                                subtitle: viewModel.listSubtitle(for: tournament),
                                 winnerName: viewModel.winnerName(for: tournament)
                             )
                         }
                         .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                viewModel.openEdit(tournament)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.accentColor)
+                            
+                            Button(role: .destructive) {
+                                viewModel.requestDelete(tournament)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                         .contextMenu {
                             Button {
                                 viewModel.openEdit(tournament)
@@ -126,7 +158,11 @@ struct TournamentsView: View {
                                 Label("Delete", systemImage: "trash")
                             }
                         }
+                        .accessibilityIdentifier("completed-tournament-\(tournament.name)")
                     }
+                } header: {
+                    Text("Completed")
+                        .accessibilityAddTraits(.isHeader)
                 }
             }
         }

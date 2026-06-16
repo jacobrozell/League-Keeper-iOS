@@ -32,13 +32,14 @@ Living register of League Keeper features: shipped, partial, and planned.
 |------|---------|---------|---------|
 | Tournament lifecycle | Create, weeks, pods, standings | Edit tournament sheet | — |
 | Players | CRUD, detail, stats | — | Import/export |
-| Achievements | CRUD, always-on, random roll | — | — |
+| Achievements | CRUD, always-on, random roll | Edit, icons, templates | v2 catalog (see [AchievementSpec.md](../specs/AchievementSpec.md)) |
 | Stats | Weekly, standings, charts, players | Chart VoiceOver | Export |
-| Settings | About, version | Support link in-app | Preferences |
+| Settings | About, version, theme | Support + privacy links in-app | Preferences |
 | Persistence | SwiftData local | — | iCloud sync |
 | CI / quality | GHA lint + unit; nightly UI | Snapshot refs in CI | Xcode Cloud |
 | Analytics | AppLog + Firebase scaffold | Real Firebase project | — |
 | Accessibility | Component labels, UI audits | Manual VO sign-off | WCAG Pass |
+| iPad & landscape layout | Universal binary runs | Max-width, landscape sticky bar | Split view |
 | Localization | English | — | Additional locales |
 | App Store | Listing copy, Pages HTML | TestFlight | Public release |
 
@@ -69,7 +70,12 @@ Living register of League Keeper features: shipped, partial, and planned.
 | Global player pool | Shipped | Shared across tournaments |
 | Player detail + history | Shipped | `PlayerDetailView` |
 | Achievement catalog | Shipped | `AchievementsView` |
-| Add / edit / delete achievement | Shipped | |
+| Add achievement | Shipped | `NewAchievementView` |
+| Edit achievement (full) | Planned | [achievement-improvements-plan.md](achievement-improvements-plan.md) Sprint A2 |
+| Achievement icons (SF Symbols) | Planned | [AchievementSpec.md](../specs/AchievementSpec.md) §4 |
+| Achievement templates | Planned | [achievement-improvements-plan.md](achievement-improvements-plan.md) Sprint A2 |
+| Points tiers + balance summary | Planned | [achievement-improvements-plan.md](achievement-improvements-plan.md) Sprint A2–A3 |
+| Exclusivity (one per pod / per week) | Planned | [achievement-improvements-plan.md](achievement-improvements-plan.md) Sprint A4 |
 | Default "First Blood" seed | Shipped | On first launch |
 
 ### Stats
@@ -91,6 +97,21 @@ Living register of League Keeper features: shipped, partial, and planned.
 | GitHub Pages | Partial | Enable in repo settings |
 | WCAG tracker | Shipped | [accessibility/wcag-2.1-aa/](../accessibility/wcag-2.1-aa/) |
 
+### Platform & layout
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Universal iPhone + iPad binary | Shipped | Same UI; no split view |
+| Landscape — menu section pickers | Shipped | Stats, tournament detail |
+| Landscape — pods sticky bar | Partial | Stacked layout in compact height — [iPadLayoutSpec.md](../specs/iPadLayoutSpec.md) |
+| iPad content max-width | Partial | `adaptiveContentWidth()` on core tab screens |
+| Onboarding iPad portrait layout | Shipped | Wide layout when `horizontalSizeClass == .regular` |
+| First-attendance coach mark | Shipped | One-time tip on tournament detail Attendance tab |
+| Generate-pods coach mark | Shipped | One-time tip on tournament detail Pods tab |
+| Share standings (week + final) | Shipped | `StandingsShareFormatter` + ShareLink on sheets |
+| Sample league deep-link | Shipped | Onboarding load opens tournament on Attendance |
+| iPad-native NavigationSplitView | Planned | Post–1.0 |
+
 ### Planned (post–1.0)
 
 | Feature | Notes |
@@ -98,7 +119,7 @@ Living register of League Keeper features: shipped, partial, and planned.
 | iCloud sync | [ios-roadmap.md](ios-roadmap.md) |
 | Player / data export | JSON or share sheet |
 | Localization | German, Spanish, etc. |
-| iPad-optimized layouts | Wider stats charts |
+| iPad split-view / sidebar | [iPadLayoutSpec.md](../specs/iPadLayoutSpec.md) Phase C |
 | Widgets / Shortcuts | Quick standings glance |
 
 ---

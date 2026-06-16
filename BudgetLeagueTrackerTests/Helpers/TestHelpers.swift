@@ -11,12 +11,7 @@ final class TestModelContext {
     let modelContext: ModelContext
     
     init(bootstrapped: Bool = true) throws {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        self.container = try ModelContainer(
-            for: Player.self, Achievement.self, LeagueState.self,
-                Tournament.self, GameResult.self,
-            configurations: config
-        )
+        self.container = try LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
         self.modelContext = container.mainContext
         
         if bootstrapped {
@@ -48,12 +43,7 @@ enum TestHelpers {
     /// Creates an in-memory ModelContainer for testing
     /// - Returns: A ModelContainer configured for in-memory storage
     static func inMemoryContainer() throws -> ModelContainer {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try ModelContainer(
-            for: Player.self, Achievement.self, LeagueState.self,
-                Tournament.self, GameResult.self,
-            configurations: config
-        )
+        try LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
     }
     
     /// Creates a test context with bootstrapped state (LeagueState + default achievement)

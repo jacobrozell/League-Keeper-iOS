@@ -136,11 +136,15 @@ struct PodsView: View {
                         AchievementCheckItem(
                             name: achievement.name,
                             points: achievement.points,
+                            iconName: achievement.iconName,
+                            achievementDescription: achievement.achievementDescription,
+                            exclusivity: achievement.exclusivity,
                             isChecked: Binding(
                                 get: { viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id) },
                                 set: { _ in viewModel.toggleAchievementCheck(playerId: player.id, achievementId: achievement.id) }
                             ),
-                            isDisabled: false
+                            isDisabled: viewModel.isAchievementCheckDisabled(playerId: player.id, achievementId: achievement.id),
+                            disabledReason: "Already earned this week"
                         )
                     }
                 }

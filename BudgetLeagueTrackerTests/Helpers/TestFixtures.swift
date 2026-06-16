@@ -71,9 +71,21 @@ enum TestFixtures {
     static func achievement(
         name: String = "Test Achievement",
         points: Int = 1,
-        alwaysOn: Bool = false
+        alwaysOn: Bool = false,
+        achievementDescription: String? = nil,
+        category: AchievementCategory = .custom,
+        iconName: String = AppConstants.Achievement.defaultIconName,
+        exclusivity: AchievementExclusivity = .unlimited
     ) -> Achievement {
-        Achievement(name: name, points: points, alwaysOn: alwaysOn)
+        Achievement(
+            name: name,
+            points: points,
+            alwaysOn: alwaysOn,
+            achievementDescription: achievementDescription,
+            category: category,
+            iconName: iconName,
+            exclusivity: exclusivity
+        )
     }
     
     /// Creates the default "First Blood" achievement

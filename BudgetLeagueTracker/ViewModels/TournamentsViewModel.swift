@@ -78,6 +78,47 @@ final class TournamentsViewModel {
         let uniquePlayerIds = Set(results.map { $0.playerId })
         return uniquePlayerIds.count
     }
+
+    /// Active achievement count for an ongoing tournament week.
+    func activeAchievementCount(for tournament: Tournament) -> Int {
+        tournament.activeAchievementIds.count
+    }
+
+    /// Player count for list display: present players when set, otherwise full roster.
+    func rosterCount(for tournament: Tournament) -> Int {
+        if tournament.status == .ongoing {
+            let presentCount = tournament.presentPlayerIds.count
+            return presentCount > 0 ? presentCount : players.count
+        }
+        return playerCount(for: tournament)
+    }
+
+    /// Subtitle shown in the tournament list cell.
+    func listSubtitle(for tournament: Tournament) -> String {
+        switch tournament.status {
+        case .ongoing:
+            var segments: [String]
+            if tournament.presentPlayerIds.isEmpty {
+                segments = ["Resume Week \(tournament.currentWeek)"]
+            } else {
+                segments = ["Week \(tournament.currentWeek) · Round \(tournament.currentRound)"]
+            }
+            let count = rosterCount(for: tournament)
+            if count > 0 {
+                segments.append("\(count)\u{00A0}players")
+            }
+            let achievements = activeAchievementCount(for: tournament)
+            if tournament.achievementsOnThisWeek, achievements > 0 {
+                segments.append("\(achievements)\u{00A0}achievements")
+            }
+            return segments.joined(separator: " · ")
+        case .completed:
+            if let winner = winnerName(for: tournament) {
+                return "Winner: \(winner) · \(tournament.totalWeeks) weeks"
+            }
+            return "\(tournament.totalWeeks) weeks · \(tournament.dateRangeString)"
+        }
+    }
     
     /// Returns the winner's name for a completed tournament.
     /// The winner is the player with the most total points in that tournament's GameResults.

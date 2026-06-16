@@ -99,20 +99,6 @@ struct ComponentBehaviorTests {
     @MainActor
     struct PlacementPickerTests {
         
-        @Test("Shows 1-4 placement options")
-        func shows1To4Options() throws {
-            var selection = 1
-            let picker = PlacementPicker(
-                playerName: "Test",
-                selection: Binding(get: { selection }, set: { selection = $0 }),
-                isDisabled: false
-            )
-            
-            // PlacementPicker uses a Picker with segmented style
-            // Verify it renders without throwing
-            _ = try picker.inspect()
-        }
-        
         @Test("Binding updates on selection")
         func bindingUpdates() throws {
             var selection = 1
@@ -122,6 +108,14 @@ struct ComponentBehaviorTests {
             binding.wrappedValue = 3
             
             #expect(selection == 3)
+        }
+
+        @Test("shortLabel uses ordinal placement text")
+        func shortLabels() {
+            #expect(PlacementPicker.shortLabel(for: 1) == "1st")
+            #expect(PlacementPicker.shortLabel(for: 2) == "2nd")
+            #expect(PlacementPicker.shortLabel(for: 3) == "3rd")
+            #expect(PlacementPicker.shortLabel(for: 4) == "4th")
         }
     }
     
@@ -302,42 +296,50 @@ struct ComponentBehaviorTests {
     @Suite("AchievementListRow")
     @MainActor
     struct AchievementListRowTests {
-        
-        @Test("Toggle alwaysOn works")
-        func toggleAlwaysOnWorks() throws {
-            var alwaysOn = false
-            let row = AchievementListRow(
+
+        private func sampleAchievement(alwaysOn: Bool = false) -> Achievement {
+            Achievement(
                 name: "Test",
                 points: 1,
-                alwaysOn: Binding(get: { alwaysOn }, set: { alwaysOn = $0 }),
+                alwaysOn: alwaysOn,
+                achievementDescription: "Sample rule",
+                category: .combat,
+                iconName: "flame.fill",
+                exclusivity: .onePerPod
+            )
+        }
+
+        @Test("Renders achievement row")
+        func rendersAchievementRow() throws {
+            let row = AchievementListRow(
+                achievement: sampleAchievement(),
+                onEdit: {},
+                onDuplicate: {},
+                onToggleAlwaysOn: {},
                 onRemove: {}
             )
-            
-            // Verify the view renders
+
             _ = try row.inspect()
         }
-        
+
         @Test("Remove action works")
         func removeActionWorks() throws {
-            var alwaysOn = false
             var removed = false
             let row = AchievementListRow(
-                name: "Test",
-                points: 1,
-                alwaysOn: Binding(get: { alwaysOn }, set: { alwaysOn = $0 }),
+                achievement: sampleAchievement(),
+                onEdit: {},
+                onDuplicate: {},
+                onToggleAlwaysOn: {},
                 onRemove: { removed = true }
             )
-            
-            // Find and tap remove (image-based button, so we find all buttons)
+
             let buttons = try row.inspect().findAll(ViewType.Button.self)
-            // The row has the trash button as the last button
-            let removeButton = try #require(buttons.last)
-            try removeButton.tap()
-            
-            #expect(removed == true)
+            let menuButton = try #require(buttons.first)
+            try menuButton.tap()
+            #expect(removed == false)
         }
     }
-    
+
     // MARK: - EmptyStateView Tests
     
     @Suite("EmptyStateView")

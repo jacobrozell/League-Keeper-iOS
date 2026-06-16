@@ -33,14 +33,15 @@ struct AchievementsViewModelTests {
         func showsAndDismisses() throws {
             let context = try TestHelpers.bootstrappedContext()
             let viewModel = AchievementsViewModel(context: context)
-            
-            #expect(viewModel.isShowingNewAchievement == false)
-            
+
+            #expect(viewModel.isShowingTemplatePicker == false)
+
             viewModel.showNewAchievement()
-            #expect(viewModel.isShowingNewAchievement == true)
-            
+            #expect(viewModel.isShowingTemplatePicker == true)
+
             viewModel.dismissNewAchievement()
-            #expect(viewModel.isShowingNewAchievement == false)
+            #expect(viewModel.isShowingTemplatePicker == false)
+            #expect(viewModel.presentedFormMode == nil)
         }
     }
     
@@ -52,17 +53,17 @@ struct AchievementsViewModelTests {
         func createsWithCallbacks() throws {
             let context = try TestHelpers.bootstrappedContext()
             let viewModel = AchievementsViewModel(context: context)
-            viewModel.showNewAchievement()
-            
+            viewModel.selectTemplate(nil)
+
             let newAchievementVM = viewModel.makeNewAchievementViewModel()
-            
+
             // Simulate adding - should dismiss
             newAchievementVM.name = "Test"
             newAchievementVM.points = 1
             newAchievementVM.addAchievement()
-            
-            // After a brief delay, the callback should have been called
-            #expect(viewModel.isShowingNewAchievement == false)
+
+            #expect(viewModel.presentedFormMode == nil)
+            #expect(viewModel.isShowingTemplatePicker == false)
         }
     }
     

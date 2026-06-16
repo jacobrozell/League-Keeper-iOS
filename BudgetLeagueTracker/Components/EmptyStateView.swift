@@ -36,6 +36,14 @@ struct EmptyStateView: View {
         .padding()
         .dynamicTypeSize(...DynamicTypeSize.accessibility3)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+    }
+
+    private var accessibilitySummary: String {
+        if let hint, !hint.isEmpty {
+            return "\(message). \(hint)"
+        }
+        return message
     }
 }
 

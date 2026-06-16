@@ -29,10 +29,10 @@
 
 ## Open work
 
-- [ ] Accessibility identifiers on segment/tab controls
-- [ ] VoiceOver: week navigation and pod placement flow
-- [ ] VoiceOver: edit last round sheet entry
-- [ ] Automated audit test for tournament detail (requires seed data)
+- [x] Accessibility identifiers on segment/tab controls
+- [x] VoiceOver: contextual action labels, pod expand/collapse, announcements
+- [ ] VoiceOver: manual full-flow sign-off (`Manual_todo.md`)
+- [x] Automated audit test for tournament detail (requires seed data)
 
 ## Verification log
 

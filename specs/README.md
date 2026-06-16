@@ -28,9 +28,11 @@ Catalog of product and system specifications for **League Keeper**. Specs are th
 | [DataSchemaSpec.md](DataSchemaSpec.md) | `@Model` types, invariants, bootstrap |
 | [NavigationSpec.md](NavigationSpec.md) | `Screen` enum, TabView, sheets, `LeagueState` |
 | [ScoringSpec.md](ScoringSpec.md) | Placement points, achievements, pods, weeks |
+| [AchievementSpec.md](AchievementSpec.md) | Achievement catalog v2: icons, templates, tiers, exclusivity |
 | [LoggingAnalyticsSpec.md](LoggingAnalyticsSpec.md) | AppLog, Firebase event allowlist |
 | [TestPlanSpec.md](TestPlanSpec.md) | Unit, snapshot, UI, accessibility strategy |
 | [AccessibilitySpec.md](AccessibilitySpec.md) | WCAG requirements and release gate |
+| [iPadLayoutSpec.md](iPadLayoutSpec.md) | iPad + landscape layout, QA matrix, TestFlight gates |
 | [AppStoreConnectSpec.md](AppStoreConnectSpec.md) | Metadata, URLs, privacy nutrition |
 | [SpecGovernance.md](SpecGovernance.md) | Ownership, update rules, PR checklist |
 
@@ -43,7 +45,7 @@ Catalog of product and system specifications for **League Keeper**. Specs are th
 | Tournaments | `Views/TournamentsView`, `TournamentDetailView`, … | [user-flows.md](../docs/user-flows.md) |
 | Players | `Views/PlayersView`, `PlayerDetailView` | [data-model.md](../docs/data-model.md) |
 | Stats & charts | `Views/StatsView`, `Components/Charts/` | [ScoringSpec.md](ScoringSpec.md) |
-| Achievements | `Views/AchievementsView`, `NewAchievementView` | [domain-glossary.md](../docs/domain-glossary.md) |
+| Achievements | `Views/AchievementsView`, `AchievementFormView` (planned) | [AchievementSpec.md](AchievementSpec.md), [achievement-improvements-plan.md](../docs/achievement-improvements-plan.md) |
 | Settings | `Views/SettingsView` | [AppStoreConnectSpec.md](AppStoreConnectSpec.md) |
 
 ---

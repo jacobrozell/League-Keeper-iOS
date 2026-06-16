@@ -45,6 +45,22 @@
 | New screen | Snapshot + UI audit (or flow test) |
 | New analytics event | `FirebaseAnalyticsEventMappingTests` |
 | Accessibility fix | Update WCAG screen file + audit test if applicable |
+| iPad / landscape layout | Update [iPadLayoutSpec.md](iPadLayoutSpec.md) + snapshot or UI test per §11.3 |
+
+---
+
+## 4b. iPad & landscape coverage
+
+Normative requirements: [iPadLayoutSpec.md](iPadLayoutSpec.md).
+
+| Layer | What to add |
+|-------|-------------|
+| Snapshot | iPad Pro 13" portrait — tournaments, tournament detail |
+| Snapshot | iPhone landscape 844×390 — pods sticky bar (stacked) |
+| UI | Landscape tournament detail: sticky actions hittable |
+| Manual | §11.2 scenario matrix before TestFlight external |
+
+Existing smoke tests: `TournamentsScreenTests` (landscape), `StatsScreenTests` (landscape).
 
 ---
 

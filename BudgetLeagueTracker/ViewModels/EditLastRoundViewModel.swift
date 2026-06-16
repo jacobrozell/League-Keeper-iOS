@@ -117,6 +117,12 @@ final class EditLastRoundViewModel {
         if achievementChecks.contains(key) {
             achievementChecks.remove(key)
         } else {
+            if let achievement = achievements.first(where: { $0.id == achievementId }),
+               achievement.exclusivity == .onePerPod {
+                for otherPlayer in players where otherPlayer.id != playerId {
+                    achievementChecks.remove("\(otherPlayer.id):\(achievementId)")
+                }
+            }
             achievementChecks.insert(key)
         }
     }

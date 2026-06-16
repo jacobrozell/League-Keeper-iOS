@@ -8,6 +8,13 @@ enum TournamentDetailTab: String, CaseIterable {
     case standings = "Standings"
 }
 
+/// Host-facing step within the current week workflow.
+enum TournamentHostStep {
+    case attendance
+    case pods
+    case scoreRound
+}
+
 /// ViewModel for the Tournament Detail view.
 /// Manages tournament landing page including pods, standings, and navigation.
 /// Absorbs functionality from PodsViewModel for ongoing tournaments.
@@ -26,6 +33,8 @@ final class TournamentDetailViewModel {
     var activeTab: TournamentDetailTab = .attendance
     /// Selected week for standings: nil = overall/tournament total, 1...totalWeeks = that week.
     var selectedStandingsWeek: Int? = nil
+    /// Which pod sections are expanded in the Pods tab.
+    var expandedPodIndices: Set<Int> = []
     
     private var allPlayers: [Player] = []
     private var podHistoryCount: Int = 0
@@ -34,6 +43,8 @@ final class TournamentDetailViewModel {
     
     var showAttendance: Bool = false
     var showEditLastRound: Bool = false
+    var showWeekCompleteSheet: Bool = false
+    var completedWeekNumber: Int?
     
     // MARK: - Computed Properties: Tournament Info
     
@@ -76,6 +87,78 @@ final class TournamentDetailViewModel {
     var roundString: String {
         "Round \(currentRound)"
     }
+
+    /// Whether pods have been generated or scored for the current round.
+    var hasScoredCurrentRound: Bool {
+        !pods.isEmpty || hasRoundPlacementsForPresentPlayers
+    }
+
+    /// Current step in the weekly host workflow.
+    var hostStep: TournamentHostStep {
+        if !hasPresentPlayers { return .attendance }
+        if !hasScoredCurrentRound { return .pods }
+        return .scoreRound
+    }
+
+    /// Short hint describing what the host should do next.
+    var nextStepHint: String {
+        switch hostStep {
+        case .attendance:
+            return "Mark who's here this week"
+        case .pods:
+            return "Generate pods for Round \(currentRound)"
+        case .scoreRound:
+            if currentRound < AppConstants.League.roundsPerWeek {
+                return "Set placements, then finish Round \(currentRound)"
+            }
+            if tournament?.isFinalWeek == true {
+                return "Set placements, then end the tournament"
+            }
+            return "Set placements, then end Week \(currentWeek)"
+        }
+    }
+
+    /// Steps for the progress header.
+    var progressSteps: [TournamentProgressStep] {
+        let attendanceState: TournamentProgressStepState = hasPresentPlayers ? .complete : .current
+        let podsState: TournamentProgressStepState = {
+            if !hasPresentPlayers { return .upcoming }
+            if hasScoredCurrentRound { return .complete }
+            return .current
+        }()
+        let scoreState: TournamentProgressStepState = {
+            if !hasScoredCurrentRound { return .upcoming }
+            return .current
+        }()
+
+        return [
+            TournamentProgressStep(id: "attendance", title: "Attendance", state: attendanceState),
+            TournamentProgressStep(id: "pods", title: "Pods", state: podsState),
+            TournamentProgressStep(id: "score", title: "Score", state: scoreState)
+        ]
+    }
+
+    /// Label for the generate-pods action.
+    var generatePodsButtonTitle: String {
+        "Generate Round \(currentRound) Pods"
+    }
+
+    /// Whether any present player has scored points this week.
+    var hasWeeklyStandingsToShow: Bool {
+        weeklyStandings.contains { $0.points.total > 0 }
+    }
+
+    /// Top weekly standings rows for inline display on the Pods tab.
+    var inlineWeeklyStandings: [(player: Player, points: WeeklyPlayerPoints)] {
+        let ranked = weeklyStandings.filter { $0.points.total > 0 }
+        return Array(ranked.prefix(5))
+    }
+
+    /// Standings for the week that just ended (week-complete sheet).
+    var completedWeekStandings: [(player: Player, points: Int, placementPoints: Int, achievementPoints: Int)] {
+        guard let week = completedWeekNumber else { return [] }
+        return weekStandings(week: week)
+    }
     
     var presentPlayerIds: [String] {
         tournament?.presentPlayerIds ?? []
@@ -83,6 +166,10 @@ final class TournamentDetailViewModel {
     
     var hasPresentPlayers: Bool {
         !presentPlayerIds.isEmpty
+    }
+
+    var podLayoutHint: String? {
+        PodLayoutHint.message(presentCount: presentPlayerIds.count)
     }
     
     // MARK: - Computed Properties: Pod Management
@@ -93,6 +180,66 @@ final class TournamentDetailViewModel {
     
     var canEdit: Bool {
         podHistoryCount > 0
+    }
+
+    /// True when every present player has a placement recorded for the current round.
+    var hasRoundPlacementsForPresentPlayers: Bool {
+        guard hasPresentPlayers, let tournament = tournament else { return false }
+        return presentPlayerIds.allSatisfy { tournament.roundPlacements[$0] != nil }
+    }
+
+    /// Whether the host can advance to the next round or week.
+    var canNextRound: Bool {
+        hasPresentPlayers && (!pods.isEmpty || hasRoundPlacementsForPresentPlayers)
+    }
+
+    /// Primary label for the advance-round action.
+    var nextRoundButtonTitle: String {
+        guard tournament != nil else { return "Next Round" }
+        if currentRound < AppConstants.League.roundsPerWeek {
+            return "Finish Round \(currentRound)"
+        }
+        if tournament?.isFinalWeek == true {
+            return "End Tournament"
+        }
+        return "End Week & Show Standings"
+    }
+
+    /// Alert title when confirming round/week advancement.
+    var nextRoundConfirmationTitle: String {
+        guard tournament != nil else { return "Finish round?" }
+        if currentRound < AppConstants.League.roundsPerWeek {
+            return "Finish Round \(currentRound)?"
+        }
+        if tournament?.isFinalWeek == true {
+            return "End tournament?"
+        }
+        return "End Week \(currentWeek)?"
+    }
+
+    /// Alert message when confirming round/week advancement.
+    var nextRoundConfirmationMessage: String {
+        guard tournament != nil else {
+            return "This will save current scores and continue."
+        }
+        if currentRound < AppConstants.League.roundsPerWeek {
+            return "This saves Round \(currentRound) scores and starts Round \(currentRound + 1)."
+        }
+        if tournament?.isFinalWeek == true {
+            return "This saves the final round and completes the tournament."
+        }
+        return "This saves the week and starts Week \(currentWeek + 1) attendance."
+    }
+
+    /// Destructive confirm button label in the advancement alert.
+    var nextRoundConfirmActionTitle: String {
+        if currentRound < AppConstants.League.roundsPerWeek {
+            return "Finish Round"
+        }
+        if tournament?.isFinalWeek == true {
+            return "End Tournament"
+        }
+        return "End Week"
     }
     
     /// Weekly standings for inline display, sorted by total points descending.
@@ -168,6 +315,14 @@ final class TournamentDetailViewModel {
         }
         return options
     }
+
+    /// VoiceOver label for the standings week menu picker.
+    var standingsWeekPickerLabel: String {
+        if let week = selectedStandingsWeek {
+            return "Week \(week)"
+        }
+        return "Tournament overall"
+    }
     
     /// Standings to display based on selectedStandingsWeek (overall or specific week).
     var standingsForDisplay: [(player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int?)] {
@@ -213,12 +368,19 @@ final class TournamentDetailViewModel {
         
         if let tournament = tournament {
             podHistoryCount = tournament.podHistorySnapshots.count
-            if podHistoryCount > 0, activeTab == .attendance {
-                activeTab = .pods
-            }
+            syncActiveTab(for: tournament)
 
             // Filter to active achievements
             activeAchievements = allAchievements.filter { tournament.activeAchievementIds.contains($0.id) }
+        }
+    }
+
+    /// Routes to the tab that matches tournament progress for this week.
+    private func syncActiveTab(for tournament: Tournament) {
+        if tournament.presentPlayerIds.isEmpty {
+            activeTab = .attendance
+        } else if activeTab == .attendance {
+            activeTab = .pods
         }
     }
     
@@ -245,7 +407,25 @@ final class TournamentDetailViewModel {
                 LeagueEngine.updatePlacement(context: context, playerId: player.id, placement: defaultPlace)
             }
         }
+        resetPodExpansion()
         refresh()
+    }
+
+    /// Expands only the first pod by default after generation.
+    func resetPodExpansion() {
+        expandedPodIndices = pods.isEmpty ? [] : [0]
+    }
+
+    func isPodExpanded(_ index: Int) -> Bool {
+        expandedPodIndices.contains(index)
+    }
+
+    func setPodExpanded(_ index: Int, expanded: Bool) {
+        if expanded {
+            expandedPodIndices.insert(index)
+        } else {
+            expandedPodIndices.remove(index)
+        }
     }
     
     /// Sets placement for a player (auto-saves immediately).
@@ -262,11 +442,32 @@ final class TournamentDetailViewModel {
     /// Toggles an achievement check for a player (auto-saves immediately).
     func toggleAchievementCheck(playerId: String, achievementId: String) {
         let currentlyChecked = isAchievementChecked(playerId: playerId, achievementId: achievementId)
+        let podPlayerIds = pods.first(where: { pod in pod.contains(where: { $0.id == playerId }) })?.map(\.id)
         LeagueEngine.updateAchievementCheck(
             context: context,
             playerId: playerId,
             achievementId: achievementId,
-            checked: !currentlyChecked
+            checked: !currentlyChecked,
+            podPlayerIds: podPlayerIds
+        )
+    }
+
+    /// Whether the achievement toggle should be disabled for a player.
+    func isAchievementCheckDisabled(playerId: String, achievementId: String) -> Bool {
+        guard !isAchievementChecked(playerId: playerId, achievementId: achievementId),
+              let tournament,
+              let achievement = activeAchievements.first(where: { $0.id == achievementId }),
+              achievement.exclusivity == .onePerWeekPerPlayer else {
+            return false
+        }
+
+        return LeagueEngine.playerHasEarnedAchievementThisWeek(
+            context: context,
+            tournamentId: tournament.id,
+            week: tournament.currentWeek,
+            playerId: playerId,
+            achievementId: achievementId,
+            excludingRound: tournament.currentRound
         )
     }
     
@@ -284,14 +485,32 @@ final class TournamentDetailViewModel {
     /// Called when the edit last round view saves changes.
     func onEditLastRoundSaved() {
         pods = []
+        resetPodExpansion()
         refresh()
     }
     
     /// Advances to the next round or next week.
     func nextRound() {
+        let endingWeek = currentWeek
+        let isEndOfWeek = currentRound >= AppConstants.League.roundsPerWeek
+        let wasFinalWeek = tournament?.isFinalWeek ?? false
+
         LeagueEngine.nextRound(context: context)
         pods = []
+        resetPodExpansion()
         refresh()
+
+        if isEndOfWeek, !wasFinalWeek {
+            completedWeekNumber = endingWeek
+            showWeekCompleteSheet = true
+        }
+    }
+
+    /// Dismisses the week-complete sheet after the host reviews standings.
+    func dismissWeekCompleteSheet() {
+        showWeekCompleteSheet = false
+        completedWeekNumber = nil
+        activeTab = .attendance
     }
     
     // MARK: - Actions: Navigation

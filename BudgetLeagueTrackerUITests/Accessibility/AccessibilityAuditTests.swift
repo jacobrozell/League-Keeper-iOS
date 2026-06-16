@@ -142,7 +142,12 @@ final class AccessibilityAuditTests: XCTestCase {
             app.openSeededOngoingTournament()
         }
         XCTAssertTrue(editRoundButton.waitForExistence(timeout: 8))
-        app.buttons["Edit Last Round"].tap()
+        editRoundButton.tap()
+
+        let editConfirm = app.buttons["Edit"]
+        if editConfirm.waitForExistence(timeout: 2) {
+            editConfirm.tap()
+        }
 
         XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 8))
         if #available(iOS 17.0, *) {
@@ -225,9 +230,6 @@ final class AccessibilityAuditTests: XCTestCase {
     
     /// Tests app renders correctly with accessibility text sizes
     func testDynamicTypeSupport() {
-        // Note: This requires manual verification or screenshot comparison
-        // The app should handle Dynamic Type via .font(.body) etc.
-        
         // Wait for main screen to load first
         let navBar = app.navigationBars.firstMatch
         guard navBar.waitForExistence(timeout: 5) else {
@@ -256,6 +258,44 @@ final class AccessibilityAuditTests: XCTestCase {
             achievementsTab.tap()
             XCTAssertTrue(app.navigationBars["Achievements"].waitForExistence(timeout: 5), "Achievements screen should render")
         }
+    }
+
+    // MARK: - AXXXL layout (text clipping)
+
+    /// Tournament detail at AXXXL should not clip critical labels (menu pickers, stacked actions).
+    @available(iOS 17.0, *)
+    func testAXXXLTournamentDetailTextNotClipped() throws {
+        relaunch(with: ["--uitesting", "UI-Testing-Accessibility", "UI-Testing-Seed-TournamentDetail"])
+        XCUIDevice.shared.orientation = .portrait
+
+        let detailPicker = app.descendants(matching: .any)["tournamentDetailSectionPicker"]
+        if !detailPicker.waitForExistence(timeout: 8) {
+            app.openSeededOngoingTournament()
+        }
+        XCTAssertTrue(detailPicker.waitForExistence(timeout: 8))
+
+        try app.performAccessibilityAudit(for: [.textClipped])
+    }
+
+    /// Stats at AXXXL should not clip section chrome or list content.
+    @available(iOS 17.0, *)
+    func testAXXXLStatsTextNotClipped() throws {
+        relaunch(with: ["--uitesting", "UI-Testing-Accessibility"])
+        XCUIDevice.shared.orientation = .portrait
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 10), "Tab bar should be visible")
+
+        let statsTab = tabBar.buttons["Stats"]
+        XCTAssertTrue(statsTab.waitForExistence(timeout: 8), "Stats tab should exist")
+        statsTab.tap()
+
+        XCTAssertTrue(
+            app.navigationBars.firstMatch.waitForExistence(timeout: 12),
+            "Stats navigation bar should appear"
+        )
+
+        try app.performAccessibilityAudit(for: [.textClipped])
     }
     
     // MARK: - VoiceOver Navigation Tests

@@ -23,9 +23,12 @@ Terms used throughout League Keeper documentation, specs, and support.
 | **Pod** | A group of four players who play one game together in a round. Placements (1st–4th) are recorded per player. |
 | **Placement** | Finish position in a pod: 1st, 2nd, 3rd, or 4th. |
 | **Placement points** | Points from placement: 4 / 3 / 2 / 1 for 1st–4th. See [scoring-rules.md](scoring-rules.md). |
-| **Achievement** | A named bonus (e.g. "First Blood") worth a fixed number of points when earned in a pod. |
-| **Always-on achievement** | Counts every week it is active without being rolled randomly. |
-| **Random achievement** | Rolled from the catalog each week (`randomAchievementsPerWeek` on the tournament). |
+| **Achievement** | A named bonus (e.g. "First Blood") worth a fixed number of points when earned in a pod. May include a description, icon, category, and exclusivity rules (v2). |
+| **Achievement template** | Pre-defined achievement used to seed the add form; not stored until the host saves. |
+| **Points tier** | UI preset (Small / Standard / Big / Trophy) mapping to point values with placement context. |
+| **Always-on achievement** | Counts every week it is active without being rolled randomly. UI label: "Every week". |
+| **Random achievement** | Rolled from the catalog each week (`randomAchievementsPerWeek` on the tournament). UI label: "Random pool". |
+| **Achievement exclusivity** | Who can earn: anyone (`unlimited`), one player per pod (`onePerPod`), or once per week per player (`onePerWeekPerPlayer`). |
 | **Achievements on this week** | User toggle during attendance: whether achievement checkboxes appear in pod scoring. |
 | **Present players** | Players marked attending for the current week; only they are grouped into pods. |
 | **Pod history** | Saved pods for the current week, used for undo and standings calculation. |

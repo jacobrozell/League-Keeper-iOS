@@ -6,6 +6,9 @@ enum AppInfo {
     static let tagline = "Track · Score · Compete"
     static let subtitle = "Your league campaign HQ"
 
+    static let supportURL = URL(string: "https://jacobrozell.github.io/League-Keeper-iOS/support.html")!
+    static let privacyURL = URL(string: "https://jacobrozell.github.io/League-Keeper-iOS/privacy.html")!
+
     static var isUITesting: Bool {
         let args = ProcessInfo.processInfo.arguments
         return args.contains("--uitesting")

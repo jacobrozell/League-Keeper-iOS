@@ -249,6 +249,255 @@ struct TournamentDetailViewModelTests {
             #expect(viewModel.canEdit == false)
         }
     }
+
+    @Suite("canNextRound")
+    @MainActor
+    struct CanNextRoundTests {
+
+        @Test("Returns false when attendance is not confirmed")
+        func returnsFalseWithoutAttendance() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = []
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.canNextRound == false)
+        }
+
+        @Test("Returns false when pods are not generated")
+        func returnsFalseWithoutPods() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.canNextRound == false)
+        }
+
+        @Test("Returns true after pods are generated")
+        func returnsTrueAfterGeneratePods() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.generatePods()
+
+            #expect(viewModel.canNextRound == true)
+        }
+    }
+
+    @Suite("nextRoundButtonTitle")
+    @MainActor
+    struct NextRoundButtonTitleTests {
+
+        @Test("Uses finish round wording before final round of week")
+        func finishRoundTitle() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRound = 1
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.nextRoundButtonTitle == "Finish Round 1")
+        }
+
+        @Test("Uses end week wording on final round of non-final week")
+        func endWeekTitle() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRound = AppConstants.League.roundsPerWeek
+            tournament.currentWeek = 1
+            tournament.totalWeeks = 6
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.nextRoundButtonTitle == "End Week & Show Standings")
+        }
+
+        @Test("Uses end tournament wording on final week")
+        func endTournamentTitle() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRound = AppConstants.League.roundsPerWeek
+            tournament.currentWeek = tournament.totalWeeks
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.nextRoundButtonTitle == "End Tournament")
+        }
+    }
+
+    @Suite("syncActiveTab")
+    @MainActor
+    struct SyncActiveTabTests {
+
+        @Test("Defaults to attendance when no players are present")
+        func defaultsToAttendance() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = []
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.activeTab == .attendance)
+        }
+
+        @Test("Defaults to pods when attendance is confirmed")
+        func defaultsToPods() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.activeTab == .pods)
+        }
+    }
+
+    @Suite("hostStep")
+    @MainActor
+    struct HostStepTests {
+
+        @Test("Starts at attendance when no players are present")
+        func attendanceStep() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = []
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.hostStep == .attendance)
+            #expect(viewModel.nextStepHint == "Mark who's here this week")
+        }
+
+        @Test("Moves to pods after attendance is confirmed")
+        func podsStep() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.hostStep == .pods)
+            #expect(viewModel.nextStepHint.contains("Generate pods"))
+        }
+
+        @Test("Moves to score round after pods are generated")
+        func scoreStep() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.generatePods()
+
+            #expect(viewModel.hostStep == .scoreRound)
+        }
+    }
+
+    @Suite("generatePodsButtonTitle")
+    @MainActor
+    struct GeneratePodsButtonTitleTests {
+
+        @Test("Includes current round number")
+        func includesRound() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRound = 2
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.generatePodsButtonTitle == "Generate Round 2 Pods")
+        }
+    }
+
+    @Suite("nextRound week complete")
+    @MainActor
+    struct NextRoundWeekCompleteTests {
+
+        @Test("Shows week complete sheet when ending a non-final week")
+        func showsWeekCompleteSheet() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            tournament.currentRound = AppConstants.League.roundsPerWeek
+            tournament.currentWeek = 1
+            tournament.totalWeeks = 6
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.generatePods()
+            viewModel.nextRound()
+
+            #expect(viewModel.showWeekCompleteSheet == true)
+            #expect(viewModel.completedWeekNumber == 1)
+            #expect(viewModel.currentWeek == 2)
+        }
+    }
+
+    @Suite("standingsWeekPickerLabel")
+    @MainActor
+    struct StandingsWeekPickerLabelTests {
+        @Test("Describes tournament overall when no week selected")
+        func overall() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.standingsWeekPickerLabel == "Tournament overall")
+        }
+
+        @Test("Describes selected week")
+        func week() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.selectedStandingsWeek = 2
+
+            #expect(viewModel.standingsWeekPickerLabel == "Week 2")
+        }
+    }
+
+    @Suite("pod expansion")
+    @MainActor
+    struct PodExpansionTests {
+
+        @Test("Expands only the first pod after generation")
+        func expandsFirstPod() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.generatePods()
+
+            #expect(viewModel.isPodExpanded(0))
+            #expect(viewModel.isPodExpanded(1) == false)
+        }
+    }
     
     @Suite("weeklyStandings")
     @MainActor

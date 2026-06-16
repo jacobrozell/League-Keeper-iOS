@@ -118,11 +118,32 @@ final class PodsViewModel {
     /// Toggles an achievement check for a player (auto-saves immediately).
     func toggleAchievementCheck(playerId: String, achievementId: String) {
         let currentlyChecked = isAchievementChecked(playerId: playerId, achievementId: achievementId)
+        let podPlayerIds = pods.first(where: { pod in pod.contains(where: { $0.id == playerId }) })?.map(\.id)
         LeagueEngine.updateAchievementCheck(
             context: context,
             playerId: playerId,
             achievementId: achievementId,
-            checked: !currentlyChecked
+            checked: !currentlyChecked,
+            podPlayerIds: podPlayerIds
+        )
+    }
+
+    /// Whether the achievement toggle should be disabled for a player.
+    func isAchievementCheckDisabled(playerId: String, achievementId: String) -> Bool {
+        guard !isAchievementChecked(playerId: playerId, achievementId: achievementId),
+              let tournament = LeagueEngine.fetchActiveTournament(context: context),
+              let achievement = activeAchievements.first(where: { $0.id == achievementId }),
+              achievement.exclusivity == .onePerWeekPerPlayer else {
+            return false
+        }
+
+        return LeagueEngine.playerHasEarnedAchievementThisWeek(
+            context: context,
+            tournamentId: tournament.id,
+            week: tournament.currentWeek,
+            playerId: playerId,
+            achievementId: achievementId,
+            excludingRound: tournament.currentRound
         )
     }
     

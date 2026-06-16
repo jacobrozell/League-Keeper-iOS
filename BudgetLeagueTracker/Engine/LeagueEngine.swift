@@ -282,31 +282,56 @@ enum LeagueEngine {
     }
     
     /// Updates a single achievement check for the current round (auto-save).
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - playerId: The player's ID
-    ///   - achievementId: The achievement's ID
-    ///   - checked: Whether the achievement is checked
+    /// Enforces one-per-pod exclusivity when checking on.
     static func updateAchievementCheck(
         context: ModelContext,
         playerId: String,
         achievementId: String,
-        checked: Bool
+        checked: Bool,
+        podPlayerIds: [String]? = nil
     ) {
         guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+
         let key = "\(playerId):\(achievementId)"
         var checks = tournament.roundAchievementChecks
-        
+
         if checked {
+            if let achievement = fetchAchievement(context: context, id: achievementId),
+               achievement.exclusivity == .onePerPod,
+               let podPlayerIds {
+                for otherPlayerId in podPlayerIds where otherPlayerId != playerId {
+                    checks.remove("\(otherPlayerId):\(achievementId)")
+                }
+            }
             checks.insert(key)
         } else {
             checks.remove(key)
         }
-        
+
         tournament.roundAchievementChecks = checks
-        
+
         try? context.save()
+    }
+
+    /// Returns whether a player already earned an achievement earlier in the current week.
+    static func playerHasEarnedAchievementThisWeek(
+        context: ModelContext,
+        tournamentId: String,
+        week: Int,
+        playerId: String,
+        achievementId: String,
+        excludingRound: Int? = nil
+    ) -> Bool {
+        let descriptor = FetchDescriptor<GameResult>()
+        guard let results = try? context.fetch(descriptor) else { return false }
+
+        return results.contains { result in
+            result.tournamentId == tournamentId
+                && result.week == week
+                && result.playerId == playerId
+                && (excludingRound == nil || result.round != excludingRound)
+                && result.achievementIds.contains(achievementId)
+        }
     }
     
     /// Finalizes the current round's placements and achievements.
@@ -757,26 +782,91 @@ enum LeagueEngine {
     }
     
     /// Adds a new achievement.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - name: Achievement name
-    ///   - points: Points awarded
-    ///   - alwaysOn: Whether always active
-    /// - Returns: The created achievement, or nil if name was empty
     @discardableResult
     static func addAchievement(
         context: ModelContext,
         name: String,
         points: Int,
-        alwaysOn: Bool
+        alwaysOn: Bool,
+        achievementDescription: String? = nil,
+        category: AchievementCategory = .custom,
+        iconName: String = AppConstants.Achievement.defaultIconName,
+        exclusivity: AchievementExclusivity = .unlimited
     ) -> Achievement? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return nil }
-        
-        let achievement = Achievement(name: trimmedName, points: points, alwaysOn: alwaysOn)
+
+        let clampedPoints = min(
+            max(points, AppConstants.Achievement.pointsRange.lowerBound),
+            AppConstants.Achievement.pointsRange.upperBound
+        )
+        let trimmedDescription = achievementDescription?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedDescription = (trimmedDescription?.isEmpty == false) ? trimmedDescription : nil
+        let truncatedDescription = normalizedDescription.map {
+            String($0.prefix(AppConstants.Achievement.descriptionMaxLength))
+        }
+        let truncatedName = String(trimmedName.prefix(AppConstants.Achievement.nameMaxLength))
+
+        let achievement = Achievement(
+            name: truncatedName,
+            points: clampedPoints,
+            alwaysOn: alwaysOn,
+            achievementDescription: truncatedDescription,
+            category: category,
+            iconName: AppConstants.Achievement.sanitizedIconName(iconName),
+            exclusivity: exclusivity
+        )
         context.insert(achievement)
         try? context.save()
         return achievement
+    }
+
+    /// Updates an existing achievement.
+    @discardableResult
+    static func updateAchievement(
+        context: ModelContext,
+        id: String,
+        name: String,
+        points: Int,
+        alwaysOn: Bool,
+        achievementDescription: String?,
+        category: AchievementCategory,
+        iconName: String,
+        exclusivity: AchievementExclusivity
+    ) -> Bool {
+        guard let achievement = fetchAchievement(context: context, id: id) else { return false }
+
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return false }
+
+        let clampedPoints = min(
+            max(points, AppConstants.Achievement.pointsRange.lowerBound),
+            AppConstants.Achievement.pointsRange.upperBound
+        )
+        let trimmedDescription = achievementDescription?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedDescription = (trimmedDescription?.isEmpty == false) ? trimmedDescription : nil
+
+        achievement.name = String(trimmedName.prefix(AppConstants.Achievement.nameMaxLength))
+        achievement.points = clampedPoints
+        achievement.alwaysOn = alwaysOn
+        achievement.achievementDescription = normalizedDescription.map {
+            String($0.prefix(AppConstants.Achievement.descriptionMaxLength))
+        }
+        achievement.category = category
+        achievement.iconName = AppConstants.Achievement.sanitizedIconName(iconName)
+        achievement.exclusivity = exclusivity
+
+        try? context.save()
+        return true
+    }
+
+    /// Fetches a single achievement by ID.
+    static func fetchAchievement(context: ModelContext, id: String) -> Achievement? {
+        let descriptor = FetchDescriptor<Achievement>()
+        let achievements = (try? context.fetch(descriptor)) ?? []
+        return achievements.first { $0.id == id }
     }
     
     /// Removes an achievement by ID.
@@ -871,7 +961,7 @@ enum LeagueEngine {
     }
     
     // MARK: - Helpers
-    
+
     /// Fetches all achievements from the context.
     static func fetchAllAchievements(context: ModelContext) -> [Achievement] {
         let descriptor = FetchDescriptor<Achievement>()

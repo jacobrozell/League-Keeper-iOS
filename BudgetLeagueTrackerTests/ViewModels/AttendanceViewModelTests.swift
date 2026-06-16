@@ -185,4 +185,54 @@ struct AttendanceViewModelTests {
             #expect(viewModel.canConfirmAttendance == false)
         }
     }
+
+    @Suite("bulk presence")
+    @MainActor
+    struct BulkPresenceTests {
+
+        @Test("markAllPresent marks every player present")
+        func markAllPresent() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let viewModel = AttendanceViewModel(context: context)
+
+            for player in viewModel.players {
+                viewModel.presentStatus[player.id] = false
+            }
+            viewModel.markAllPresent()
+
+            for player in viewModel.players {
+                #expect(viewModel.isPresent(player.id))
+            }
+        }
+
+        @Test("markAllAbsent clears every player")
+        func markAllAbsent() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let viewModel = AttendanceViewModel(context: context)
+
+            viewModel.markAllAbsent()
+
+            for player in viewModel.players {
+                #expect(viewModel.isPresent(player.id) == false)
+            }
+        }
+    }
+
+    @Suite("isAttendanceConfirmed")
+    @MainActor
+    struct IsAttendanceConfirmedTests {
+
+        @Test("Returns true when tournament has saved present players")
+        func returnsTrueWhenConfirmed() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            let viewModel = AttendanceViewModel(context: context)
+
+            #expect(viewModel.isAttendanceConfirmed == true)
+        }
+    }
 }

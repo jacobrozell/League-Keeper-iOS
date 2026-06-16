@@ -2,6 +2,8 @@ import SwiftUI
 
 /// Settings view — theme, app credit, version, and build info.
 struct SettingsView: View {
+    var onViewOnboarding: (() -> Void)?
+
     @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
     @Environment(\.palette) private var palette
 
@@ -56,6 +58,43 @@ struct SettingsView: View {
                 }
             }
 
+            if let onViewOnboarding {
+                Section {
+                    Button {
+                        onViewOnboarding()
+                    } label: {
+                        Label("View welcome tour", systemImage: "book.pages")
+                    }
+                    .accessibilityIdentifier("settings_viewOnboardingButton")
+
+                    Link(destination: AppInfo.supportURL) {
+                        Label("Support", systemImage: "questionmark.circle")
+                    }
+                    .accessibilityIdentifier("settings_supportLink")
+
+                    Link(destination: AppInfo.privacyURL) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
+                    .accessibilityIdentifier("settings_privacyLink")
+                } header: {
+                    Text("Help")
+                }
+            } else {
+                Section {
+                    Link(destination: AppInfo.supportURL) {
+                        Label("Support", systemImage: "questionmark.circle")
+                    }
+                    .accessibilityIdentifier("settings_supportLink")
+
+                    Link(destination: AppInfo.privacyURL) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
+                    .accessibilityIdentifier("settings_privacyLink")
+                } header: {
+                    Text("Help")
+                }
+            }
+
             Section {
                 LabeledContent("App", value: appDisplayName)
                 LabeledContent("Version", value: appVersion)
@@ -66,6 +105,7 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .brandedScreenBackground()
+        .adaptiveContentWidth()
     }
 }
 

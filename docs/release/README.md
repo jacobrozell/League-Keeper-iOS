@@ -11,6 +11,7 @@ Guides for shipping League Keeper to TestFlight and the App Store.
 | [testflight.md](testflight.md) | Beta distribution setup |
 | [1.0-ship-checklist.md](1.0-ship-checklist.md) | Pre-submission gate |
 | [todo.md](todo.md) | Open release tasks |
+| [ipad-layout-plan.md](../ipad-layout-plan.md) | iPad & landscape implementation checklist |
 
 ---
 
@@ -27,8 +28,8 @@ flowchart LR
 
 | Stage | Gate |
 |-------|------|
-| TestFlight internal | CI green, app runs on device |
-| External beta | Manual VO checklist started |
+| TestFlight internal | CI green, app runs on device, iPad Phase A QA started |
+| External beta | Manual VO checklist started; iPad Phase A complete |
 | App Store submit | [1.0-ship-checklist.md](1.0-ship-checklist.md) complete |
 
 ---
@@ -44,5 +45,7 @@ flowchart LR
 ## Related
 
 - [specs/AppStoreConnectSpec.md](../../specs/AppStoreConnectSpec.md)
+- [specs/iPadLayoutSpec.md](../../specs/iPadLayoutSpec.md)
 - [docs/app-store-listing.md](../app-store-listing.md)
+- [docs/ipad-layout-plan.md](../ipad-layout-plan.md)
 - [docs/ios-roadmap.md](../ios-roadmap.md)

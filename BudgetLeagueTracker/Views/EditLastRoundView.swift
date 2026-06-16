@@ -40,6 +40,7 @@ struct EditLastRoundView: View {
                     Text(viewModel.subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .accessibilityLabel(viewModel.subtitle)
                 }
                 
                 // Players
@@ -66,6 +67,7 @@ struct EditLastRoundView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(player.name)
                 .font(.headline)
+                .accessibilityHidden(true)
             
             PlacementPicker(
                 playerName: player.name,
@@ -81,11 +83,13 @@ struct EditLastRoundView: View {
                     AchievementCheckItem(
                         name: achievement.name,
                         points: achievement.points,
+                        iconName: achievement.iconName,
+                        achievementDescription: achievement.achievementDescription,
+                        exclusivity: achievement.exclusivity,
                         isChecked: Binding(
                             get: { viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id) },
                             set: { _ in viewModel.toggleAchievementCheck(playerId: player.id, achievementId: achievement.id) }
-                        ),
-                        isDisabled: false
+                        )
                     )
                 }
             }

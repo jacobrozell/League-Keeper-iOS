@@ -3,11 +3,41 @@ import SwiftUI
 /// Attendance view - record who is present and weekly settings.
 struct AttendanceView: View {
     @Bindable var viewModel: AttendanceViewModel
+    /// When true, shows a banner that attendance is already confirmed for this week.
+    var showsConfirmedBanner: Bool = false
+    /// One-time coach mark for first-week attendance (tournament detail).
+    var showsCoachMark: Bool = false
+    var onDismissCoachMark: (() -> Void)? = nil
     /// When non-nil, called after confirming attendance (e.g. to dismiss a sheet and refresh).
     var onConfirm: (() -> Void)? = nil
     
     var body: some View {
         List {
+            if showsCoachMark {
+                Section {
+                    CoachMarkBanner(
+                        title: "Start each week here",
+                        message: "Mark who's here, then tap Confirm Attendance to unlock pod scoring.",
+                        onDismiss: { onDismissCoachMark?() }
+                    )
+                }
+            }
+
+            if showsConfirmedBanner, viewModel.isAttendanceConfirmed {
+                Section {
+                    Label {
+                        Text("Attendance confirmed for Week \(viewModel.currentWeek). Update toggles and confirm again to change.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(AppConstants.AccessibleColors.activeStatus)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Attendance confirmed for week \(viewModel.currentWeek). Update toggles and confirm again to change.")
+                }
+            }
+
             Section("This Week") {
                 LabeledToggle(
                     title: "Count achievements this week",
@@ -15,7 +45,7 @@ struct AttendanceView: View {
                 )
             }
             
-            Section("Players") {
+            Section {
                 ForEach(viewModel.players, id: \.id) { player in
                     PlayerRow(
                         name: player.name,
@@ -27,20 +57,53 @@ struct AttendanceView: View {
                 }
                 
                 addPlayerRow
-            }
-            
-            Section {
-                PrimaryActionButton(title: "Confirm Attendance") {
-                    viewModel.confirmAttendance()
-                    onConfirm?()
+            } header: {
+                HStack {
+                    Text("Players")
+                    Spacer()
+                    Text(viewModel.presentCountLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .disabled(!viewModel.canConfirmAttendance)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+            } footer: {
+                VStack(alignment: .leading, spacing: 8) {
+                    if let hint = viewModel.podLayoutHint {
+                        Text(hint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Button("Mark all") {
+                            viewModel.markAllPresent()
+                        }
+                        .accessibilityIdentifier("attendanceMarkAll")
+                        Spacer()
+                        Button("Clear all") {
+                            viewModel.markAllAbsent()
+                        }
+                        .accessibilityIdentifier("attendanceClearAll")
+                    }
+                    .font(.subheadline)
+                }
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Attendance – Week \(viewModel.currentWeek)")
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                Divider()
+                PrimaryActionButton(title: "Confirm Attendance") {
+                    viewModel.confirmAttendance()
+                    AppHaptics.success()
+                    onDismissCoachMark?()
+                    onConfirm?()
+                }
+                .disabled(!viewModel.canConfirmAttendance)
+                .accessibilityIdentifier("Confirm Attendance")
+                .padding()
+            }
+            .background(.bar)
+        }
         .onAppear {
             viewModel.refresh()
         }

@@ -6,34 +6,35 @@ import SwiftData
 struct BudgetLeagueTrackerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    private let modelContainer: ModelContainer
+
+    init() {
+        do {
+            let container = try LeagueKeeperModelContainer.make()
+            Self.bootstrapData(in: container)
+            modelContainer = container
+        } catch {
+            AppLog.shared.error(
+                .persistence,
+                eventName: "model_container_bootstrap_failure",
+                message: "Failed to create model container",
+                metadata: ["errorCode": String(describing: type(of: error))]
+            )
+            modelContainer = try! LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
+            Self.bootstrapData(in: modelContainer)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             AppShell()
         }
-        .modelContainer(for: [
-            Player.self,
-            Achievement.self,
-            LeagueState.self,
-            Tournament.self,
-            GameResult.self
-        ]) { result in
-            switch result {
-            case .success(let container):
-                bootstrapData(in: container)
-            case .failure(let error):
-                AppLog.shared.error(
-                    .persistence,
-                    eventName: "model_container_bootstrap_failure",
-                    message: "Failed to create model container",
-                    metadata: ["errorCode": String(describing: type(of: error))]
-                )
-            }
-        }
+        .modelContainer(modelContainer)
     }
     
     /// Bootstrap initial data if needed.
     /// Creates default LeagueState, seeds the default achievement, and validates state.
-    private func bootstrapData(in container: ModelContainer) {
+    private static func bootstrapData(in container: ModelContainer) {
         let context = container.mainContext
         
         // Ensure exactly one LeagueState exists
@@ -53,7 +54,11 @@ struct BudgetLeagueTrackerApp: App {
             let defaultAchievement = Achievement(
                 name: AppConstants.DefaultAchievement.name,
                 points: AppConstants.DefaultAchievement.points,
-                alwaysOn: AppConstants.DefaultAchievement.alwaysOn
+                alwaysOn: AppConstants.DefaultAchievement.alwaysOn,
+                achievementDescription: AppConstants.DefaultAchievement.achievementDescription,
+                category: AppConstants.DefaultAchievement.category,
+                iconName: AppConstants.DefaultAchievement.iconName,
+                exclusivity: AppConstants.DefaultAchievement.exclusivity
             )
             context.insert(defaultAchievement)
         }

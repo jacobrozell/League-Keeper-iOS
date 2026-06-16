@@ -19,6 +19,9 @@ struct AchievementTests {
             #expect(achievement.name == "Test Achievement")
             #expect(achievement.points == 1)
             #expect(achievement.alwaysOn == false)
+            #expect(achievement.category == .custom)
+            #expect(achievement.iconName == AppConstants.Achievement.defaultIconName)
+            #expect(achievement.exclusivity == .unlimited)
             #expect(!achievement.id.isEmpty)
         }
         

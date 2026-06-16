@@ -6,7 +6,13 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var leagueStates: [LeagueState]
+    @Query private var players: [Player]
+    @Query private var tournaments: [Tournament]
     @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
+
+    private let onboardingStore = OnboardingStore()
+    private let attendanceCoachMarkStore = AttendanceCoachMarkStore()
+    private let generatePodsCoachMarkStore = GeneratePodsCoachMarkStore()
 
     private var theme: ThemePreference {
         ThemePreference.resolved(storedRaw: themeRaw)
@@ -17,6 +23,8 @@ struct ContentView: View {
     }
 
     @State private var showTournamentStandings = false
+    @State private var showOnboarding = false
+    @State private var onboardingSampleError: String?
     @State private var tournamentsNavigationPath: [Tournament] = []
     /// ViewModel for New Tournament screen; persisted so adding a player doesn't recreate it and lose form state.
     @State private var newTournamentViewModel: NewTournamentViewModel?
@@ -27,6 +35,10 @@ struct ContentView: View {
     
     private var shouldHideTabBar: Bool {
         NavigationState.shouldHideTabBar(from: leagueStates)
+    }
+
+    private var isInTournamentDetail: Bool {
+        !tournamentsNavigationPath.isEmpty
     }
     
     var body: some View {
@@ -76,6 +88,22 @@ struct ContentView: View {
                 context: modelContext,
                 navigationPath: &tournamentsNavigationPath
             )
+            checkOnboarding()
+        }
+        .onChange(of: players.count) { _, _ in checkOnboarding() }
+        .onChange(of: tournaments.count) { _, _ in checkOnboarding() }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView { completeOnboarding($0) }
+        }
+        .alert("Sample league", isPresented: Binding(
+            get: { onboardingSampleError != nil },
+            set: { if !$0 { onboardingSampleError = nil } }
+        )) {
+            Button("OK", role: .cancel) { onboardingSampleError = nil }
+        } message: {
+            if let onboardingSampleError {
+                Text(onboardingSampleError)
+            }
         }
         .onChange(of: currentScreen) { _, newScreen in
             switch newScreen {
@@ -125,10 +153,16 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: Tournament.self) { tournament in
-                TournamentDetailView(viewModel: TournamentDetailViewModel(context: modelContext, tournamentId: tournament.id))
+                TournamentDetailView(
+                    viewModel: TournamentDetailViewModel(context: modelContext, tournamentId: tournament.id),
+                    showsAttendanceCoachMark: attendanceCoachMarkStore.shouldShowCoachMark,
+                    onDismissAttendanceCoachMark: { attendanceCoachMarkStore.markSeen() },
+                    showsGeneratePodsCoachMark: generatePodsCoachMarkStore.shouldShowCoachMark,
+                    onDismissGeneratePodsCoachMark: { generatePodsCoachMarkStore.markSeen() }
+                )
             }
         }
-        .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
+        .toolbar(shouldHideTabBar || isInTournamentDetail ? .hidden : .visible, for: .tabBar)
     }
     
     @ViewBuilder
@@ -161,9 +195,47 @@ struct ContentView: View {
     @ViewBuilder
     private var settingsStack: some View {
         NavigationStack {
-            SettingsView()
+            SettingsView(onViewOnboarding: { showOnboarding = true })
         }
         .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
+    }
+
+    private func checkOnboarding() {
+        guard onboardingStore.shouldPresentOnLaunch else { return }
+        if !players.isEmpty || !tournaments.isEmpty {
+            onboardingStore.markCompleted()
+            return
+        }
+        guard !showOnboarding else { return }
+        showOnboarding = true
+    }
+
+    private func completeOnboarding(_ action: OnboardingView.Completion) {
+        onboardingStore.markCompleted()
+        showOnboarding = false
+
+        switch action {
+        case .dismiss:
+            break
+        case .loadSample:
+            do {
+                let result = try DemoLeagueLoader.load(into: modelContext)
+                openTournamentDetail(tournamentId: result.tournamentId)
+            } catch {
+                onboardingSampleError = error.localizedDescription
+            }
+        case .createTournament:
+            LeagueEngine.setScreen(context: modelContext, screen: .newTournament)
+        }
+    }
+
+    private func openTournamentDetail(tournamentId: String) {
+        var descriptor = FetchDescriptor<Tournament>(
+            predicate: #Predicate { $0.id == tournamentId }
+        )
+        descriptor.fetchLimit = 1
+        guard let tournament = try? modelContext.fetch(descriptor).first else { return }
+        tournamentsNavigationPath = [tournament]
     }
 }
 

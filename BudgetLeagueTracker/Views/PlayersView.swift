@@ -15,6 +15,7 @@ struct PlayersView: View {
         }
         .navigationTitle("Players")
         .brandedScreenBackground()
+        .adaptiveContentWidth()
         .onAppear {
             viewModel.refresh()
         }

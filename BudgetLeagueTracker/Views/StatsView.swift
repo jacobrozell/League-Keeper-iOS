@@ -3,6 +3,7 @@ import Charts
 
 /// Stats view - displays weekly standings, tournament standings, player statistics, and charts.
 struct StatsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: StatsViewModel
     
@@ -27,6 +28,7 @@ struct StatsView: View {
         }
         .navigationTitle("Stats")
         .brandedScreenBackground()
+        .adaptiveContentWidth()
         .onAppear {
             viewModel.refresh()
         }
@@ -35,7 +37,10 @@ struct StatsView: View {
     @ViewBuilder
     private var statsSectionPicker: some View {
         Group {
-            if AdaptiveLayout.usesMenuSectionPicker(verticalSizeClass: verticalSizeClass) {
+            if AdaptiveLayout.usesMenuSectionPicker(
+                dynamicType: dynamicTypeSize,
+                verticalSizeClass: verticalSizeClass
+            ) {
                 HStack {
                     Text("Section")
                         .font(.subheadline)
@@ -48,6 +53,7 @@ struct StatsView: View {
                     }
                     .pickerStyle(.menu)
                     .accessibilityIdentifier("statsSectionPicker")
+                    .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 8)
@@ -60,6 +66,7 @@ struct StatsView: View {
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("statsSectionPicker")
+                .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
             }
@@ -183,6 +190,7 @@ struct StatsView: View {
                     LazyVStack(spacing: 0) {
                         chartsSections
                     }
+                    .adaptiveContentWidth()
                 }
             } else {
                 ScrollView {
@@ -216,15 +224,18 @@ struct StatsView: View {
                     .font(.system(.headline, design: .serif))
                 
                 // Player Picker
-                Picker("Player", selection: Binding(
-                    get: { viewModel.selectedPlayerId ?? viewModel.players.first?.id ?? "" },
-                    set: { viewModel.selectedPlayerId = $0 }
-                )) {
-                    ForEach(viewModel.players, id: \.id) { player in
-                        Text(player.name).tag(player.id)
+                Group {
+                    if AdaptiveLayout.usesMenuPickerStyle(
+                        dynamicType: dynamicTypeSize,
+                        verticalSizeClass: verticalSizeClass
+                    ) {
+                        playerPicker
+                            .pickerStyle(.menu)
+                    } else {
+                        playerPicker
+                            .pickerStyle(.segmented)
                     }
                 }
-                .pickerStyle(.segmented)
                 .padding(.bottom, 4)
                 
                 if !viewModel.selectedPlayerPerformanceTrend.isEmpty {
@@ -328,7 +339,18 @@ struct StatsView: View {
             }
         }
     }
-    
+
+    private var playerPicker: some View {
+        Picker("Player", selection: Binding(
+            get: { viewModel.selectedPlayerId ?? viewModel.players.first?.id ?? "" },
+            set: { viewModel.selectedPlayerId = $0 }
+        )) {
+            ForEach(viewModel.players, id: \.id) { player in
+                Text(player.name).tag(player.id)
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     @ViewBuilder

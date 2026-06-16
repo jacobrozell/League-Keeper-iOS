@@ -42,6 +42,9 @@ Global league participant; cumulative stats updated on pod save.
 
 Global catalog entry; referenced by ID in tournament weekly state.
 
+v1 fields: `name`, `points`, `alwaysOn`.  
+v2 extensions (icons, description, category, exclusivity): [AchievementSpec.md](AchievementSpec.md).
+
 ### GameResult
 
 Historical match record for stats and player detail.
@@ -69,8 +72,10 @@ On success:
 
 ## 6. Migration (future)
 
-When schema changes:
+When schema changes **after first release**:
 
-1. Version schemas (e.g. `SchemaV1`, `SchemaV2`).
+1. Version schemas (e.g. `SchemaV1`, `SchemaV2`) and a `SchemaMigrationPlan`.
 2. Add migration tests in `BudgetLeagueTrackerTests`.
 3. Update this spec and [docs/data-model.md](../docs/data-model.md).
+
+Pre–1.0: no shipped stores — delete the simulator app or reset local data when the model changes.

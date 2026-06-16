@@ -6,18 +6,36 @@ struct PlacementPicker: View {
     let playerName: String
     @Binding var selection: Int
     var isDisabled: Bool = false
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     
     var body: some View {
+        Group {
+            if AdaptiveLayout.usesMenuPickerStyle(
+                dynamicType: dynamicTypeSize,
+                verticalSizeClass: verticalSizeClass
+            ) {
+                placementPicker
+                    .pickerStyle(.menu)
+            } else {
+                placementPicker
+                    .pickerStyle(.segmented)
+            }
+        }
+        .disabled(isDisabled)
+        .accessibilityIdentifier("placement-\(playerName)")
+        .accessibilityLabel("Placement for \(playerName)")
+        .accessibilityValue(placementLabel)
+    }
+
+    private var placementPicker: some View {
         Picker("Placement", selection: $selection) {
             ForEach(1...4, id: \.self) { place in
-                Text("\(place)")
+                Text(Self.shortLabel(for: place))
                     .tag(place)
             }
         }
-        .pickerStyle(.segmented)
-        .disabled(isDisabled)
-        .accessibilityLabel("Placement for \(playerName)")
-        .accessibilityValue(placementLabel)
     }
     
     private var placementLabel: String {
@@ -27,6 +45,16 @@ struct PlacementPicker: View {
         case 3: return "Third place"
         case 4: return "Fourth place"
         default: return "\(selection)"
+        }
+    }
+
+    static func shortLabel(for place: Int) -> String {
+        switch place {
+        case 1: return "1st"
+        case 2: return "2nd"
+        case 3: return "3rd"
+        case 4: return "4th"
+        default: return "\(place)"
         }
     }
 }
