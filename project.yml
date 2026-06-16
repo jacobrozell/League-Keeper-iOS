@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     iOS: "18.0"
   xcodeVersion: "16.0"
+  createIntermediateGroups: true
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -15,6 +16,9 @@ packages:
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing
     from: 1.15.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.0.0
 targets:
   BudgetLeagueTracker:
     type: application
@@ -23,6 +27,44 @@ targets:
       - path: BudgetLeagueTracker
         type: group
       - path: Assets.xcassets
+      - path: Resources/GoogleService-Info.plist
+        type: file
+        buildPhase: resources
+        optional: true
+      - path: Resources/PrivacyInfo.xcprivacy
+        type: file
+        buildPhase: resources
+    dependencies:
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseAnalytics
+      - package: Firebase
+        product: FirebaseCrashlytics
+    postBuildScripts:
+      - name: Firebase Crashlytics
+        script: |
+          if [ "${CONFIGURATION}" != "Release" ]; then
+            exit 0
+          fi
+          if ! [ -f "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist" ]; then
+            exit 0
+          fi
+          if grep -q "REPLACE_WITH" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist" 2>/dev/null; then
+            exit 0
+          fi
+          RUN_SCRIPT="${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"
+          if [ ! -f "$RUN_SCRIPT" ]; then
+            echo "warning: Crashlytics run script not found at $RUN_SCRIPT"
+            exit 0
+          fi
+          "${RUN_SCRIPT}"
+        inputFiles:
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist
+          - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist
+          - $(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.budgetleague.BudgetLeagueTracker
@@ -43,6 +85,8 @@ targets:
     sources:
       - path: BudgetLeagueTrackerTests
         type: group
+        excludes:
+          - "**/__Snapshots__/**"
     dependencies:
       - target: BudgetLeagueTracker
       - package: ViewInspector
@@ -66,3 +110,35 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.budgetleague.BudgetLeagueTrackerUITests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: BudgetLeagueTracker
+schemes:
+  BudgetLeagueTracker:
+    build:
+      targets:
+        BudgetLeagueTracker: all
+    run:
+      config: Debug
+    test:
+      targets:
+        - BudgetLeagueTrackerTests
+        - BudgetLeagueTrackerUITests
+  BudgetLeagueTrackerCI:
+    build:
+      targets:
+        BudgetLeagueTracker: all
+    test:
+      gatherCoverageData: true
+      coverageTargets:
+        - BudgetLeagueTracker
+      targets:
+        - BudgetLeagueTrackerTests
+    run:
+      config: Debug
+  BudgetLeagueTrackerUI:
+    build:
+      targets:
+        BudgetLeagueTracker: all
+    test:
+      targets:
+        - BudgetLeagueTrackerUITests
+    run:
+      config: Debug

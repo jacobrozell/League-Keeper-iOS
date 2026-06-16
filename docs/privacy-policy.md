@@ -26,13 +26,15 @@ All data you create in the app (players, tournaments, pods, standings, achieveme
 
 ## Third parties
 
-The app does not integrate analytics, advertising, or other third-party SDKs that collect or transmit your data.
+In **App Store Release builds**, the app may send limited anonymous analytics and crash diagnostics via Google Firebase (Analytics and Crashlytics). Events are allowlisted and never include player names or league content. Debug builds and UI tests disable this collection by default.
+
+See [docs/privacy.html](privacy.html) for the hosted privacy policy shown to users.
 
 ---
 
 ## Contact
 
-If you have questions about this privacy policy, please use the support contact listed in the app or on the App Store support page (e.g. GitHub Issues or the email/support URL you provide).
+If you have questions about this privacy policy, open an issue at [github.com/jacobrozell/League-Keeper-iOS/issues](https://github.com/jacobrozell/League-Keeper-iOS/issues).
 
 ---
 

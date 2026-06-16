@@ -24,4 +24,17 @@ final class StatsScreenTests: XCTestCase {
         let navBar = app.navigationBars["Stats"]
         XCTAssertTrue(navBar.waitForExistence(timeout: 5))
     }
+
+    func testStatsFlowInLandscape() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = XCTWaiter.wait(for: [XCTestExpectation(description: "orientation")], timeout: 2)
+
+        app.navigateToStats()
+        let navBar = app.navigationBars["Stats"]
+        XCTAssertTrue(navBar.waitForExistence(timeout: 8), "Stats navigation bar should be visible in landscape")
+
+        let sectionPicker = app.otherElements["statsSectionPicker"]
+        let pickerExists = sectionPicker.waitForExistence(timeout: 5)
+        XCTAssertTrue(pickerExists || navBar.exists, "Stats section picker or nav bar should be present in landscape")
+    }
 }

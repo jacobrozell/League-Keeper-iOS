@@ -108,6 +108,8 @@ struct NewTournamentView: View {
             TextField("Add player", text: $viewModel.newPlayerName)
                 .textContentType(.name)
                 .submitLabel(.done)
+                .accessibilityLabel("Add player")
+                .accessibilityIdentifier("newTournamentAddPlayerField")
                 .onSubmit {
                     viewModel.addPlayer()
                 }

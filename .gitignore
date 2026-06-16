@@ -1,0 +1,29 @@
+# Xcode
+*.xcodeproj/
+DerivedData/
+.build/
+*.xcresult
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# SPM
+.packages/
+.swiftpm/
+Package.resolved
+
+# Firebase secrets (use .example in repo)
+**/GoogleService-Info.plist
+!**/GoogleService-Info.plist.example
+
+# macOS
+.DS_Store
+
+# CI artifacts
+xcodebuild-*.log
+coverage-summary.txt
+
+# MCP simulator output
+tmp/
+
+# Snapshot recording (commit __Snapshots__ when ready)
+# BudgetLeagueTrackerTests/**/__Snapshots__/

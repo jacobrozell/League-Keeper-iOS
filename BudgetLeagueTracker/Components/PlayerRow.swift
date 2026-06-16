@@ -38,13 +38,13 @@ struct PlayerRow: View {
     private func displayContent(subtitle: String?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(name)
-                .font(.headline)
+                .font(.system(.headline, design: .serif))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
             if let subtitle = subtitle {
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(AppConstants.AccessibleColors.captionText)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
             }
@@ -84,8 +84,8 @@ struct PlayerRow: View {
 
 #Preview("Removable Mode") {
     List {
-        PlayerRow(name: "Alice", mode: .removable(onRemove: { print("Remove Alice") }))
-        PlayerRow(name: "Bob", mode: .removable(onRemove: { print("Remove Bob") }))
+        PlayerRow(name: "Alice", mode: .removable(onRemove: {}))
+        PlayerRow(name: "Bob", mode: .removable(onRemove: {}))
     }
     .listStyle(.insetGrouped)
 }

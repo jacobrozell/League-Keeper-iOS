@@ -1,0 +1,38 @@
+import Foundation
+
+public struct LocalFeatureFlagsProvider: FeatureFlagsProvider {
+    private let overrides: [FeatureFlag: Bool]
+    private let arguments: [String]
+
+    public init(
+        overrides: [FeatureFlag: Bool] = [:],
+        arguments: [String] = ProcessInfo.processInfo.arguments
+    ) {
+        self.overrides = overrides
+        self.arguments = arguments
+    }
+
+    public func isEnabled(_ flag: FeatureFlag) -> Bool {
+        if let override = overrides[flag] {
+            return override
+        }
+        return Self.defaultValue(for: flag, arguments: arguments)
+    }
+
+    public static func defaultValue(for flag: FeatureFlag, arguments: [String]) -> Bool {
+        switch flag {
+        case .enableFirebaseAnalytics, .enableFirebaseCrashlytics:
+            if arguments.contains("-disable_firebase_analytics") || arguments.contains("--uitesting") {
+                return false
+            }
+            if arguments.contains("-firebase_analytics_debug") {
+                return true
+            }
+            #if DEBUG
+            return false
+            #else
+            return true
+            #endif
+        }
+    }
+}

@@ -43,6 +43,29 @@ extension XCUIApplication {
     func navigateToSettings() {
         navigateToTab("Settings")
     }
+
+    /// Opens a seeded ongoing tournament from the tournaments list (requires `UI-Testing-Seed-*` launch arg).
+    /// No-op when launch args already auto-navigate to tournament detail.
+    func openSeededOngoingTournament(named name: String = "UI Test League") {
+        let detailPicker = descendants(matching: .any)["tournamentDetailSectionPicker"]
+        if detailPicker.waitForExistence(timeout: 2) {
+            return
+        }
+
+        navigateToTournaments()
+
+        let identifier = "tournament-\(name)"
+        let byIdentifier = descendants(matching: .any)[identifier]
+        if byIdentifier.waitForExistence(timeout: 4), byIdentifier.isHittable {
+            byIdentifier.tap()
+            return
+        }
+
+        let cell = tables.cells.containing(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
+        if cell.waitForExistence(timeout: 4) {
+            cell.tap()
+        }
+    }
     
     // MARK: - Tournament Creation Helpers
     

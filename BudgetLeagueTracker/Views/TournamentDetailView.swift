@@ -6,6 +6,7 @@ import SwiftUI
 /// For completed: final standings and tournament summary.
 struct TournamentDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: TournamentDetailViewModel
     @State private var attendanceViewModel: AttendanceViewModel?
     @State private var showFinalStandingsSheet = false
@@ -61,17 +62,9 @@ struct TournamentDetailView: View {
         VStack(spacing: 0) {
             // Info bar
             infoBar
-            
-            // Segmented control: Attendance | Pods | Standings
-            Picker("Section", selection: $viewModel.activeTab) {
-                ForEach(TournamentDetailTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            
+
+            sectionTabPicker
+
             // Tab content
             Group {
                 switch viewModel.activeTab {
@@ -84,6 +77,40 @@ struct TournamentDetailView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var sectionTabPicker: some View {
+        Group {
+            if AdaptiveLayout.usesMenuSectionPicker(verticalSizeClass: verticalSizeClass) {
+                HStack {
+                    Text("Section")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Picker("Section", selection: $viewModel.activeTab) {
+                        ForEach(TournamentDetailTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("tournamentDetailSectionPicker")
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(.secondarySystemBackground))
+            } else {
+                Picker("Section", selection: $viewModel.activeTab) {
+                    ForEach(TournamentDetailTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("tournamentDetailSectionPicker")
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
         }
     }
     

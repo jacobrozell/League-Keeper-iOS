@@ -1,11 +1,22 @@
 # Budget League Tracker – Development
 
+> **See also:** [README.md](README.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [testing.md](testing.md) · [infrastructure.md](infrastructure.md)
+
 How to build, run, test, and where to make common changes.
 
 ## Prerequisites
 
-- **Xcode** – Version that supports the project’s deployment target (see [README](README.md) and [project.yml](project.yml); iOS 18+).
-- **XcodeGen** – For generating the Xcode project from `project.yml`. Install e.g. via Homebrew: `brew install xcodegen`.
+- **Xcode** — 16+ (supports iOS 18 deployment target)
+- **XcodeGen** — `brew install xcodegen`
+- **SwiftLint** (optional locally) — `brew install swiftlint`
+
+## First-time setup
+
+```bash
+xcodegen generate
+cp Resources/GoogleService-Info.plist.example Resources/GoogleService-Info.plist
+Scripts/install-git-hooks.sh   # optional: block Firebase secret commits
+```
 
 ## Build and run
 
@@ -15,7 +26,12 @@ How to build, run, test, and where to make common changes.
 
 ## Testing
 
-Testing strategy, test layout, and how to run tests (Xcode and command line) are described in [docs/testing.md](docs/testing.md). Use that document for unit tests, integration tests, snapshot tests, and UI tests. Do not duplicate test details here.
+See [testing.md](testing.md). Quick commands:
+
+```bash
+Scripts/ci/run-tests.sh "platform=iOS Simulator,name=iPhone 17"   # unit (CI)
+xcodebuild test -scheme BudgetLeagueTrackerUI -destination 'platform=iOS Simulator,name=iPhone 17'  # UI
+```
 
 ## Where to change things
 

@@ -80,6 +80,7 @@ struct BarChartView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
+        .accessibilityValue(ChartAccessibility.barChartSummary(title: title, data: data))
     }
     
     // MARK: - Grouped Bar Chart
@@ -120,6 +121,7 @@ struct BarChartView: View {
         .chartLegend(showLegend ? .visible : .hidden)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
+        .accessibilityValue(ChartAccessibility.barChartSummary(title: title, data: data))
     }
     
     // MARK: - Empty State

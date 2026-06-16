@@ -1,39 +1,55 @@
 import SwiftUI
 
 /// A view displayed when there's no content to show.
-/// Displays a message and optional hint text.
+/// Branded empty state with optional icon and hint text.
 struct EmptyStateView: View {
     let message: String
     var hint: String?
-    
+    var systemImage: String = "tray"
+
+    @Environment(\.palette) private var palette
+
     var body: some View {
-        VStack(spacing: 8) {
-            Text(message)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            if let hint = hint {
-                Text(hint)
-                    .font(.caption)
-                    .foregroundColor(AppConstants.AccessibleColors.hintText)
+        VStack(spacing: 16) {
+            Image(systemName: systemImage)
+                .font(.system(size: 44, weight: .medium))
+                .foregroundStyle(Color(hex: palette.gold).opacity(0.85))
+                .accessibilityHidden(true)
+
+            VStack(spacing: 8) {
+                Text(message)
+                    .font(.system(.title3, design: .serif).weight(.semibold))
+                    .foregroundStyle(Color(hex: palette.ink))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let hint = hint {
+                    Text(hint)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .frame(maxWidth: .infinity)
         .padding()
         .dynamicTypeSize(...DynamicTypeSize.accessibility3)
+        .accessibilityElement(children: .combine)
     }
 }
 
 #Preview {
-    VStack(spacing: 32) {
-        EmptyStateView(message: "No players yet")
-        
-        EmptyStateView(
-            message: "No stats yet",
-            hint: "Add players and run pods to see stats."
-        )
+    ZStack {
+        Color("LaunchBackground").ignoresSafeArea()
+        VStack(spacing: 32) {
+            EmptyStateView(message: "No players yet", systemImage: "person.crop.rectangle.stack")
+
+            EmptyStateView(
+                message: "No stats yet",
+                hint: "Add players and run pods to see stats.",
+                systemImage: "chart.bar"
+            )
+        }
     }
 }

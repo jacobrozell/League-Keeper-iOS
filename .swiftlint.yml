@@ -1,0 +1,59 @@
+# Calibrated for League Keeper. Errors gate CI; warnings flag drift without blocking unrelated work.
+
+included:
+  - BudgetLeagueTracker
+
+excluded:
+  - BudgetLeagueTrackerTests
+  - BudgetLeagueTrackerUITests
+  - .packages
+  - DerivedData
+
+disabled_rules:
+  - trailing_whitespace
+  - todo
+  - blanket_disable_command
+  - force_try
+  - force_cast
+  - large_tuple
+
+opt_in_rules:
+  - force_unwrapping
+
+force_unwrapping:
+  severity: warning
+
+identifier_name:
+  min_length:
+    warning: 1
+    error: 1
+
+line_length:
+  warning: 200
+  error: 400
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 800
+  error: 2500
+
+type_body_length:
+  warning: 600
+  error: 1400
+
+function_body_length:
+  warning: 80
+  error: 200
+
+cyclomatic_complexity:
+  warning: 15
+  error: 30
+  ignores_case_statements: true
+
+custom_rules:
+  no_print_statements:
+    name: "No print()"
+    regex: '^\s*print\('
+    message: "Use AppLog.shared instead of print() in production code."
+    severity: error

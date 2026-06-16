@@ -311,6 +311,7 @@ struct AchievementsView: View {
             .padding(.horizontal)
             .padding(.bottom, 32)
         }
+        .adaptiveEmptyStateLayout()
     }
     
     // MARK: - Helpers

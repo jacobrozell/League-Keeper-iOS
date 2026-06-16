@@ -6,7 +6,16 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var leagueStates: [LeagueState]
-    
+    @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
+
+    private var theme: ThemePreference {
+        ThemePreference.resolved(storedRaw: themeRaw)
+    }
+
+    private var isAccessibilityUITest: Bool {
+        ProcessInfo.processInfo.arguments.contains("UI-Testing-Accessibility")
+    }
+
     @State private var showTournamentStandings = false
     @State private var tournamentsNavigationPath: [Tournament] = []
     /// ViewModel for New Tournament screen; persisted so adding a player doesn't recreate it and lose form state.
@@ -22,25 +31,51 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            Tab("Tournaments", systemImage: "trophy.fill") {
+            Tab {
                 tournamentsStack
+            } label: {
+                Label("Tournaments", systemImage: "trophy.fill")
+                    .accessibilityIdentifier("tabTournaments")
             }
-            
-            Tab("Players", systemImage: "person.crop.rectangle.stack") {
+
+            Tab {
                 playersStack
+            } label: {
+                Label("Players", systemImage: "person.crop.rectangle.stack")
+                    .accessibilityIdentifier("tabPlayers")
             }
-            
-            Tab("Stats", systemImage: "chart.bar") {
+
+            Tab {
                 statsStack
+            } label: {
+                Label("Stats", systemImage: "chart.bar")
+                    .accessibilityIdentifier("tabStats")
             }
-            
-            Tab("Achievements", systemImage: "star") {
+
+            Tab {
                 achievementsStack
+            } label: {
+                Label("Achievements", systemImage: "star")
+                    .accessibilityIdentifier("tabAchievements")
             }
-            
-            Tab("Settings", systemImage: "gearshape.fill") {
+
+            Tab {
                 settingsStack
+            } label: {
+                Label("Settings", systemImage: "gearshape.fill")
+                    .accessibilityIdentifier("tabSettings")
             }
+        }
+        .tint(Color("AccentColor"))
+        .preferredColorScheme(theme.colorScheme)
+        .brandedScreenBackground()
+        .modifier(OptionalDynamicTypeSize(isAccessibilityUITest: isAccessibilityUITest))
+        .onAppear {
+            UITestBootstrap.applyIfNeeded(context: modelContext)
+            UITestBootstrap.openPendingTournamentDetailIfNeeded(
+                context: modelContext,
+                navigationPath: &tournamentsNavigationPath
+            )
         }
         .onChange(of: currentScreen) { _, newScreen in
             switch newScreen {
@@ -148,6 +183,19 @@ enum NavigationState {
             return true
         default:
             return false
+        }
+    }
+}
+
+/// Applies AXXXL Dynamic Type during accessibility UI tests (matches MiniMuster AppShell).
+private struct OptionalDynamicTypeSize: ViewModifier {
+    let isAccessibilityUITest: Bool
+
+    func body(content: Content) -> some View {
+        if isAccessibilityUITest {
+            content.dynamicTypeSize(.accessibility5)
+        } else {
+            content
         }
     }
 }

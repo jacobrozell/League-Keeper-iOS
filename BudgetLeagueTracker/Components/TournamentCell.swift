@@ -6,16 +6,19 @@ struct TournamentCell: View {
     let tournament: Tournament
     let playerCount: Int
     let winnerName: String?
-    
+
+    @Environment(\.palette) private var palette
+
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            tournamentIcon
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(tournament.name)
-                    .font(.body)
-                    .fontWeight(.medium)
+                    .font(.system(.body, design: .serif).weight(.semibold))
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -23,51 +26,58 @@ struct TournamentCell: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-            
+
             Spacer(minLength: 8)
-            
+
             if tournament.status == .ongoing {
-                statusBadge
+                StatusChip(
+                    label: "Active",
+                    colorHex: "#34C759",
+                    accessibilityPrefix: "Tournament status"
+                )
+            } else if winnerName != nil {
+                Image(systemName: "crown.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color(hex: palette.gold))
+                    .accessibilityHidden(true)
             }
-            
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
         }
         .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tournament.name), \(subtitle)")
     }
-    
+
+    // MARK: - Icon
+
+    @ViewBuilder
+    private var tournamentIcon: some View {
+        let isCompleted = tournament.status == .completed
+        let accentHex = isCompleted ? palette.gold : "#007AFF"
+        Image(systemName: isCompleted ? "trophy.fill" : "flag.fill")
+            .font(.body.weight(.semibold))
+            .foregroundStyle(Color(hex: accentHex))
+            .frame(width: 36, height: 36)
+            .background(
+                Color(hex: accentHex).opacity(0.12),
+                in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+            )
+            .accessibilityHidden(true)
+    }
+
     // MARK: - Subtitle
-    
+
     private var subtitle: String {
         switch tournament.status {
         case .ongoing:
-            return "Week \(tournament.currentWeek) of \(tournament.totalWeeks) • \(playerCount) players"
+            return "Week \(tournament.currentWeek) of \(tournament.totalWeeks) · \(playerCount) players"
         case .completed:
             if let winner = winnerName {
-                return "Winner: \(winner) • \(tournament.totalWeeks) weeks"
+                return "Winner: \(winner) · \(tournament.totalWeeks) weeks"
             } else {
-                return "\(tournament.totalWeeks) weeks • \(tournament.dateRangeString)"
+                return "\(tournament.totalWeeks) weeks · \(tournament.dateRangeString)"
             }
         }
-    }
-    
-    // MARK: - Status Badge
-    
-    @ViewBuilder
-    private var statusBadge: some View {
-        Text("Active")
-            .font(.caption2)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(AppConstants.AccessibleColors.activeStatusBackground)
-            .foregroundStyle(AppConstants.AccessibleColors.activeStatus)
-            .clipShape(Capsule())
-            .accessibilityLabel("Tournament status: Active")
     }
 }
 
@@ -83,6 +93,7 @@ struct TournamentCell: View {
             winnerName: nil
         )
     }
+    .listStyle(.insetGrouped)
 }
 
 #Preview("Completed Tournament") {
@@ -97,4 +108,5 @@ struct TournamentCell: View {
             winnerName: "Alice"
         )
     }
+    .listStyle(.insetGrouped)
 }

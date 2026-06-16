@@ -22,9 +22,7 @@ struct DestructiveActionButton: View {
 
 #Preview {
     VStack(spacing: 16) {
-        DestructiveActionButton(title: "Delete All Data") {
-            print("Tapped")
-        }
+        DestructiveActionButton(title: "Delete All Data") {}
         
         DestructiveActionButton(title: "Disabled", action: {}, isDisabled: true)
     }

@@ -4,7 +4,7 @@ import SwiftUI
 enum StandingsMode {
     /// Weekly standings: shows placement and achievement points
     case weekly
-    
+
     /// Tournament standings: also shows wins
     case tournament
 }
@@ -18,24 +18,25 @@ struct StandingsRow: View {
     let achievementPoints: Int
     var wins: Int = 0
     let mode: StandingsMode
-    
+
+    @Environment(\.palette) private var palette
+
     var body: some View {
-        HStack {
-            Text("#\(rank)")
-                .font(.headline)
-                .frame(minWidth: 36, alignment: .leading)
-            
+        HStack(spacing: 12) {
+            rankBadge
+
             Text(name)
-                .font(.headline)
+                .font(.system(.headline, design: .serif))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Spacer(minLength: 8)
-            
+
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(totalPoints) pts")
-                    .font(.body)
-                
+                    .font(.system(.body, design: .serif).weight(.semibold))
+                    .foregroundStyle(rank == 1 ? Color(hex: palette.gold) : .primary)
+
                 HStack(spacing: 4) {
                     Text("P: \(placementPoints)")
                     Text("A: \(achievementPoints)")
@@ -54,7 +55,21 @@ struct StandingsRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
     }
-    
+
+    @ViewBuilder
+    private var rankBadge: some View {
+        let isLeader = rank == 1
+        Text("#\(rank)")
+            .font(.system(.headline, design: .serif).weight(.bold))
+            .foregroundStyle(isLeader ? Color(hex: palette.chipOnText) : Color(hex: palette.ink))
+            .frame(minWidth: 36, minHeight: 32)
+            .background {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isLeader ? Color(hex: palette.gold) : Color(hex: palette.surface2))
+            }
+            .accessibilityHidden(true)
+    }
+
     private var accessibilityDescription: String {
         var description = "Rank \(rank), \(name), \(totalPoints) points"
         if case .tournament = mode {

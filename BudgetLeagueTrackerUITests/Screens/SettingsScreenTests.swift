@@ -30,4 +30,20 @@ final class SettingsScreenTests: XCTestCase {
         let about = app.staticTexts["About"]
         XCTAssertTrue(about.waitForExistence(timeout: 5))
     }
+
+    func testThemePickerExists() {
+        app.navigateToSettings()
+        let appearance = app.staticTexts["Appearance"]
+        XCTAssertTrue(appearance.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Theme"].waitForExistence(timeout: 5) || app.staticTexts["Theme"].exists)
+    }
+
+    func testSettingsInLandscape() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = XCTWaiter.wait(for: [XCTestExpectation(description: "orientation")], timeout: 2)
+
+        app.navigateToSettings()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Appearance"].waitForExistence(timeout: 5))
+    }
 }

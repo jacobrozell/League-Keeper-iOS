@@ -213,7 +213,10 @@ final class TournamentDetailViewModel {
         
         if let tournament = tournament {
             podHistoryCount = tournament.podHistorySnapshots.count
-            
+            if podHistoryCount > 0, activeTab == .attendance {
+                activeTab = .pods
+            }
+
             // Filter to active achievements
             activeAchievements = allAchievements.filter { tournament.activeAchievementIds.contains($0.id) }
         }

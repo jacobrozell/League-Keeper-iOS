@@ -52,6 +52,8 @@ struct AttendanceView: View {
             TextField("Add player this week", text: $viewModel.newPlayerName)
                 .textContentType(.name)
                 .submitLabel(.done)
+                .accessibilityLabel("Add player this week")
+                .accessibilityIdentifier("attendanceAddPlayerField")
                 .onSubmit {
                     viewModel.addWeeklyPlayer()
                 }
@@ -59,6 +61,8 @@ struct AttendanceView: View {
             Button("Add") {
                 viewModel.addWeeklyPlayer()
             }
+            .accessibilityLabel("Add player")
+            .accessibilityIdentifier("attendanceAddPlayerButton")
             .disabled(viewModel.newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .frame(minHeight: AppConstants.UI.minTouchTargetHeight)

@@ -16,6 +16,7 @@ struct TournamentsView: View {
             }
         }
         .navigationTitle("Tournaments")
+        .brandedScreenBackground()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -82,6 +83,7 @@ struct TournamentsView: View {
                                 winnerName: nil
                             )
                         }
+                        .accessibilityIdentifier("tournament-\(tournament.name)")
                         .contextMenu {
                             Button {
                                 viewModel.openEdit(tournament)
@@ -153,7 +155,8 @@ struct TournamentsView: View {
             
             EmptyStateView(
                 message: "No tournaments yet",
-                hint: "Tap the + button to create your first tournament."
+                hint: "Tap the + button to create your first tournament.",
+                systemImage: "trophy"
             )
             
             Spacer()
@@ -167,6 +170,7 @@ struct TournamentsView: View {
             .padding(.horizontal)
             .padding(.bottom, 32)
         }
+        .adaptiveEmptyStateLayout()
     }
 }
 

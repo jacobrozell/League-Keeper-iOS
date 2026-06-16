@@ -100,6 +100,7 @@ struct PieChartView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
+        .accessibilityValue(ChartAccessibility.pieChartSummary(title: title, data: data))
     }
     
     // MARK: - Legend View

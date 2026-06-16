@@ -43,12 +43,8 @@ struct AchievementListRow: View {
 
 #Preview {
     List {
-        AchievementListRow(name: "First Blood", points: 1, alwaysOn: .constant(false)) {
-            print("Remove")
-        }
-        AchievementListRow(name: "Combo Master", points: 2, alwaysOn: .constant(true)) {
-            print("Remove")
-        }
+        AchievementListRow(name: "First Blood", points: 1, alwaysOn: .constant(false)) {}
+        AchievementListRow(name: "Combo Master", points: 2, alwaysOn: .constant(true)) {}
     }
     .listStyle(.insetGrouped)
 }

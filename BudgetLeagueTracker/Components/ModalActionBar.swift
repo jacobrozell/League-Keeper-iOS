@@ -31,15 +31,15 @@ struct ModalActionBar: View {
 #Preview("With Secondary") {
     ModalActionBar(
         primaryTitle: "Continue to Next Week",
-        primaryAction: { print("Continue") },
+        primaryAction: {},
         secondaryTitle: "Exit Standings",
-        secondaryAction: { print("Exit") }
+        secondaryAction: {}
     )
 }
 
 #Preview("Primary Only") {
     ModalActionBar(
         primaryTitle: "Close",
-        primaryAction: { print("Close") }
+        primaryAction: {}
     )
 }

@@ -1,5 +1,7 @@
 # Budget League Tracker — Testing
 
+> **See also:** [specs/TestPlanSpec.md](../specs/TestPlanSpec.md) · [test-coverage.md](test-coverage.md) · [infrastructure.md](infrastructure.md)
+
 ## Overview
 
 The app uses a layered test strategy:
@@ -13,12 +15,22 @@ Data-flow tests (engine logic and ViewModels that read/write context) are priori
 
 ## How to run tests
 
-- **Xcode:** Product → Test (⌘U), or run a specific test target/suite.
-- **Command line:**  
+### Xcode schemes
+
+| Scheme | Contents |
+|--------|----------|
+| `BudgetLeagueTracker` | App + all test targets |
+| `BudgetLeagueTrackerCI` | Unit/integration only (PR CI) |
+| `BudgetLeagueTrackerUI` | UI + accessibility (nightly) |
+
+### Commands
+
+- **Xcode:** Product → Test (⌘U)
+- **All tests:**  
   `xcodebuild test -scheme BudgetLeagueTracker -destination 'platform=iOS Simulator,name=iPhone 17'`
-- **With code coverage (command line):**  
-  `xcodebuild test -scheme BudgetLeagueTracker -destination 'platform=iOS Simulator,name=iPhone 17' -enableCodeCoverage YES`  
-  Then open the test result in Xcode (Report navigator → last test run) and use the Coverage tab to see line/region coverage.
+- **CI unit tests:**  
+  `Scripts/ci/run-tests.sh "platform=iOS Simulator,name=iPhone 17"`
+- **Coverage:** enabled in `BudgetLeagueTrackerCI` — see `Scripts/ci/coverage-summary.sh`
 
 ## Test layout
 
@@ -34,6 +46,8 @@ Data-flow tests (engine logic and ViewModels that read/write context) are priori
 | Components    | ComponentBehaviorTests, ComponentSnapshotTests, ChartsSnapshotTests (+ __Snapshots__) |
 | Screens       | ScreenSnapshotTests (+ __Snapshots__)                                     |
 | Helpers       | TestFixtures, TestHelpers                                                 |
+| Accessibility | WCAGContrastTests                                                       |
+| Support       | FirebaseAnalyticsEventMappingTests                                      |
 | (root)        | SnapshotTestConfiguration, ChartsSnapshotTests, NavigationStateTests     |
 
 ### BudgetLeagueTrackerUITests
@@ -57,7 +71,7 @@ Data-flow tests (engine logic and ViewModels that read/write context) are priori
 ## Code coverage
 
 - **Enable in Xcode:** Edit Scheme → Test → Options → check **Code Coverage**, then run tests (⌘U). Open the Report navigator, select the latest test run, and use the Coverage tab to see line/region coverage per file.
-- **CI/script:** Use `xcodebuild test ... -enableCodeCoverage YES` and parse or archive the generated `.xcresult` for coverage tracking.
+- **CI/script:** GitHub Actions runs `BudgetLeagueTrackerCI` on every PR — see [infrastructure.md](infrastructure.md)
 
 ## What’s left / not covered
 

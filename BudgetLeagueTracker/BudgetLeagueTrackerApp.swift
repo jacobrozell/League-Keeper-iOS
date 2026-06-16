@@ -4,9 +4,11 @@ import SwiftData
 /// Main entry point for the Budget League Tracker iOS app.
 @main
 struct BudgetLeagueTrackerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppShell()
         }
         .modelContainer(for: [
             Player.self,
@@ -19,7 +21,12 @@ struct BudgetLeagueTrackerApp: App {
             case .success(let container):
                 bootstrapData(in: container)
             case .failure(let error):
-                print("Failed to create model container: \(error)")
+                AppLog.shared.error(
+                    .persistence,
+                    eventName: "model_container_bootstrap_failure",
+                    message: "Failed to create model container",
+                    metadata: ["errorCode": String(describing: type(of: error))]
+                )
             }
         }
     }

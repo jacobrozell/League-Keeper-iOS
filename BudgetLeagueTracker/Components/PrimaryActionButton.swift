@@ -11,10 +11,12 @@ struct PrimaryActionButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
+                .font(.headline)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
         }
         .buttonStyle(.borderedProminent)
+        .tint(Color("AccentColor"))
         .disabled(isDisabled)
         .accessibilityLabel(accessibilityLabel ?? title)
     }
@@ -22,9 +24,7 @@ struct PrimaryActionButton: View {
 
 #Preview {
     VStack(spacing: 16) {
-        PrimaryActionButton(title: "Start Tournament") {
-            print("Tapped")
-        }
+        PrimaryActionButton(title: "Start Tournament") {}
         
         PrimaryActionButton(title: "Disabled Button", action: {}, isDisabled: true)
     }

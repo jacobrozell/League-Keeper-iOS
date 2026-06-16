@@ -6,21 +6,19 @@ Get help with League Keeper (Budget League Tracker) for iOS.
 
 ## How to get support
 
-- **Bugs and feature requests:** Open an issue on the project’s GitHub repository (if applicable). Replace the link below with your repo’s Issues URL before publishing.
-  - Example: `https://github.com/yourusername/MTG/issues`
-
-- **General questions:** Use the contact method you provide (e.g. email or a simple support page). Add your preferred contact here before hosting this page.
+- **Bugs and feature requests:** [GitHub Issues](https://github.com/jacobrozell/League-Keeper-iOS/issues)
 
 ---
 
 ## App Store Support URL
 
-When submitting to App Store Connect, set the **Support URL** to the hosted version of this page. For example:
+When submitting to App Store Connect, set the **Support URL** to:
 
-- If using GitHub Pages: `https://yourusername.github.io/MTG/support` (or the path where this file is published)
-- If using your own site: `https://yoursite.com/league-keeper/support`
+`https://jacobrozell.github.io/League-Keeper-iOS/support.html`
 
-Ensure the URL is publicly accessible so Apple and users can open it.
+Privacy Policy URL:
+
+`https://jacobrozell.github.io/League-Keeper-iOS/privacy.html`
 
 ---
 

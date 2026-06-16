@@ -3,44 +3,74 @@ import Charts
 
 /// Stats view - displays weekly standings, tournament standings, player statistics, and charts.
 struct StatsView: View {
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: StatsViewModel
     
     var body: some View {
         Group {
             if viewModel.hasPlayers {
                 VStack(spacing: 0) {
-                    // Segmented control: Weekly | Standings | Charts | Players
-                    Picker("Section", selection: $viewModel.activeSegment) {
-                        ForEach(viewModel.visibleSegments, id: \.self) { segment in
-                            Text(segment.rawValue).tag(segment)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .onChange(of: viewModel.visibleSegments) { _, newSegments in
-                        if !newSegments.contains(viewModel.activeSegment) {
-                            viewModel.activeSegment = .standings
-                        }
-                    }
-                    
+                    statsSectionPicker
+
                     // Segment content
                     segmentContent
                 }
-                .background(Color(.systemGroupedBackground))
+                .brandedScreenBackground()
             } else {
                 EmptyStateView(
                     message: "No stats yet",
-                    hint: "Create a tournament and play some games to see stats."
+                    hint: "Create a tournament and play some games to see stats.",
+                    systemImage: "chart.bar"
                 )
+                .adaptiveEmptyStateLayout()
             }
         }
         .navigationTitle("Stats")
+        .brandedScreenBackground()
         .onAppear {
             viewModel.refresh()
         }
     }
     
+    @ViewBuilder
+    private var statsSectionPicker: some View {
+        Group {
+            if AdaptiveLayout.usesMenuSectionPicker(verticalSizeClass: verticalSizeClass) {
+                HStack {
+                    Text("Section")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Picker("Section", selection: $viewModel.activeSegment) {
+                        ForEach(viewModel.visibleSegments, id: \.self) { segment in
+                            Text(segment.rawValue).tag(segment)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("statsSectionPicker")
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.bar)
+            } else {
+                Picker("Section", selection: $viewModel.activeSegment) {
+                    ForEach(viewModel.visibleSegments, id: \.self) { segment in
+                        Text(segment.rawValue).tag(segment)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("statsSectionPicker")
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
+        }
+        .onChange(of: viewModel.visibleSegments) { _, newSegments in
+            if !newSegments.contains(viewModel.activeSegment) {
+                viewModel.activeSegment = .standings
+            }
+        }
+    }
+
     @ViewBuilder
     private var segmentContent: some View {
         switch viewModel.activeSegment {
@@ -52,9 +82,9 @@ struct StatsView: View {
             chartsSectionContent
         case .players:
             ScrollView {
-                sectionContainer {
+                BrandedSectionCard {
                     Text("Player Stats")
-                        .font(.headline)
+                        .font(.system(.headline, design: .serif))
                         .padding(.horizontal)
                         .padding(.top)
                     
@@ -80,7 +110,7 @@ struct StatsView: View {
     @ViewBuilder
     private var weeklySection: some View {
         ScrollView {
-            sectionContainer {
+            BrandedSectionCard {
                 VStack(alignment: .leading, spacing: 2) {
                     if !viewModel.tournamentName.isEmpty {
                         Text(viewModel.tournamentName)
@@ -88,7 +118,7 @@ struct StatsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Text("Week \(viewModel.currentWeek) Standings")
-                        .font(.headline)
+                        .font(.system(.headline, design: .serif))
                 }
                 .padding(.horizontal)
                 .padding(.top)
@@ -117,9 +147,9 @@ struct StatsView: View {
     @ViewBuilder
     private var standingsSection: some View {
         ScrollView {
-            sectionContainer {
+            BrandedSectionCard {
                 Text("All-Time Standings")
-                    .font(.headline)
+                    .font(.system(.headline, design: .serif))
                     .padding(.horizontal)
                     .padding(.top)
                 
@@ -156,7 +186,7 @@ struct StatsView: View {
                 }
             } else {
                 ScrollView {
-                    sectionContainer {
+                    BrandedSectionCard {
                         Text("No chart data yet")
                             .foregroundStyle(.secondary)
                             .padding()
@@ -171,7 +201,7 @@ struct StatsView: View {
     @ViewBuilder
     private var chartsSections: some View {
         // Points Comparison Chart
-        sectionContainer {
+        BrandedSectionCard {
             BarChartView.playerPoints(
                 title: "Points Comparison",
                 data: viewModel.playerPointsComparison,
@@ -180,10 +210,10 @@ struct StatsView: View {
         }
         
         // Performance Trends Chart
-        sectionContainer {
+        BrandedSectionCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Performance Trends")
-                    .font(.headline)
+                    .font(.system(.headline, design: .serif))
                 
                 // Player Picker
                 Picker("Player", selection: Binding(
@@ -212,10 +242,10 @@ struct StatsView: View {
         }
         
         // Placement Distribution Chart
-        sectionContainer {
+        BrandedSectionCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Placement Distribution")
-                    .font(.headline)
+                    .font(.system(.headline, design: .serif))
                 
                 // Player Picker
                 Picker("Player", selection: Binding(
@@ -245,7 +275,7 @@ struct StatsView: View {
         
         // Achievement Leaderboard Chart
         if !viewModel.achievementLeaderboard.isEmpty {
-            sectionContainer {
+            BrandedSectionCard {
                 BarChartView.achievementLeaderboard(
                     title: "Most Earned Achievements",
                     data: Array(viewModel.achievementLeaderboard.prefix(5)),
@@ -255,7 +285,7 @@ struct StatsView: View {
         }
         
         // Wins Comparison Chart
-        sectionContainer {
+        BrandedSectionCard {
             BarChartView.winsComparison(
                 title: "Wins by Player",
                 data: viewModel.winsComparison,
@@ -265,10 +295,10 @@ struct StatsView: View {
         
         // Top Achievement Earners Chart
         if viewModel.topAchievementEarners.contains(where: { $0.achievementPoints > 0 }) {
-            sectionContainer {
+            BrandedSectionCard {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Top Achievement Earners")
-                        .font(.headline)
+                        .font(.system(.headline, design: .serif))
                     
                     let data = viewModel.topAchievementEarners
                         .filter { $0.achievementPoints > 0 }
@@ -290,6 +320,9 @@ struct StatsView: View {
                         }
                     }
                     .frame(height: 180)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Top Achievement Earners")
+                    .accessibilityValue(ChartAccessibility.barChartSummary(title: "Top Achievement Earners", data: Array(data)))
                 }
                 .padding()
             }
@@ -297,18 +330,7 @@ struct StatsView: View {
     }
     
     // MARK: - Helpers
-    
-    @ViewBuilder
-    private func sectionContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            content()
-        }
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.horizontal)
-        .padding(.top, 16)
-    }
-    
+
     @ViewBuilder
     private func noDataPlaceholder(height: CGFloat) -> some View {
         VStack(spacing: 8) {

@@ -1,5 +1,7 @@
 # Budget League Tracker – Architecture
 
+> **See also:** [docs/README.md](README.md) · [specs/ArchitectureSpec.md](../specs/ArchitectureSpec.md) · [data-model.md](data-model.md) · [navigation.md](navigation.md) · [design-system.md](design-system.md)
+
 ## What the app is
 
 League Keeper (Budget League Tracker) is an iOS app for running and tracking Magic: The Gathering budget leagues. Organizers create multi-week tournaments, add players, record weekly attendance, group players into pods of four, score placement and achievements, and view weekly and final standings. The app targets iOS 18+ and is built with Swift 6, SwiftUI, and SwiftData.
@@ -71,3 +73,7 @@ flowchart LR
 | **Constants/** | `AppConstants`: UI (e.g. min touch target), League (ranges, pod size, rounds), Scoring (placement points, defaults), DefaultAchievement. |
 
 The Xcode project is generated from [project.yml](project.yml) at the repo root. Unit and integration tests live in **BudgetLeagueTrackerTests/**; UI tests in **BudgetLeagueTrackerUITests/**.
+
+**Support layer** (`BudgetLeagueTracker/Support/`) contains logging (`AppLog`), feature flags, and Firebase bootstrap — see [logging-analytics.md](logging-analytics.md).
+
+**Specifications** for normative requirements live in [specs/](../specs/).

@@ -1,0 +1,63 @@
+name: Nightly UI
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+env:
+  CI_XCODE_PROJECT: BudgetLeagueTracker.xcodeproj
+  CI_XCODE_SCHEME: BudgetLeagueTrackerUI
+  CI_PARALLEL_TESTING: NO
+  CI_PACKAGES_ROOT: .packages
+  SIM_DESTINATION: platform=iOS Simulator,name=iPhone 17
+
+jobs:
+  ui-tests:
+    name: UI & Accessibility
+    runs-on: macos-26
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+        with:
+          xcode-version: '26.2'
+
+      - name: Prepare Firebase config
+        run: cp Resources/GoogleService-Info.plist.example Resources/GoogleService-Info.plist
+
+      - name: Install CI tools
+        run: brew install xcodegen xcbeautify
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Run UI Tests
+        run: |
+          set -o pipefail
+          xcrun simctl ui booted content_size large 2>/dev/null || true
+          xcodebuild test \
+            -project "${{ env.CI_XCODE_PROJECT }}" \
+            -scheme "${{ env.CI_XCODE_SCHEME }}" \
+            -destination "${{ env.SIM_DESTINATION }}" \
+            -parallel-testing-enabled "${{ env.CI_PARALLEL_TESTING }}" \
+            -derivedDataPath DerivedData \
+            -clonedSourcePackagesDirPath ./.packages/cloned_sources \
+            -packageCachePath "$(pwd)/.packages/cache" \
+            -resultBundlePath UITestResults.xcresult \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | xcbeautify --renderer github-actions
+
+      - name: Upload UI Test Results
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        if: always()
+        with:
+          name: ui-test-results
+          path: UITestResults.xcresult
+          if-no-files-found: ignore

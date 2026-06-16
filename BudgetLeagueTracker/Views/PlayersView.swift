@@ -14,6 +14,7 @@ struct PlayersView: View {
             }
         }
         .navigationTitle("Players")
+        .brandedScreenBackground()
         .onAppear {
             viewModel.refresh()
         }
@@ -53,7 +54,8 @@ struct PlayersView: View {
             
             EmptyStateView(
                 message: "No players yet",
-                hint: "Add players to track their stats across tournaments."
+                hint: "Add players to track their stats across tournaments.",
+                systemImage: "person.crop.rectangle.stack"
             )
             
             Spacer()
@@ -65,20 +67,24 @@ struct PlayersView: View {
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.name)
                         .submitLabel(.done)
+                        .accessibilityLabel("Player name")
+                        .accessibilityIdentifier("playerNameField")
                         .onSubmit {
                             viewModel.addPlayer()
                         }
-                    
+
                     Button("Add") {
                         viewModel.addPlayer()
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!viewModel.canAddPlayer)
+                    .accessibilityLabel("Add player")
                 }
                 .padding(.horizontal)
             }
             .padding(.bottom, 32)
         }
+        .adaptiveEmptyStateLayout()
     }
     
     // MARK: - Add Player Row
@@ -89,14 +95,17 @@ struct PlayersView: View {
             TextField("Add new player", text: $viewModel.newPlayerName)
                 .textContentType(.name)
                 .submitLabel(.done)
+                .accessibilityLabel("Add new player")
+                .accessibilityIdentifier("addNewPlayerField")
                 .onSubmit {
                     viewModel.addPlayer()
                 }
-            
+
             Button("Add") {
                 viewModel.addPlayer()
             }
             .disabled(!viewModel.canAddPlayer)
+            .accessibilityLabel("Add player")
         }
         .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
     }

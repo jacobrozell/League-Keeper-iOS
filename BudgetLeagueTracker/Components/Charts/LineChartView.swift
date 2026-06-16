@@ -101,6 +101,7 @@ struct LineChartView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
+        .accessibilityValue(ChartAccessibility.lineChartSummary(title: title, data: data))
     }
     
     // MARK: - Multi Series Chart
@@ -138,6 +139,7 @@ struct LineChartView: View {
         .chartLegend(.visible)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
+        .accessibilityValue(ChartAccessibility.lineChartSummary(title: title, data: data))
     }
     
     // MARK: - Empty State
