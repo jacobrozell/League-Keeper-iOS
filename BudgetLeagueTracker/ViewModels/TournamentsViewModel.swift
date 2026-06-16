@@ -95,14 +95,20 @@ final class TournamentsViewModel {
         for result in results {
             pointsByPlayer[result.playerId, default: 0] += result.totalPoints
         }
-        
-        // Find player with most points
-        guard let winnerId = pointsByPlayer.max(by: { $0.value < $1.value })?.key,
-              let winner = players.first(where: { $0.id == winnerId }) else {
-            return nil
-        }
-        
-        return winner.name
+
+        // Find player with most points, breaking ties deterministically by name then
+        // id (dictionary order is not stable, so ties would otherwise vary per call).
+        let winner = players
+            .filter { pointsByPlayer[$0.id] != nil }
+            .max { lhs, rhs in
+                let lhsPoints = pointsByPlayer[lhs.id] ?? 0
+                let rhsPoints = pointsByPlayer[rhs.id] ?? 0
+                if lhsPoints != rhsPoints { return lhsPoints < rhsPoints }
+                if lhs.name != rhs.name { return lhs.name > rhs.name }
+                return lhs.id > rhs.id
+            }
+
+        return winner?.name
     }
     
     /// Presents the new tournament sheet (single-screen create, like React modal).

@@ -26,9 +26,14 @@ final class TournamentStandingsViewModel {
     func refresh() {
         let descriptor = FetchDescriptor<Player>()
         let allPlayers = (try? context.fetch(descriptor)) ?? []
-        
-        // Sort by total points descending
-        sortedPlayers = allPlayers.sorted { $0.totalPoints > $1.totalPoints }
+
+        // Sort by total points descending, with a deterministic tiebreak (name then
+        // id) so tied players don't reorder between fetches.
+        sortedPlayers = allPlayers.sorted { lhs, rhs in
+            if lhs.totalPoints != rhs.totalPoints { return lhs.totalPoints > rhs.totalPoints }
+            if lhs.name != rhs.name { return lhs.name < rhs.name }
+            return lhs.id < rhs.id
+        }
         
         if let tournament = LeagueEngine.fetchActiveTournament(context: context) {
             isFinal = tournament.isFinalWeek || tournament.status == .completed

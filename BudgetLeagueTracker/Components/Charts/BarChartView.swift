@@ -103,7 +103,17 @@ struct BarChartView: View {
             }
             return result
         }
-        
+
+        // Map each distinct series (in order of appearance) to a color. Building the
+        // scale from the actual series names avoids mapping phantom "Primary"/"Secondary"
+        // keys that don't exist in the data, and keeps the legend order stable.
+        let seriesColors = [barColor, secondaryColor ?? Color(uiColor: .systemGray)]
+        var seriesOrder: [String] = []
+        for item in chartData where !seriesOrder.contains(item.series) {
+            seriesOrder.append(item.series)
+        }
+        let seriesRange = seriesOrder.indices.map { seriesColors[$0 % seriesColors.count] }
+
         Chart(chartData) { item in
             BarMark(
                 x: .value("Category", item.label),
@@ -113,10 +123,7 @@ struct BarChartView: View {
             .position(by: .value("Series", item.series))
         }
         .frame(height: height)
-        .chartForegroundStyleScale([
-            chartData.first?.series ?? "Primary": barColor,
-            chartData.dropFirst().first(where: { $0.series != chartData.first?.series })?.series ?? "Secondary": secondaryColor ?? Color(uiColor: .systemGray)
-        ])
+        .chartForegroundStyleScale(domain: seriesOrder, range: seriesRange)
         .chartLegend(showLegend ? .visible : .hidden)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)

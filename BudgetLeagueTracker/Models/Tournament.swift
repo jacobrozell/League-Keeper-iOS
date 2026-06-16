@@ -202,12 +202,18 @@ final class Tournament: Identifiable {
         currentWeek >= totalWeeks
     }
     
-    /// Formatted date range string
-    var dateRangeString: String {
+    /// Shared formatter for date ranges. `DateFormatter` is expensive to create,
+    /// and `dateRangeString` is read repeatedly while rendering tournament lists.
+    private static let dateRangeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
-        
+        return formatter
+    }()
+
+    /// Formatted date range string
+    var dateRangeString: String {
+        let formatter = Tournament.dateRangeFormatter
         let start = formatter.string(from: startDate)
         if let end = endDate {
             return "\(start) - \(formatter.string(from: end))"

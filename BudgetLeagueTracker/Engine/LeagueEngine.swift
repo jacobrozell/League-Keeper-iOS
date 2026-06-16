@@ -236,11 +236,14 @@ enum LeagueEngine {
             // Round 1: Shuffle randomly
             sortedPlayers = presentPlayers.shuffled()
         } else {
-            // Later rounds: Sort by weekly total points (descending)
+            // Later rounds: Sort by weekly total points (descending), breaking ties
+            // deterministically by name then id so pods are reproducible for a round.
             sortedPlayers = presentPlayers.sorted { player1, player2 in
                 let points1 = weeklyPointsByPlayer[player1.id]?.total ?? 0
                 let points2 = weeklyPointsByPlayer[player2.id]?.total ?? 0
-                return points1 > points2
+                if points1 != points2 { return points1 > points2 }
+                if player1.name != player2.name { return player1.name < player2.name }
+                return player1.id < player2.id
             }
         }
         

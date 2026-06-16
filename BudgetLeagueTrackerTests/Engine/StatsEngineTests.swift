@@ -475,6 +475,32 @@ struct StatsEngineTests {
             #expect(summary.standings[2].player.name == "Third")
             #expect(summary.standings[2].points == 2)
         }
+
+        @Test("Ties resolve deterministically by name and the winner matches rank #1")
+        func tiesResolveDeterministically() {
+            let tournamentId = "t1"
+
+            // Zoe and Amy each score 4 points (both placed 1st once).
+            let zoe = TestFixtures.player(name: "Zoe")
+            let amy = TestFixtures.player(name: "Amy")
+
+            let results = [
+                TestFixtures.gameResult(tournamentId: tournamentId, playerId: zoe.id, placement: 1),
+                TestFixtures.gameResult(tournamentId: tournamentId, playerId: amy.id, placement: 1)
+            ]
+
+            // Run repeatedly with players supplied in different orders; the ranking and
+            // winner must be identical every time (alphabetically-first name wins ties).
+            for playerOrder in [[zoe, amy], [amy, zoe]] {
+                let summary = StatsEngine.tournamentSummary(
+                    tournamentId: tournamentId,
+                    results: results,
+                    players: playerOrder
+                )
+                #expect(summary.winnerName == "Amy")
+                #expect(summary.standings.map { $0.player.name } == ["Amy", "Zoe"])
+            }
+        }
     }
     
     // MARK: - Fetch Helper Tests

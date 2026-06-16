@@ -166,30 +166,34 @@ enum StatsEngine {
         let uniquePodIds = Set(tournamentResults.map { $0.podId })
         let totalGames = uniquePodIds.count
         
-        // Find winner (highest total points)
+        // Sum points per player
         var pointsByPlayer: [String: Int] = [:]
         for result in tournamentResults {
             pointsByPlayer[result.playerId, default: 0] += result.totalPoints
         }
-        
-        let winnerId = pointsByPlayer.max(by: { $0.value < $1.value })?.key
-        let winnerName = players.first { $0.id == winnerId }?.name
-        let winnerPoints = winnerId != nil ? pointsByPlayer[winnerId!] ?? 0 : 0
-        
-        // Calculate standings
+
+        // Calculate standings with a deterministic order: points descending, then
+        // player name, then id. Dictionary iteration order is not stable, so an
+        // explicit tiebreak is required to keep rankings (and the winner) consistent.
         let standings = pointsByPlayer
-            .map { (playerId: $0.key, points: $0.value) }
-            .sorted { $0.points > $1.points }
-            .compactMap { standing -> (player: Player, points: Int)? in
-                guard let player = players.first(where: { $0.id == standing.playerId }) else { return nil }
-                return (player: player, points: standing.points)
+            .compactMap { playerId, points -> (player: Player, points: Int)? in
+                guard let player = players.first(where: { $0.id == playerId }) else { return nil }
+                return (player: player, points: points)
             }
-        
+            .sorted { lhs, rhs in
+                if lhs.points != rhs.points { return lhs.points > rhs.points }
+                if lhs.player.name != rhs.player.name { return lhs.player.name < rhs.player.name }
+                return lhs.player.id < rhs.player.id
+            }
+
+        // Winner is rank #1, so the summary's winner always matches the standings.
+        let winner = standings.first
+
         return TournamentSummary(
             participantCount: participantCount,
             totalGames: totalGames,
-            winnerName: winnerName,
-            winnerPoints: winnerPoints,
+            winnerName: winner?.player.name,
+            winnerPoints: winner?.points ?? 0,
             standings: standings
         )
     }

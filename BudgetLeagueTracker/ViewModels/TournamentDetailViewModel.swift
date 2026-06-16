@@ -106,7 +106,11 @@ final class TournamentDetailViewModel {
             .map { player in
                 (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
             }
-            .sorted { $0.points.total > $1.points.total }
+            .sorted { lhs, rhs in
+                if lhs.points.total != rhs.points.total { return lhs.points.total > rhs.points.total }
+                if lhs.player.name != rhs.player.name { return lhs.player.name < rhs.player.name }
+                return lhs.player.id < rhs.player.id
+            }
     }
     
     // MARK: - Computed Properties: Standings
@@ -136,7 +140,15 @@ final class TournamentDetailViewModel {
                 guard let player = allPlayers.first(where: { $0.id == playerId }) else { return nil }
                 return (player: player, points: stats.points, placementPoints: stats.placementPoints, achievementPoints: stats.achievementPoints, wins: stats.wins)
             }
-            .sorted { $0.points > $1.points }
+            .sorted { standingSortsBefore(($0.player, $0.points), ($1.player, $1.points)) }
+    }
+
+    /// Deterministic ranking order: points descending, then name, then id.
+    /// Needed because standings are built from dictionaries (unstable iteration order).
+    private func standingSortsBefore(_ lhs: (player: Player, points: Int), _ rhs: (player: Player, points: Int)) -> Bool {
+        if lhs.points != rhs.points { return lhs.points > rhs.points }
+        if lhs.player.name != rhs.player.name { return lhs.player.name < rhs.player.name }
+        return lhs.player.id < rhs.player.id
     }
     
     /// Standings for a specific week (from game results).
@@ -156,7 +168,7 @@ final class TournamentDetailViewModel {
                 guard let player = allPlayers.first(where: { $0.id == playerId }) else { return nil }
                 return (player: player, points: stats.points, placementPoints: stats.placementPoints, achievementPoints: stats.achievementPoints)
             }
-            .sorted { $0.points > $1.points }
+            .sorted { standingSortsBefore(($0.player, $0.points), ($1.player, $1.points)) }
     }
     
     /// Standings options for the week picker: Tournament (overall) + Week 1..N.
