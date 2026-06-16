@@ -86,6 +86,7 @@ Authoritative requirements for behavior, data, and quality gates. See [specs/REA
 | [release/testflight.md](release/testflight.md) | TestFlight setup and beta process |
 | [release/1.0-ship-checklist.md](release/1.0-ship-checklist.md) | Pre-submission checklist |
 | [release/todo.md](release/todo.md) | Open release tasks |
+| [release/marketing-screenshots-plan.md](release/marketing-screenshots-plan.md) | Screenshot automation (future work) |
 | [ios-roadmap.md](ios-roadmap.md) | Long-term product roadmap |
 | [app-store-listing.md](app-store-listing.md) | Copy-paste App Store Connect text |
 

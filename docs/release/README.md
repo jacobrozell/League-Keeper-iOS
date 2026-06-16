@@ -11,6 +11,7 @@ Guides for shipping League Keeper to TestFlight and the App Store.
 | [testflight.md](testflight.md) | Beta distribution setup |
 | [1.0-ship-checklist.md](1.0-ship-checklist.md) | Pre-submission gate |
 | [todo.md](todo.md) | Open release tasks |
+| [marketing-screenshots-plan.md](marketing-screenshots-plan.md) | Screenshot automation (future work; Dart Buddy pattern) |
 | [ipad-layout-plan.md](../ipad-layout-plan.md) | iPad & landscape implementation checklist |
 
 ---

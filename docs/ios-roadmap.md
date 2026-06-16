@@ -79,6 +79,7 @@ See [feature-inventory.md](feature-inventory.md) for detail.
 | App Store Connect listing | Copy ready ([app-store-listing.md](app-store-listing.md)) |
 | Privacy nutrition labels | Open |
 | Submit for review | Open |
+| Screenshot automation (Dart Buddy pattern) | Planned — [release/marketing-screenshots-plan.md](release/marketing-screenshots-plan.md) |
 
 **Deliverable:** League Keeper 1.0 on the App Store.
 

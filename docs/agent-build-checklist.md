@@ -285,7 +285,7 @@ Owner decisions: English only · Firebase in Release · no iCloud · min iOS 18
 - [ ] **15.4** App Store Connect record + live URL verification
 - [ ] **15.5** Bump "Last updated" when practices change
 - [x] **15.6** App Store metadata spec — [AppStoreConnectSpec.md](../specs/AppStoreConnectSpec.md), [app-store-listing.md](app-store-listing.md)
-- [ ] **15.7** Marketing screenshots + snapshot automation
+- [ ] **15.7** Marketing screenshots + snapshot automation — [marketing-screenshots-plan.md](release/marketing-screenshots-plan.md)
 - [x] **15.8** Launch screen — `Resources/LaunchScreen.storyboard` + asset catalog
 - [ ] **15.9** CI/CD for TestFlight — [release/testflight.md](release/testflight.md)
 
