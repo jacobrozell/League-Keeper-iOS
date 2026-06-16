@@ -12,6 +12,8 @@ final class TournamentStandingsViewModel {
     var sortedPlayers: [Player] = []
     var isFinal: Bool = false
     var tournamentName: String = ""
+
+    private var roster: [Player] = []
     
     // MARK: - Initialization
     
@@ -26,7 +28,8 @@ final class TournamentStandingsViewModel {
     func refresh() {
         let descriptor = FetchDescriptor<Player>()
         let allPlayers = (try? context.fetch(descriptor)) ?? []
-        
+        roster = allPlayers
+
         // Sort by total points descending
         sortedPlayers = allPlayers.sorted { $0.totalPoints > $1.totalPoints }
         
@@ -44,5 +47,9 @@ final class TournamentStandingsViewModel {
     /// Closes tournament standings and returns to tournaments list.
     func close() {
         LeagueEngine.closeTournamentStandings(context: context)
+    }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: roster)
     }
 }

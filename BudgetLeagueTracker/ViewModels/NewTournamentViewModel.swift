@@ -110,6 +110,10 @@ final class NewTournamentViewModel {
     func deselectAll() {
         selectedPlayerIds.removeAll()
     }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: allPlayers)
+    }
     
     /// Adds a new player and selects them.
     func addPlayer() {

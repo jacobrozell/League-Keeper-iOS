@@ -8,7 +8,7 @@ struct AddPlayersView: View {
         List {
             Section("Players") {
                 ForEach(viewModel.players, id: \.id) { player in
-                    PlayerRow(name: player.name, mode: .removable {
+                    PlayerRow(name: viewModel.displayName(for: player), mode: .removable {
                         viewModel.removePlayer(player)
                     })
                 }

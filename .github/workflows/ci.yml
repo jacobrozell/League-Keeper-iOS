@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI_XCODE_PROJECT: BudgetLeagueTracker.xcodeproj
+  CI_XCODE_PROJECT: League Keeper.xcodeproj
   CI_XCODE_SCHEME: BudgetLeagueTrackerCI
   CI_PARALLEL_TESTING: NO
   CI_PACKAGES_ROOT: .packages
@@ -109,7 +109,7 @@ jobs:
         with:
           name: test-products
           path: |
-            BudgetLeagueTracker.xcodeproj
+            League Keeper.xcodeproj
             DerivedData/Build/Products
           retention-days: 1
 

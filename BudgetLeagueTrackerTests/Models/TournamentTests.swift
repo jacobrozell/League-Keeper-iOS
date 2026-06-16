@@ -145,6 +145,24 @@ struct TournamentTests {
             #expect(retrieved == ids)
         }
     }
+
+    @Suite("Attendance History JSON Encoding/Decoding")
+    @MainActor
+    struct AttendanceHistoryTests {
+
+        @Test("Set and get attendance history")
+        func setAndGet() {
+            let tournament = Tournament(name: "Test")
+            let history = [
+                WeekAttendanceSnapshot(week: 1, presentPlayerIds: ["p1"], confirmedAt: Date()),
+                WeekAttendanceSnapshot(week: 2, presentPlayerIds: ["p1", "p2"], confirmedAt: Date())
+            ]
+
+            tournament.attendanceHistory = history
+
+            #expect(tournament.attendanceHistory == history)
+        }
+    }
     
     @Suite("Weekly Points JSON Encoding/Decoding")
     @MainActor

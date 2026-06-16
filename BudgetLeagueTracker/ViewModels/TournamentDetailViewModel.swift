@@ -340,7 +340,8 @@ final class TournamentDetailViewModel {
     
     /// Winner name for completed tournaments.
     var winnerName: String? {
-        finalStandings.first?.player.name
+        guard let winner = finalStandings.first?.player else { return nil }
+        return displayName(for: winner)
     }
     
     // MARK: - Initialization
@@ -526,5 +527,9 @@ final class TournamentDetailViewModel {
     func goToAttendance() {
         setAsActiveTournament()
         showAttendance = true
+    }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: allPlayers)
     }
 }

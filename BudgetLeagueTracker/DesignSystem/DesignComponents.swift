@@ -73,12 +73,123 @@ struct BrandedSectionCard<Content: View>: View {
     }
 }
 
-private struct BrandedScreenBackground: ViewModifier {
+/// Layered brand gradient used on splash and tab screens.
+struct BrandedGradientBackground: View {
     @Environment(\.palette) private var palette
 
+    var body: some View {
+        ZStack {
+            Color(hex: palette.bg)
+                .ignoresSafeArea()
+
+            RadialGradient(
+                colors: [
+                    Color(hex: palette.gold).opacity(0.18),
+                    Color(hex: palette.bg).opacity(0),
+                ],
+                center: .top,
+                startRadius: 20,
+                endRadius: 420
+            )
+            .ignoresSafeArea()
+
+            RadialGradient(
+                colors: [
+                    Color(hex: palette.blood).opacity(0.08),
+                    Color(hex: palette.bg).opacity(0),
+                ],
+                center: .bottomTrailing,
+                startRadius: 10,
+                endRadius: 320
+            )
+            .ignoresSafeArea()
+
+            LinearGradient(
+                colors: [
+                    Color(hex: palette.bg).opacity(0),
+                    Color(hex: palette.bg2).opacity(0.55),
+                ],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+    }
+}
+
+/// Row fill for inset grouped lists on branded backgrounds.
+struct BrandedListRowBackground: View {
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Color(hex: palette.surface)
+    }
+}
+
+/// Circular primary action button anchored above the tab bar.
+struct FloatingActionButton: View {
+    let systemImage: String
+    let accessibilityLabel: String
+    var accessibilityIdentifier: String?
+    let action: () -> Void
+
+    var body: some View {
+        let button = Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(minWidth: 56, minHeight: 56)
+                .background(Color("AccentColor"), in: Circle())
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+        }
+        .accessibilityLabel(accessibilityLabel)
+
+        if let accessibilityIdentifier {
+            button.accessibilityIdentifier(accessibilityIdentifier)
+        } else {
+            button
+        }
+    }
+}
+
+private struct BrandedScreenBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        ZStack {
+            BrandedGradientBackground()
+            content
+        }
+    }
+}
+
+/// Full-width branded background with a readable content column on iPad.
+private struct BrandedAdaptiveScreen: ViewModifier {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    func body(content: Content) -> some View {
+        ZStack {
+            BrandedGradientBackground()
+            if AdaptiveLayout.usesReadableContentWidth(horizontalSizeClass: horizontalSizeClass) {
+                content
+                    .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            } else {
+                content
+            }
+        }
+    }
+}
+
+private struct BrandedListChrome: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(Color(hex: palette.bg2).ignoresSafeArea())
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+    }
+}
+
+private struct BrandedInsetListRow: ViewModifier {
+    func body(content: Content) -> some View {
+        content.listRowBackground(BrandedListRowBackground())
     }
 }
 
@@ -86,5 +197,20 @@ extension View {
     /// Warm parchment background behind grouped lists and scroll content.
     func brandedScreenBackground() -> some View {
         modifier(BrandedScreenBackground())
+    }
+
+    /// Branded background edge-to-edge with readable content width on iPad.
+    func brandedAdaptiveScreen() -> some View {
+        modifier(BrandedAdaptiveScreen())
+    }
+
+    /// Inset grouped list with scroll chrome hidden so the branded background shows through.
+    func brandedListChrome() -> some View {
+        modifier(BrandedListChrome())
+    }
+
+    /// Surface-colored row background for lists on branded screens.
+    func brandedInsetListRow() -> some View {
+        modifier(BrandedInsetListRow())
     }
 }

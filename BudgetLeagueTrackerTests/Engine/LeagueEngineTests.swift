@@ -249,6 +249,18 @@ struct LeagueEngineTests {
             #expect(player?.wins == 0)
             #expect(player?.gamesPlayed == 0)
         }
+
+        @Test("Allows duplicate names")
+        func allowsDuplicateNames() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            _ = LeagueEngine.addPlayer(context: context, name: "Alex")
+
+            let duplicate = LeagueEngine.addPlayer(context: context, name: "alex")
+
+            #expect(duplicate != nil)
+            let players = try TestHelpers.fetchAll(Player.self, from: context)
+            #expect(players.count == 2)
+        }
         
         @Test("Persists player to context")
         func persistsToContext() throws {
@@ -313,6 +325,41 @@ struct LeagueEngineTests {
             
             let tournament = try TestHelpers.fetchActiveTournament(from: context)
             #expect(tournament?.presentPlayerIds == presentIds)
+        }
+
+        @Test("Records attendance history for current week")
+        func recordsAttendanceHistory() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let presentIds = ["player1", "player2"]
+
+            LeagueEngine.confirmAttendance(
+                context: context,
+                presentIds: presentIds,
+                achievementsOnThisWeek: true
+            )
+
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)
+            #expect(tournament?.attendanceHistory.count == 1)
+            #expect(tournament?.attendanceHistory.first?.week == 1)
+            #expect(tournament?.attendanceHistory.first?.presentPlayerIds == presentIds)
+        }
+
+        @Test("Updates player name and allows duplicates")
+        func updatesPlayerName() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let player = TestFixtures.player(name: "Alice")
+            let other = TestFixtures.player(name: "Bob")
+            context.insert(player)
+            context.insert(other)
+            try context.save()
+
+            #expect(LeagueEngine.updatePlayerName(context: context, id: player.id, name: "Alicia") == nil)
+
+            let duplicate = LeagueEngine.updatePlayerName(context: context, id: player.id, name: "bob")
+            #expect(duplicate == nil)
+
+            let players = try TestHelpers.fetchAll(Player.self, from: context)
+            #expect(players.first(where: { $0.id == player.id })?.name == "bob")
         }
         
         @Test("Sets achievements flag")

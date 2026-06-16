@@ -39,8 +39,9 @@ final class AddPlayersViewModel {
     
     /// Adds a new player with the current name.
     func addPlayer() {
-        guard !newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        LeagueEngine.addPlayer(context: context, name: newPlayerName)
+        let trimmed = newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard PlayerNameValidation.validate(name: trimmed) == nil else { return }
+        guard LeagueEngine.addPlayer(context: context, name: trimmed) != nil else { return }
         newPlayerName = ""
         refresh()
     }
@@ -69,5 +70,9 @@ final class AddPlayersViewModel {
     /// Cancels and returns to tournaments list.
     func cancel() {
         LeagueEngine.setScreen(context: context, screen: .tournaments)
+    }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: players)
     }
 }

@@ -83,7 +83,7 @@ final class StatsViewModel {
     var playerPointsComparison: [PlayerPointsData] {
         players
             .sorted { $0.totalPoints > $1.totalPoints }
-            .map { PlayerPointsData(player: $0) }
+            .map { PlayerPointsData(player: $0, displayName: displayName(for: $0)) }
     }
     
     // MARK: - Chart Data: Achievement Leaderboard
@@ -99,7 +99,7 @@ final class StatsViewModel {
         AchievementStatsEngine.topAchievementEarners(players: players)
             .map { PlayerPointsData(
                 id: $0.player.id,
-                name: $0.player.name,
+                name: displayName(for: $0.player),
                 placementPoints: $0.player.placementPoints,
                 achievementPoints: $0.achievementPoints
             )}
@@ -148,7 +148,7 @@ final class StatsViewModel {
             // Update or create entry for this week (keep latest cumulative)
             weeklyData[result.week] = PerformanceTrendData(
                 id: "\(player.id)-\(result.week)",
-                playerName: player.name,
+                playerName: displayName(for: player),
                 week: result.week,
                 cumulativePoints: cumulativePoints,
                 placementPoints: cumulativePlacement,
@@ -176,7 +176,7 @@ final class StatsViewModel {
     var winsComparison: [WinsComparisonData] {
         players
             .sorted { $0.wins > $1.wins }
-            .map { WinsComparisonData(player: $0) }
+            .map { WinsComparisonData(player: $0, displayName: displayName(for: $0)) }
     }
     
     // MARK: - Chart Data: Points Breakdown
@@ -249,5 +249,63 @@ final class StatsViewModel {
     func statsSubtitle(for player: Player) -> String {
         let total = player.placementPoints + player.achievementPoints
         return "\(total) pts • \(player.wins) wins • \(player.gamesPlayed) games • \(player.tournamentsPlayed) tournaments"
+    }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: players)
+    }
+
+    func rank(for player: Player) -> Int? {
+        StatsEngine.leagueRanks(players: players)[player.id]
+    }
+
+    func recentPlacements(for player: Player) -> [Int] {
+        StatsEngine.recentPlacements(playerId: player.id, results: gameResults)
+    }
+
+    func sparklinePoints(for player: Player) -> [Double] {
+        StatsEngine.sparklinePoints(playerId: player.id, results: gameResults)
+    }
+
+    /// Players sorted by points for the Players stats segment.
+    var playersByPoints: [Player] {
+        players.sorted {
+            if $0.totalPoints != $1.totalPoints { return $0.totalPoints > $1.totalPoints }
+            return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+
+    var weeklyStandingsShareText: String {
+        let rows = weeklyStandings.enumerated().map { index, item in
+            StandingsShareFormatter.WeeklyStanding(
+                rank: index + 1,
+                name: displayName(for: item.player),
+                totalPoints: item.points.total,
+                placementPoints: item.points.placementPoints,
+                achievementPoints: item.points.achievementPoints
+            )
+        }
+        return StandingsShareFormatter.weeklyStandings(
+            tournamentName: tournamentName.isEmpty ? "League" : tournamentName,
+            week: currentWeek,
+            standings: rows
+        )
+    }
+
+    var allTimeStandingsShareText: String {
+        let rows = tournamentStandings.enumerated().map { index, item in
+            StandingsShareFormatter.TournamentStanding(
+                rank: index + 1,
+                name: displayName(for: item.player),
+                totalPoints: item.totalPoints,
+                placementPoints: item.player.placementPoints,
+                achievementPoints: item.player.achievementPoints,
+                wins: item.player.wins
+            )
+        }
+        return StandingsShareFormatter.finalStandings(
+            tournamentName: "All-Time League",
+            standings: rows
+        )
     }
 }

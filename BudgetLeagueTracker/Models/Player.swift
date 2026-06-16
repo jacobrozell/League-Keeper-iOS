@@ -10,6 +10,9 @@ final class Player {
     
     /// Player's display name
     var name: String
+
+    /// Optional nickname (e.g. last name) to distinguish same-name players.
+    var nameNote: String?
     
     /// Cumulative placement points earned across all games (all-time)
     var placementPoints: Int
@@ -38,6 +41,7 @@ final class Player {
     init(
         id: String = UUID().uuidString,
         name: String,
+        nameNote: String? = nil,
         placementPoints: Int = AppConstants.Scoring.initialPlacementPoints,
         achievementPoints: Int = AppConstants.Scoring.initialAchievementPoints,
         wins: Int = AppConstants.Scoring.initialWins,
@@ -46,6 +50,7 @@ final class Player {
     ) {
         self.id = id
         self.name = name
+        self.nameNote = nameNote
         self.placementPoints = placementPoints
         self.achievementPoints = achievementPoints
         self.wins = wins

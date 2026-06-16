@@ -4,6 +4,7 @@ import Charts
 /// Achievements view - manage achievements (add, remove, toggle always-on) with stats.
 struct AchievementsView: View {
     @Bindable var viewModel: AchievementsViewModel
+    @Environment(\.palette) private var palette
     
     var body: some View {
         Group {
@@ -14,7 +15,6 @@ struct AchievementsView: View {
             }
         }
         .navigationTitle("Achievements")
-        .brandedScreenBackground()
         .adaptiveContentWidth()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -70,7 +70,7 @@ struct AchievementsView: View {
                 achievementsListSection
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .scrollContentBackground(.hidden)
     }
     
     // MARK: - Stats Summary Section
@@ -157,7 +157,7 @@ struct AchievementsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Color(hex: palette.surface2))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
@@ -299,7 +299,7 @@ struct AchievementsView: View {
         VStack(alignment: .leading, spacing: 0) {
             content()
         }
-        .background(Color(.systemBackground))
+        .background(Color(hex: palette.surface))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
         .padding(.top, 16)

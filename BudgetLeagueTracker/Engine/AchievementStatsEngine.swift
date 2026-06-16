@@ -65,10 +65,10 @@ enum AchievementStatsEngine {
         limit: Int = 3
     ) -> [(playerName: String, count: Int)] {
         let playerCounts = earnedByPlayer(achievementId: achievementId, results: results)
-        let playerNameMap = Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0.name) })
-        
+        let displayNameMap = PlayerDisambiguation.displayNames(for: players)
+
         return playerCounts
-            .map { (playerName: playerNameMap[$0.key] ?? "Unknown", count: $0.value) }
+            .map { (playerName: displayNameMap[$0.key] ?? "Unknown", count: $0.value) }
             .sorted { $0.count > $1.count }
             .prefix(limit)
             .map { $0 }

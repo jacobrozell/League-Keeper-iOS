@@ -23,10 +23,11 @@ struct SettingsView: View {
         List {
             Section {
                 HStack(spacing: 16) {
-                    BrandCrest(size: 56)
+                    BrandCrest(size: 56, showsShadow: false)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(appDisplayName)
                             .font(.system(.title3, design: .serif).weight(.bold))
+                            .foregroundStyle(Color(hex: palette.ink))
                         Text(AppInfo.tagline)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color(hex: palette.gold))
@@ -34,6 +35,7 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 4)
                 .accessibilityElement(children: .combine)
+                .brandedInsetListRow()
             }
 
             Section {
@@ -46,6 +48,7 @@ struct SettingsView: View {
                     }
                 }
                 .accessibilityIdentifier("settingsThemePicker")
+                .brandedInsetListRow()
             } header: {
                 Text("Appearance")
             }
@@ -56,6 +59,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
+                .brandedInsetListRow()
             }
 
             if let onViewOnboarding {
@@ -66,16 +70,25 @@ struct SettingsView: View {
                         Label("View welcome tour", systemImage: "book.pages")
                     }
                     .accessibilityIdentifier("settings_viewOnboardingButton")
+                    .brandedInsetListRow()
 
                     Link(destination: AppInfo.supportURL) {
                         Label("Support", systemImage: "questionmark.circle")
                     }
                     .accessibilityIdentifier("settings_supportLink")
+                    .brandedInsetListRow()
 
                     Link(destination: AppInfo.privacyURL) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
                     .accessibilityIdentifier("settings_privacyLink")
+                    .brandedInsetListRow()
+
+                    Link(destination: AppInfo.buyMeACoffeeURL) {
+                        Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
+                    }
+                    .accessibilityIdentifier("settings_buyMeACoffeeLink")
+                    .brandedInsetListRow()
                 } header: {
                     Text("Help")
                 }
@@ -85,11 +98,19 @@ struct SettingsView: View {
                         Label("Support", systemImage: "questionmark.circle")
                     }
                     .accessibilityIdentifier("settings_supportLink")
+                    .brandedInsetListRow()
 
                     Link(destination: AppInfo.privacyURL) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
                     .accessibilityIdentifier("settings_privacyLink")
+                    .brandedInsetListRow()
+
+                    Link(destination: AppInfo.buyMeACoffeeURL) {
+                        Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
+                    }
+                    .accessibilityIdentifier("settings_buyMeACoffeeLink")
+                    .brandedInsetListRow()
                 } header: {
                     Text("Help")
                 }
@@ -97,14 +118,17 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("App", value: appDisplayName)
+                    .brandedInsetListRow()
                 LabeledContent("Version", value: appVersion)
+                    .brandedInsetListRow()
                 LabeledContent("Build", value: buildNumber)
+                    .brandedInsetListRow()
             } header: {
                 Text("About")
             }
         }
+        .brandedListChrome()
         .navigationTitle("Settings")
-        .brandedScreenBackground()
         .adaptiveContentWidth()
     }
 }

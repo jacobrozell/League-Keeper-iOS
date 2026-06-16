@@ -78,6 +78,7 @@ private struct AdaptiveEmptyStateLayout: ViewModifier {
 
 extension View {
     /// Centers content in a readable column on iPad (regular horizontal size class).
+    /// Pair with a full-width `brandedScreenBackground()` on an ancestor, or use `brandedAdaptiveScreen()`.
     func adaptiveContentWidth() -> some View {
         modifier(AdaptiveContentWidth())
     }

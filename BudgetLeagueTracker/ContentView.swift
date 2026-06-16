@@ -180,6 +180,9 @@ struct ContentView: View {
     private var statsStack: some View {
         NavigationStack {
             StatsView(viewModel: StatsViewModel(context: modelContext))
+                .navigationDestination(for: Player.self) { player in
+                    PlayerDetailView(viewModel: PlayerDetailViewModel(context: modelContext, player: player))
+                }
         }
         .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
     }

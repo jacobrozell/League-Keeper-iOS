@@ -123,11 +123,11 @@ enum LeagueEngine {
     ///   - name: The player's name (will be trimmed)
     /// - Returns: The created player, or nil if name was empty
     @discardableResult
-    static func addPlayer(context: ModelContext, name: String) -> Player? {
+    static func addPlayer(context: ModelContext, name: String, nameNote: String? = nil) -> Player? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return nil }
-        
-        let player = Player(name: trimmedName)
+        guard PlayerNameValidation.validate(name: trimmedName) == nil else { return nil }
+
+        let player = Player(name: trimmedName, nameNote: PlayerDisambiguation.sanitizedNote(nameNote))
         context.insert(player)
         try? context.save()
         return player
@@ -144,6 +144,44 @@ enum LeagueEngine {
             context.delete(player)
             try? context.save()
         }
+    }
+
+    /// Updates a player's display name and optional distinguishing note.
+    /// - Returns: `nil` on success, or an error message.
+    @discardableResult
+    static func updatePlayer(
+        context: ModelContext,
+        id: String,
+        name: String,
+        nameNote: String?
+    ) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let error = PlayerNameValidation.validate(name: trimmed) {
+            return error
+        }
+
+        let descriptor = FetchDescriptor<Player>()
+        guard let players = try? context.fetch(descriptor),
+              let player = players.first(where: { $0.id == id }) else {
+            return "Player not found."
+        }
+
+        player.name = trimmed
+        player.nameNote = PlayerDisambiguation.sanitizedNote(nameNote)
+        try? context.save()
+        return nil
+    }
+
+    /// Updates a player's display name.
+    /// - Returns: `nil` on success, or an error message.
+    @discardableResult
+    static func updatePlayerName(context: ModelContext, id: String, name: String) -> String? {
+        let descriptor = FetchDescriptor<Player>()
+        guard let players = try? context.fetch(descriptor),
+              let player = players.first(where: { $0.id == id }) else {
+            return "Player not found."
+        }
+        return updatePlayer(context: context, id: id, name: name, nameNote: player.nameNote)
     }
     
     // MARK: - Attendance
@@ -163,6 +201,12 @@ enum LeagueEngine {
         tournament.presentPlayerIds = presentIds
         tournament.achievementsOnThisWeek = achievementsOnThisWeek
         tournament.currentRound = AppConstants.League.defaultCurrentRound
+
+        recordAttendanceSnapshot(
+            tournament: tournament,
+            week: tournament.currentWeek,
+            presentIds: presentIds
+        )
         
         // Reset weekly points for all present players
         var weeklyPoints: [String: WeeklyPlayerPoints] = [:]
@@ -989,5 +1033,25 @@ enum LeagueEngine {
         let descriptor = FetchDescriptor<Tournament>()
         let allTournaments = (try? context.fetch(descriptor)) ?? []
         return allTournaments.first { $0.id == id }
+    }
+
+    /// Records or updates attendance for a tournament week.
+    static func recordAttendanceSnapshot(
+        tournament: Tournament,
+        week: Int,
+        presentIds: [String]
+    ) {
+        var history = tournament.attendanceHistory
+        let snapshot = WeekAttendanceSnapshot(
+            week: week,
+            presentPlayerIds: presentIds,
+            confirmedAt: Date()
+        )
+        if let index = history.firstIndex(where: { $0.week == week }) {
+            history[index] = snapshot
+        } else {
+            history.append(snapshot)
+        }
+        tournament.attendanceHistory = history.sorted { $0.week < $1.week }
     }
 }

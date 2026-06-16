@@ -10,7 +10,7 @@ struct TournamentStandingsView: View {
         let rows = viewModel.sortedPlayers.enumerated().map { index, player in
             StandingsShareFormatter.TournamentStanding(
                 rank: index + 1,
-                name: player.name,
+                name: viewModel.displayName(for: player),
                 totalPoints: player.totalPoints,
                 placementPoints: player.placementPoints,
                 achievementPoints: player.achievementPoints,
@@ -33,7 +33,7 @@ struct TournamentStandingsView: View {
                         ForEach(Array(viewModel.sortedPlayers.enumerated()), id: \.element.id) { index, player in
                             StandingsRow(
                                 rank: index + 1,
-                                name: player.name,
+                                name: viewModel.displayName(for: player),
                                 totalPoints: player.totalPoints,
                                 placementPoints: player.placementPoints,
                                 achievementPoints: player.achievementPoints,

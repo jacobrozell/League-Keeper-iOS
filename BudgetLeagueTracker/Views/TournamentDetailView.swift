@@ -80,6 +80,7 @@ struct TournamentDetailView: View {
                 week: viewModel.completedWeekNumber ?? max(viewModel.currentWeek - 1, 1),
                 standings: viewModel.completedWeekStandings,
                 nextWeek: viewModel.currentWeek,
+                displayName: viewModel.displayName(for:),
                 onContinue: { viewModel.dismissWeekCompleteSheet() }
             )
         }
@@ -324,7 +325,7 @@ struct TournamentDetailView: View {
                     ForEach(Array(viewModel.standingsForDisplay.enumerated()), id: \.element.player.id) { index, standing in
                         StandingsRow(
                             rank: index + 1,
-                            name: standing.player.name,
+                            name: viewModel.displayName(for: standing.player),
                             totalPoints: standing.totalPoints,
                             placementPoints: standing.placementPoints,
                             achievementPoints: standing.achievementPoints,
@@ -389,13 +390,13 @@ struct TournamentDetailView: View {
                     Text("\(index + 1).")
                         .foregroundStyle(.secondary)
                         .frame(width: 24, alignment: .leading)
-                    Text(item.player.name)
+                    Text(viewModel.displayName(for: item.player))
                     Spacer()
                     Text("\(item.points.total) pts")
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Rank \(index + 1), \(item.player.name), \(item.points.total) points")
+                .accessibilityLabel("Rank \(index + 1), \(viewModel.displayName(for: item.player)), \(item.points.total) points")
             }
 
             if viewModel.weeklyStandings.filter({ $0.points.total > 0 }).count > viewModel.inlineWeeklyStandings.count {
@@ -567,12 +568,12 @@ struct TournamentDetailView: View {
     private func podContent(pod: [Player]) -> some View {
         ForEach(pod, id: \.id) { player in
             VStack(alignment: .leading, spacing: 8) {
-                Text(player.name)
+                Text(viewModel.displayName(for: player))
                     .font(.headline)
                     .accessibilityHidden(true)
                 
                 PlacementPicker(
-                    playerName: player.name,
+                    playerName: viewModel.displayName(for: player),
                     selection: Binding(
                         get: { viewModel.placement(for: player.id) },
                         set: { viewModel.setPlacement(for: player.id, place: $0) }
@@ -668,7 +669,7 @@ struct TournamentDetailView: View {
                     ForEach(Array(viewModel.standingsForDisplay.enumerated()), id: \.element.player.id) { index, standing in
                         StandingsRow(
                             rank: index + 1,
-                            name: standing.player.name,
+                            name: viewModel.displayName(for: standing.player),
                             totalPoints: standing.totalPoints,
                             placementPoints: standing.placementPoints,
                             achievementPoints: standing.achievementPoints,

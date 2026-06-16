@@ -548,4 +548,99 @@ struct StatsEngineTests {
             #expect(results.isEmpty)
         }
     }
+
+    @Suite("Player history helpers")
+    @MainActor
+    struct PlayerHistoryHelperTests {
+
+        @Test("recentRoundSummaries returns newest rounds first")
+        func recentRoundSummariesOrder() {
+            let tournament = TestFixtures.tournament(name: "League")
+            let player = TestFixtures.player(name: "Alex")
+            let older = TestFixtures.gameResult(
+                tournamentId: tournament.id,
+                week: 1,
+                round: 1,
+                playerId: player.id,
+                placement: 3
+            )
+            let newer = TestFixtures.gameResult(
+                tournamentId: tournament.id,
+                week: 2,
+                round: 1,
+                playerId: player.id,
+                placement: 1
+            )
+
+            let summaries = StatsEngine.recentRoundSummaries(
+                playerId: player.id,
+                results: [older, newer],
+                tournaments: [tournament]
+            )
+
+            #expect(summaries.count == 2)
+            #expect(summaries.first?.week == 2)
+            #expect(summaries.first?.placementLabel == "1st")
+        }
+
+        @Test("attendanceSummaries uses attendance history")
+        func attendanceSummariesFromHistory() {
+            let tournament = TestFixtures.tournament(name: "League")
+            tournament.attendanceHistory = [
+                WeekAttendanceSnapshot(week: 1, presentPlayerIds: ["p1"], confirmedAt: Date()),
+                WeekAttendanceSnapshot(week: 2, presentPlayerIds: ["p2"], confirmedAt: Date())
+            ]
+
+            let summaries = StatsEngine.attendanceSummaries(
+                playerId: "p1",
+                tournaments: [tournament],
+                results: []
+            )
+
+            #expect(summaries.count == 1)
+            #expect(summaries.first?.weeksPresent == 1)
+            #expect(summaries.first?.weeksTotal == 2)
+        }
+
+        @Test("leagueRanks orders by total points")
+        func leagueRanks() {
+            let high = TestFixtures.player(name: "High")
+            high.placementPoints = 50
+            let low = TestFixtures.player(name: "Low")
+            low.placementPoints = 5
+
+            let ranks = StatsEngine.leagueRanks(players: [low, high])
+
+            #expect(ranks[high.id] == 1)
+            #expect(ranks[low.id] == 2)
+        }
+
+        @Test("recentPlacements returns chronological placements")
+        func recentPlacements() {
+            let player = TestFixtures.player(name: "Alex")
+            let results = [
+                TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 1, playerId: player.id, placement: 4),
+                TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 2, playerId: player.id, placement: 1)
+            ]
+
+            let placements = StatsEngine.recentPlacements(playerId: player.id, results: results)
+
+            #expect(placements == [4, 1])
+        }
+
+        @Test("playerFormHighlights detects win streak")
+        func playerFormHighlights() {
+            let player = TestFixtures.player(name: "Alex")
+            let results = [
+                TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 1, playerId: player.id, placement: 2),
+                TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 2, playerId: player.id, placement: 1),
+                TestFixtures.gameResult(tournamentId: "t1", week: 2, round: 1, playerId: player.id, placement: 1)
+            ]
+
+            let highlights = StatsEngine.playerFormHighlights(playerId: player.id, results: results)
+
+            #expect(highlights.currentWinStreak == 2)
+            #expect(highlights.displayText == "2 wins in a row")
+        }
+    }
 }

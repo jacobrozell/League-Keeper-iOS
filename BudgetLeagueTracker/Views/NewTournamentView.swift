@@ -34,7 +34,7 @@ struct NewTournamentView: View {
             Section {
                 ForEach(viewModel.allPlayers, id: \.id) { player in
                     PlayerRow(
-                        name: player.name,
+                        name: viewModel.displayName(for: player),
                         mode: .toggleable(
                             isOn: Binding(
                                 get: { viewModel.isSelected(player) },

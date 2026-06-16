@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Generate static launch-screen assets that mirror SplashView."""
+"""Generate App Icon, CrestLogo, and static launch-screen assets.
+
+Source of truth for crest artwork: Scripts/assets/crest-mark.png (transparent PNG).
+On first run, that file is extracted from legacy CrestLogo/AppIcon rasters if missing.
+
+Regenerate everything:
+    python3 Scripts/generate-launch-assets.py
+"""
 
 from __future__ import annotations
 
@@ -13,6 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "Assets.xcassets"
 APP_ICON = ASSETS / "AppIcon.appiconset" / "AppIcon-1024.png"
 CREST_DIR = ASSETS / "CrestLogo.imageset"
+CREST_SOURCE = ROOT / "Scripts" / "assets" / "crest-mark.png"
+APP_ICON_PALETTE = "dark"
 
 PALETTES = {
     "light": {
@@ -179,7 +188,7 @@ def write_color(name: str, light: str, dark: str) -> None:
 
 
 def make_app_icon(crest: Image.Image, palette: dict[str, tuple[int, int, int]]) -> Image.Image:
-    """1024×1024 App Store icon — brand backdrop with centered crest hero."""
+    """1024×1024 App Store icon — dark brand field with centered circular crest hero."""
     size = 1024
     base = Image.new("RGB", (size, size), palette["bg"])
     hero_diameter = int(size * 0.82)
@@ -190,34 +199,126 @@ def make_app_icon(crest: Image.Image, palette: dict[str, tuple[int, int, int]]) 
     return composed.convert("RGB")
 
 
-def load_crest_source() -> Image.Image:
-    """Prefer largest CrestLogo raster; fall back to existing app icon."""
+def make_crest_logo_image(
+    edge: int,
+    palette: dict[str, tuple[int, int, int]],
+    crest: Image.Image,
+) -> Image.Image:
+    """Square CrestLogo raster — dark field with circular hero mark for in-app UI."""
+    base = Image.new("RGB", (edge, edge), palette["bg"])
+    hero_diameter = int(edge * 0.92)
+    hero = make_crest_hero(hero_diameter, palette, crest)
+    offset = int((edge - hero_diameter) / 2)
+    composed = base.convert("RGBA")
+    composed.alpha_composite(hero, (offset, offset))
+    return composed.convert("RGB")
+
+
+def color_saturation(red: int, green: int, blue: int) -> float:
+    peak = max(red, green, blue)
+    floor = min(red, green, blue)
+    if peak == 0:
+        return 0.0
+    return (peak - floor) / peak
+
+
+def clean_crest_artwork(image: Image.Image) -> Image.Image:
+    """Drop neutral frame pixels left from the legacy square crest raster."""
+    cleaned = image.convert("RGBA").copy()
+    pixels = cleaned.load()
+    width, height = cleaned.size
+
+    for y in range(height):
+        for x in range(width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha < 10:
+                continue
+
+            spread = max(red, green, blue) - min(red, green, blue)
+            luminance = (red + green + blue) / 3
+            saturation = color_saturation(red, green, blue)
+            is_artwork = (
+                saturation > 0.18
+                or (red > 170 and green > 120 and blue < 130)  # gold trophy / diamonds
+                or (green > 90 and blue > 90 and red < 120)  # teal cards
+                or (max(red, green, blue) < 50 and alpha > 200)  # dark linework
+            )
+            is_legacy_frame = spread < 35 and 55 < luminance < 140
+
+            if not is_artwork or is_legacy_frame:
+                pixels[x, y] = (0, 0, 0, 0)
+
+    return cleaned
+
+
+def extract_crest_source(image: Image.Image) -> Image.Image:
+    """Isolate transparent crest artwork from a legacy composed raster."""
+    im = image.convert("RGBA")
+    width, height = im.size
+    crest_size = int(min(width, height) * 0.68)
+    left = (width - crest_size) // 2
+    top = (height - crest_size) // 2
+    cropped = im.crop((left, top, left + crest_size, top + crest_size)).copy()
+    pixels = cropped.load()
+    for y in range(crest_size):
+        for x in range(crest_size):
+            red, green, blue, _alpha = pixels[x, y]
+            if red > 215 and green > 210 and blue > 195:
+                pixels[x, y] = (0, 0, 0, 0)
+            elif red > 190 and green > 160 and blue > 120 and red >= green >= blue:
+                pixels[x, y] = (0, 0, 0, 0)
+            elif max(red, green, blue) < 60:
+                pixels[x, y] = (0, 0, 0, 0)
+    return clean_crest_artwork(cropped)
+
+
+def load_legacy_composed_raster() -> Image.Image | None:
+    """Load an older composed crest/app icon raster for one-time extraction."""
     crest_path = CREST_DIR / "CrestLogo@3x.png"
     if crest_path.exists():
         return Image.open(crest_path).convert("RGBA")
     if APP_ICON.exists():
         return Image.open(APP_ICON).convert("RGBA")
-    raise FileNotFoundError("Need CrestLogo@3x.png or AppIcon-1024.png to generate assets")
+    return None
+
+
+def load_crest_source() -> Image.Image:
+    """Load transparent crest artwork used by hero, app icon, and CrestLogo."""
+    if CREST_SOURCE.exists():
+        crest = Image.open(CREST_SOURCE).convert("RGBA")
+    else:
+        legacy = load_legacy_composed_raster()
+        if legacy is None:
+            raise FileNotFoundError(
+                f"Need {CREST_SOURCE} or a legacy CrestLogo/AppIcon raster to extract crest artwork"
+            )
+        crest = extract_crest_source(legacy)
+
+    crest = clean_crest_artwork(crest)
+    CREST_SOURCE.parent.mkdir(parents=True, exist_ok=True)
+    crest.save(CREST_SOURCE, format="PNG", optimize=True)
+    return crest
 
 
 def ensure_app_icon(crest: Image.Image) -> Image.Image:
-    """Write AppIcon-1024.png when missing or when crest is the source of truth."""
+    """Write AppIcon-1024.png from crest artwork and the brand icon palette."""
     APP_ICON.parent.mkdir(parents=True, exist_ok=True)
-    icon = make_app_icon(crest, PALETTES["light"])
+    palette = PALETTES[APP_ICON_PALETTE]
+    icon = make_app_icon(crest, palette)
     icon.save(APP_ICON, format="PNG", optimize=True)
     return icon
 
 
-def write_crest_logo(source: Image.Image | None = None) -> Image.Image:
-    """Build CrestLogo.imageset from the app icon for splash + launch parity."""
-    source = (source or Image.open(APP_ICON)).convert("RGBA")
+def write_crest_logo(crest: Image.Image) -> None:
+    """Build CrestLogo.imageset — circular hero mark, not a shrunken app icon."""
+    palette = PALETTES[APP_ICON_PALETTE]
     CREST_DIR.mkdir(parents=True, exist_ok=True)
 
     filenames: dict[str, str] = {}
     for scale, edge in CREST_SIZES.items():
         filename = "CrestLogo.png" if scale == "1x" else f"CrestLogo@{scale}.png"
-        resized = source.resize((edge, edge), Image.Resampling.LANCZOS)
-        resized.save(CREST_DIR / filename, format="PNG", optimize=True)
+        image = make_crest_logo_image(edge, palette, crest)
+        image.save(CREST_DIR / filename, format="PNG", optimize=True)
         filenames[scale] = filename
 
     contents = {
@@ -228,13 +329,12 @@ def write_crest_logo(source: Image.Image | None = None) -> Image.Image:
         "info": {"author": "xcode", "version": 1},
     }
     (CREST_DIR / "Contents.json").write_text(json.dumps(contents, indent=2) + "\n")
-    return source
 
 
 def main() -> None:
     crest_source = load_crest_source()
     ensure_app_icon(crest_source)
-    crest_source = write_crest_logo()
+    write_crest_logo(crest_source)
 
     backdrop_appearances: dict[str, dict[str, str]] = {"default": {}, "dark": {}}
     for scale, size in SIZES.items():

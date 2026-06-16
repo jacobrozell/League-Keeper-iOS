@@ -85,37 +85,37 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            TabView(selection: $page) {
-                ForEach(pages) { item in
-                    pageContent(item)
-                        .tag(item.id)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: page)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                footer
-                    .padding(.horizontal, widePageLayout ? 32 : 24)
-                    .padding(.top, compactHeight ? 8 : 12)
-                    .padding(.bottom, compactHeight ? 10 : 16)
-                    .background {
-                        onboardingBackground
-                            .ignoresSafeArea(edges: .bottom)
-                    }
-            }
-            .background { onboardingBackground.ignoresSafeArea() }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if page < pages.count - 1 {
-                        Button("Skip") { onComplete(.dismiss) }
-                            .accessibilityIdentifier("onboardingSkip")
+        ZStack {
+            onboardingBackground
+                .ignoresSafeArea()
+
+            NavigationStack {
+                TabView(selection: $page) {
+                    ForEach(pages) { item in
+                        pageContent(item)
+                            .tag(item.id)
                     }
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: page)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    footer
+                        .padding(.horizontal, widePageLayout ? 32 : 24)
+                        .padding(.top, compactHeight ? 8 : 12)
+                        .padding(.bottom, compactHeight ? 10 : 16)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        if page < pages.count - 1 {
+                            Button("Skip") { onComplete(.dismiss) }
+                                .accessibilityIdentifier("onboardingSkip")
+                        }
+                    }
+                }
             }
+            .accessibilityIdentifier("onboardingScreen")
         }
-        .accessibilityIdentifier("onboardingScreen")
-        .adaptiveContentWidth()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -234,7 +234,7 @@ struct OnboardingView: View {
                 Circle()
                     .strokeBorder(Color(hex: palette.gold).opacity(0.28), lineWidth: 1)
                     .frame(width: effectiveHeroDiameter, height: effectiveHeroDiameter)
-                BrandCrest(size: effectiveHeroDiameter * 0.72)
+                BrandCrest(size: effectiveHeroDiameter * 0.72, clipStyle: .circle)
             }
             .accessibilityLabel(AppInfo.displayName)
         } else {
@@ -377,6 +377,11 @@ struct OnboardingView: View {
 #Preview("Default") {
     OnboardingView { _ in }
         .preferredColorScheme(.dark)
+}
+
+#Preview("iPad", traits: .landscapeLeft) {
+    OnboardingView { _ in }
+        .previewDevice(PreviewDevice(rawValue: "iPad Pro 11-inch (M4)"))
 }
 
 #Preview("Landscape", traits: .landscapeLeft) {

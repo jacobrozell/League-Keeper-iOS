@@ -21,9 +21,9 @@ struct PlayerPointsData: Identifiable {
         self.achievementPoints = achievementPoints
     }
     
-    init(player: Player) {
+    init(player: Player, displayName: String? = nil) {
         self.id = player.id
-        self.name = player.name
+        self.name = displayName ?? player.name
         self.placementPoints = player.placementPoints
         self.achievementPoints = player.achievementPoints
     }
@@ -180,9 +180,9 @@ struct WinsComparisonData: Identifiable {
         self.gamesPlayed = gamesPlayed
     }
     
-    init(player: Player) {
+    init(player: Player, displayName: String? = nil) {
         self.id = player.id
-        self.playerName = player.name
+        self.playerName = displayName ?? player.name
         self.wins = player.wins
         self.gamesPlayed = player.gamesPlayed
     }

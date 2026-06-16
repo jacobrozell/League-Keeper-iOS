@@ -23,7 +23,7 @@ struct PlayersViewModelTests {
             #expect(viewModel.players.count == 4)
         }
         
-        @Test("Players are sorted by name")
+        @Test("Players are sorted by name by default fetch order")
         func playersSortedByName() throws {
             let context = try TestHelpers.bootstrappedContext()
             
@@ -123,11 +123,15 @@ struct PlayersViewModelTests {
             var viewModel = PlayersViewModel(context: context)
             
             viewModel.newPlayerName = "New Player"
-            viewModel.addPlayer()
+            let result = viewModel.addPlayer()
             
+            if case .added(let player) = result {
+                #expect(player.name == "New Player")
+            } else {
+                Issue.record("Expected added player")
+            }
             #expect(viewModel.newPlayerName == "")
             #expect(viewModel.players.count == 1)
-            #expect(viewModel.players.first?.name == "New Player")
         }
         
         @Test("Does not create player with empty name")
@@ -136,8 +140,13 @@ struct PlayersViewModelTests {
             var viewModel = PlayersViewModel(context: context)
             
             viewModel.newPlayerName = ""
-            viewModel.addPlayer()
+            let result = viewModel.addPlayer()
             
+            if case .validationError = result {
+                #expect(Bool(true))
+            } else {
+                Issue.record("Expected validation error")
+            }
             #expect(viewModel.players.isEmpty)
         }
         
@@ -147,9 +156,49 @@ struct PlayersViewModelTests {
             var viewModel = PlayersViewModel(context: context)
             
             viewModel.newPlayerName = "   "
-            viewModel.addPlayer()
+            let result = viewModel.addPlayer()
             
+            if case .validationError = result {
+                #expect(Bool(true))
+            } else {
+                Issue.record("Expected validation error")
+            }
             #expect(viewModel.players.isEmpty)
+        }
+
+        @Test("Allows duplicate player name")
+        func allowsDuplicateName() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let existing = Player(id: "player-a", name: "Alex")
+            context.insert(existing)
+            try context.save()
+
+            var viewModel = PlayersViewModel(context: context)
+            viewModel.newPlayerName = "alex"
+            let result = viewModel.addPlayer()
+
+            if case .added = result {
+                #expect(viewModel.players.count == 2)
+                let labels = viewModel.players.map { viewModel.displayName(for: $0) }
+                #expect(Set(labels).count == 2)
+                #expect(labels.allSatisfy { $0.contains("(") })
+            } else {
+                Issue.record("Expected player to be added")
+            }
+        }
+
+        @Test("Shows duplicate name hint without nickname")
+        func showsDuplicateHint() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            context.insert(TestFixtures.player(name: "Devan"))
+            try context.save()
+
+            var viewModel = PlayersViewModel(context: context)
+            viewModel.newPlayerName = "Devan"
+
+            #expect(viewModel.duplicateNameHint?.contains("nickname") == true)
+            viewModel.newPlayerNote = "Smith"
+            #expect(viewModel.duplicateNameHint == nil)
         }
     }
     
@@ -191,6 +240,60 @@ struct PlayersViewModelTests {
             #expect(subtitle.contains("0 pts"))
             #expect(subtitle.contains("0 games"))
             #expect(subtitle.contains("0 wins"))
+        }
+    }
+
+    @Suite("search and sort")
+    @MainActor
+    struct SearchAndSortTests {
+
+        @Test("Filters players by search text")
+        func filtersBySearch() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            TestFixtures.insertStandardPlayers(into: context)
+            try context.save()
+
+            var viewModel = PlayersViewModel(context: context)
+            viewModel.searchText = "alice"
+
+            #expect(viewModel.filteredPlayers.count == 1)
+            #expect(viewModel.filteredPlayers.first?.name == "Alice")
+        }
+
+        @Test("Sorts players by points")
+        func sortsByPoints() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let low = TestFixtures.player(name: "Low")
+            low.placementPoints = 5
+            let high = TestFixtures.player(name: "High")
+            high.placementPoints = 50
+            context.insert(low)
+            context.insert(high)
+            try context.save()
+
+            var viewModel = PlayersViewModel(context: context)
+            viewModel.sortOption = .points
+
+            #expect(viewModel.filteredPlayers.first?.name == "High")
+        }
+
+        @Test("Returns league rank by points")
+        func returnsRank() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let first = TestFixtures.player(name: "First")
+            first.placementPoints = 100
+            let second = TestFixtures.player(name: "Second")
+            second.placementPoints = 10
+            context.insert(first)
+            context.insert(second)
+            try context.save()
+
+            let viewModel = PlayersViewModel(context: context)
+
+            #expect(viewModel.rank(for: first) == 1)
+            #expect(viewModel.rank(for: second) == 2)
         }
     }
 }

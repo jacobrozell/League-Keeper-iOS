@@ -2,16 +2,37 @@ import SwiftUI
 
 /// App crest mark — shared by launch screen, splash, and settings.
 struct BrandCrest: View {
+    enum ClipStyle {
+        /// iOS-style squircle — settings and other list contexts.
+        case roundedRect
+        /// Fills a circular frame — splash and onboarding hero.
+        case circle
+    }
+
     var size: CGFloat = 160
+    var showsShadow: Bool = true
+    var clipStyle: ClipStyle = .roundedRect
 
     var body: some View {
-        Image("CrestLogo")
+        let image = Image("CrestLogo")
             .resizable()
-            .aspectRatio(contentMode: .fit)
+            .aspectRatio(contentMode: clipStyle == .circle ? .fill : .fit)
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
-            .shadow(color: .black.opacity(0.14), radius: size * 0.06, y: size * 0.03)
-            .accessibilityLabel("\(AppInfo.displayName) crest")
+
+        Group {
+            switch clipStyle {
+            case .roundedRect:
+                image.clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
+            case .circle:
+                image.clipShape(Circle())
+            }
+        }
+        .shadow(
+            color: showsShadow ? .black.opacity(0.14) : .clear,
+            radius: showsShadow ? size * 0.06 : 0,
+            y: showsShadow ? size * 0.03 : 0
+        )
+        .accessibilityLabel("\(AppInfo.displayName) crest")
     }
 }
 

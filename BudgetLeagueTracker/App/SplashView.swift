@@ -46,42 +46,7 @@ struct SplashView: View {
     }
 
     private var splashBackground: some View {
-        ZStack {
-            Color(hex: palette.bg)
-                .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color(hex: palette.gold).opacity(0.18),
-                    Color(hex: palette.bg).opacity(0),
-                ],
-                center: .top,
-                startRadius: 20,
-                endRadius: 420
-            )
-            .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color(hex: palette.blood).opacity(0.08),
-                    Color(hex: palette.bg).opacity(0),
-                ],
-                center: .bottomTrailing,
-                startRadius: 10,
-                endRadius: 320
-            )
-            .ignoresSafeArea()
-
-            LinearGradient(
-                colors: [
-                    Color(hex: palette.bg).opacity(0),
-                    Color(hex: palette.bg2).opacity(0.55),
-                ],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        }
+        BrandedGradientBackground()
     }
 
     private var crestHero: some View {
@@ -103,7 +68,7 @@ struct SplashView: View {
                 .strokeBorder(Color(hex: palette.gold).opacity(0.12), lineWidth: 8)
                 .frame(width: crestDiameter * 1.18, height: crestDiameter * 1.18)
 
-            BrandCrest(size: crestDiameter * 0.68)
+            BrandCrest(size: crestDiameter * 0.68, clipStyle: .circle)
         }
         .accessibilityLabel(AppInfo.displayName)
     }

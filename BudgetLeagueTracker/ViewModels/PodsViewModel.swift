@@ -166,4 +166,8 @@ final class PodsViewModel {
         pods = []
         refresh()
     }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: allPlayers)
+    }
 }

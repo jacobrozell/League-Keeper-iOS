@@ -23,7 +23,7 @@ struct LabeledStepper: View {
             
             Spacer()
             
-            HStack(spacing: 0) {
+            HStack(spacing: 10) {
                 Button {
                     if canDecrement {
                         value -= 1
@@ -31,7 +31,8 @@ struct LabeledStepper: View {
                 } label: {
                     Image(systemName: "minus")
                         .font(.body.weight(.semibold))
-                        .frame(width: AppConstants.UI.minTouchTargetHeight, height: AppConstants.UI.minTouchTargetHeight)
+                        .padding(10)
+                        .frame(minWidth: AppConstants.UI.minTouchTargetHeight, minHeight: AppConstants.UI.minTouchTargetHeight)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.bordered)
@@ -45,7 +46,8 @@ struct LabeledStepper: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.body.weight(.semibold))
-                        .frame(width: AppConstants.UI.minTouchTargetHeight, height: AppConstants.UI.minTouchTargetHeight)
+                        .padding(10)
+                        .frame(minWidth: AppConstants.UI.minTouchTargetHeight, minHeight: AppConstants.UI.minTouchTargetHeight)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.bordered)

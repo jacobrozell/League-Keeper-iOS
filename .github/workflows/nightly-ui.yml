@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  CI_XCODE_PROJECT: BudgetLeagueTracker.xcodeproj
+  CI_XCODE_PROJECT: League Keeper.xcodeproj
   CI_XCODE_SCHEME: BudgetLeagueTrackerUI
   CI_PARALLEL_TESTING: NO
   CI_PACKAGES_ROOT: .packages

@@ -55,6 +55,9 @@ final class Tournament: Identifiable {
     /// JSON-encoded array of active achievement IDs for the current week
     var activeAchievementIdsData: Data?
     
+    /// JSON-encoded array of weekly attendance snapshots
+    var attendanceHistoryData: Data?
+
     /// JSON-encoded array of pod history snapshots for undo functionality
     var podHistoryData: Data?
     
@@ -142,6 +145,19 @@ final class Tournament: Identifiable {
         }
     }
     
+    // MARK: - Attendance History
+
+    /// Decodes and returns weekly attendance snapshots
+    var attendanceHistory: [WeekAttendanceSnapshot] {
+        get {
+            guard let data = attendanceHistoryData else { return [] }
+            return (try? JSONDecoder().decode([WeekAttendanceSnapshot].self, from: data)) ?? []
+        }
+        set {
+            attendanceHistoryData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
     // MARK: - Pod History
     
     /// Decodes and returns the pod history snapshots for undo

@@ -96,7 +96,7 @@ struct PodsView: View {
                             Text("\(index + 1).")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 24, alignment: .leading)
-                            Text(item.player.name)
+                            Text(viewModel.displayName(for: item.player))
                             Spacer()
                             Text("\(item.points.total) pts")
                                 .foregroundStyle(.secondary)
@@ -119,11 +119,11 @@ struct PodsView: View {
     private func podContent(pod: [Player]) -> some View {
         ForEach(pod, id: \.id) { player in
             VStack(alignment: .leading, spacing: 8) {
-                Text(player.name)
+                Text(viewModel.displayName(for: player))
                     .font(.headline)
                 
                 PlacementPicker(
-                    playerName: player.name,
+                    playerName: viewModel.displayName(for: player),
                     selection: Binding(
                         get: { viewModel.placement(for: player.id) },
                         set: { viewModel.setPlacement(for: player.id, place: $0) }

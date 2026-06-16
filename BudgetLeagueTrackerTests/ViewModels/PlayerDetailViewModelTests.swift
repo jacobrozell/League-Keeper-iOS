@@ -349,4 +349,149 @@ struct PlayerDetailViewModelTests {
             #expect(viewModel.showDeleteConfirmation == true)
         }
     }
+
+    @Suite("recentRounds")
+    @MainActor
+    struct RecentRoundsTests {
+
+        @Test("Loads recent rounds newest first")
+        func loadsRecentRounds() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let player = TestFixtures.player(name: "Test Player")
+            let tournament = TestFixtures.tournament(name: "Spring League")
+            context.insert(player)
+            context.insert(tournament)
+
+            let older = TestFixtures.gameResult(
+                tournamentId: tournament.id,
+                week: 1,
+                round: 1,
+                playerId: player.id,
+                placement: 2
+            )
+            let newer = TestFixtures.gameResult(
+                tournamentId: tournament.id,
+                week: 2,
+                round: 1,
+                playerId: player.id,
+                placement: 1
+            )
+            context.insert(older)
+            context.insert(newer)
+            try context.save()
+
+            let viewModel = PlayerDetailViewModel(context: context, player: player)
+
+            #expect(viewModel.recentRounds.count == 2)
+            #expect(viewModel.recentRounds.first?.week == 2)
+            #expect(viewModel.recentRounds.first?.tournamentName == "Spring League")
+            #expect(viewModel.lastPlayedText?.contains("Last played") == true)
+        }
+    }
+
+    @Suite("attendanceSummaries")
+    @MainActor
+    struct AttendanceSummariesTests {
+
+        @Test("Uses attendance history when available")
+        func usesAttendanceHistory() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let player = TestFixtures.player(name: "Test Player")
+            let absentPlayer = TestFixtures.player(name: "Absent Player")
+            let tournament = TestFixtures.tournament(name: "Fall League")
+            tournament.attendanceHistory = [
+                WeekAttendanceSnapshot(week: 1, presentPlayerIds: [player.id], confirmedAt: Date()),
+                WeekAttendanceSnapshot(week: 2, presentPlayerIds: [absentPlayer.id], confirmedAt: Date())
+            ]
+            context.insert(player)
+            context.insert(absentPlayer)
+            context.insert(tournament)
+            try context.save()
+
+            let viewModel = PlayerDetailViewModel(context: context, player: player)
+
+            #expect(viewModel.attendanceSummaries.count == 1)
+            #expect(viewModel.attendanceSummaries.first?.weeksPresent == 1)
+            #expect(viewModel.attendanceSummaries.first?.weeksTotal == 2)
+            #expect(viewModel.overallAttendanceText?.contains("1 of 2 weeks") == true)
+        }
+    }
+
+    @Suite("scoped stats")
+    @MainActor
+    struct ScopedStatsTests {
+
+        @Test("Filters stats by tournament scope")
+        func filtersByTournament() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let player = TestFixtures.player(name: "Test Player")
+            let tournament = TestFixtures.tournament(name: "Scoped League")
+            context.insert(player)
+            context.insert(tournament)
+
+            let result = TestFixtures.gameResult(
+                tournamentId: tournament.id,
+                playerId: player.id,
+                placement: 1
+            )
+            context.insert(result)
+            try context.save()
+
+            let viewModel = PlayerDetailViewModel(context: context, player: player)
+            viewModel.selectedScope = .tournament(id: tournament.id, name: tournament.name)
+
+            #expect(viewModel.displayGamesPlayed == 1)
+            #expect(viewModel.displayWins == 1)
+            #expect(viewModel.scopedRecentRounds.count == 1)
+        }
+    }
+
+    @Suite("formHighlightText")
+    @MainActor
+    struct FormHighlightTests {
+
+        @Test("Shows active win streak")
+        func showsWinStreak() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let player = TestFixtures.player(name: "Streak Player")
+            context.insert(player)
+
+            let win1 = TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 1, playerId: player.id, placement: 1)
+            let win2 = TestFixtures.gameResult(tournamentId: "t1", week: 1, round: 2, playerId: player.id, placement: 1)
+            context.insert(win1)
+            context.insert(win2)
+            try context.save()
+
+            let viewModel = PlayerDetailViewModel(context: context, player: player)
+
+            #expect(viewModel.formHighlightText == "2 wins in a row")
+        }
+    }
+
+    @Suite("updateName")
+    @MainActor
+    struct UpdateNameTests {
+
+        @Test("Updates player name successfully")
+        func updatesName() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let player = TestFixtures.player(name: "Old Name")
+            context.insert(player)
+            try context.save()
+
+            let viewModel = PlayerDetailViewModel(context: context, player: player)
+            let result = viewModel.updateName("New Name")
+
+            if case .success = result {
+                #expect(viewModel.player.name == "New Name")
+            } else {
+                Issue.record("Expected success")
+            }
+        }
+    }
 }

@@ -35,7 +35,13 @@ Contrast rationale: [accessibility/wcag-2.1-aa/evidence/contrast/](../accessibil
 | `PrimaryActionButton` | Main CTA | Label from title; 44pt min height |
 | `SecondaryButton` | Secondary CTA | Same |
 | `DestructiveActionButton` | Delete / reset | Red prominent style |
-| `PlayerRow` | Player list cell | Modes: display, removable, toggleable |
+| `PlayerRow` | Player list cell | Modes: display (avatar, rank, form, sparkline), removable, toggleable |
+| `PlayerAvatarView` | Initials avatar chip | Stable color from player id |
+| `PlayerFormDotsView` | Recent placement form | WCAG summary label |
+| `PlayerSparklineView` | List-row points trend | Mini Swift Charts line |
+| `PlayerIdentityCard` | Player detail hero | Rank + win rate + last played |
+| `PlayerAchievementGallerySection` | Earned achievement badges | |
+| `PlayerHeadToHeadSection` | Compare two players | |
 | `TournamentCell` | Tournament list row | Status badge |
 | `StandingsRow` | Ranked player row | Rank + name + points |
 | `AchievementListRow` | Achievement with toggle/delete | |

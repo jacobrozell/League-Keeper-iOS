@@ -12,6 +12,8 @@ final class EditLastRoundViewModel {
     
     /// Players in the last round
     var players: [Player] = []
+
+    private var roster: [Player] = []
     
     /// Active achievements for that round
     var achievements: [Achievement] = []
@@ -80,6 +82,7 @@ final class EditLastRoundViewModel {
         // Load players by ID
         let playerDescriptor = FetchDescriptor<Player>()
         if let allPlayers = try? context.fetch(playerDescriptor) {
+            roster = allPlayers
             players = allPlayers.filter { snapshot.playerIds.contains($0.id) }
             // Sort by placement for consistent display
             players.sort { (placements[$0.id] ?? 4) < (placements[$1.id] ?? 4) }
@@ -144,5 +147,9 @@ final class EditLastRoundViewModel {
         let descriptor = FetchDescriptor<Tournament>()
         let tournaments = (try? context.fetch(descriptor)) ?? []
         return tournaments.first { $0.id == tournamentId }
+    }
+
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: roster)
     }
 }

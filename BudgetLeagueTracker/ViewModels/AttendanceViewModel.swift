@@ -77,6 +77,10 @@ final class AttendanceViewModel {
         presentStatus[playerId] = !(presentStatus[playerId] ?? false)
     }
 
+    func displayName(for player: Player) -> String {
+        PlayerDisambiguation.displayName(for: player, among: players)
+    }
+
     /// Marks every league player as present for this week.
     func markAllPresent() {
         for player in players {

@@ -8,6 +8,13 @@
 | Last verified | 2026-06-16 |
 | Screen status | `Partial` |
 
+## New surfaces (2026-06-16)
+
+- Hero identity card, attendance ring, tournament scope picker
+- Achievement gallery, head-to-head compare, round detail sheet
+- Edit name toolbar action
+- Players list: search, sort, avatars, rank, form dots, sparkline
+
 ## Criterion checklist
 
 | ID | Status | Implementation notes | Evidence |

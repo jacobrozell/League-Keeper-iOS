@@ -90,3 +90,10 @@ struct PlayerDelta: Codable, Equatable {
     var wins: Int
     var gamesPlayed: Int
 }
+
+/// Attendance snapshot for a single tournament week.
+struct WeekAttendanceSnapshot: Codable, Equatable {
+    var week: Int
+    var presentPlayerIds: [String]
+    var confirmedAt: Date
+}

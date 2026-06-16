@@ -65,12 +65,12 @@ struct EditLastRoundView: View {
     @ViewBuilder
     private func playerRow(_ player: Player) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(player.name)
+            Text(viewModel.displayName(for: player))
                 .font(.headline)
                 .accessibilityHidden(true)
             
             PlacementPicker(
-                playerName: player.name,
+                playerName: viewModel.displayName(for: player),
                 selection: Binding(
                     get: { viewModel.placement(for: player.id) },
                     set: { viewModel.setPlacement(for: player.id, place: $0) }

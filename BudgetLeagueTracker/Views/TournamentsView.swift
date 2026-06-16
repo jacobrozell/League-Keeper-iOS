@@ -16,7 +16,6 @@ struct TournamentsView: View {
             }
         }
         .navigationTitle("Tournaments")
-        .brandedScreenBackground()
         .adaptiveContentWidth()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -84,6 +83,7 @@ struct TournamentsView: View {
                                 winnerName: nil
                             )
                         }
+                        .brandedInsetListRow()
                         .accessibilityIdentifier("tournament-\(tournament.name)")
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
@@ -132,6 +132,7 @@ struct TournamentsView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .brandedInsetListRow()
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
                                 viewModel.openEdit(tournament)
@@ -166,7 +167,7 @@ struct TournamentsView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .brandedListChrome()
     }
     
     @ViewBuilder

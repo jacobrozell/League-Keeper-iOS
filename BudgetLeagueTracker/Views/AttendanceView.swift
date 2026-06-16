@@ -48,7 +48,7 @@ struct AttendanceView: View {
             Section {
                 ForEach(viewModel.players, id: \.id) { player in
                     PlayerRow(
-                        name: player.name,
+                        name: viewModel.displayName(for: player),
                         mode: .toggleable(isOn: Binding(
                             get: { viewModel.isPresent(player.id) },
                             set: { _ in viewModel.togglePresence(for: player.id) }

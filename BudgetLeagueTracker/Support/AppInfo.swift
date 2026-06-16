@@ -8,6 +8,7 @@ enum AppInfo {
 
     static let supportURL = URL(string: "https://jacobrozell.github.io/League-Keeper-iOS/support.html")!
     static let privacyURL = URL(string: "https://jacobrozell.github.io/League-Keeper-iOS/privacy.html")!
+    static let buyMeACoffeeURL = URL(string: "https://buymeacoffee.com/jacobrozelq")!
 
     static var isUITesting: Bool {
         let args = ProcessInfo.processInfo.arguments

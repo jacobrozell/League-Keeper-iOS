@@ -126,12 +126,12 @@ final class AchievementsViewModel {
     /// Gets full player breakdown for an achievement.
     func playerBreakdown(for achievement: Achievement) -> [AchievementPlayerBreakdown] {
         let byPlayer = AchievementStatsEngine.earnedByPlayer(achievementId: achievement.id, results: gameResults)
-        let playerNameMap = Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0.name) })
+        let displayNameMap = PlayerDisambiguation.displayNames(for: players)
 
         return byPlayer
             .map { AchievementPlayerBreakdown(
                 id: $0.key,
-                playerName: playerNameMap[$0.key] ?? "Unknown",
+                playerName: displayNameMap[$0.key] ?? "Unknown",
                 count: $0.value
             )}
             .sorted { $0.count > $1.count }

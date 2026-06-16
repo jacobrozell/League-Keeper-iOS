@@ -16,18 +16,23 @@ struct StatsView: View {
                     // Segment content
                     segmentContent
                 }
-                .brandedScreenBackground()
             } else {
-                EmptyStateView(
-                    message: "No stats yet",
-                    hint: "Create a tournament and play some games to see stats.",
-                    systemImage: "chart.bar"
-                )
+                VStack(spacing: 24) {
+                    Spacer()
+
+                    EmptyStateView(
+                        message: "No stats yet",
+                        hint: "Create a tournament and play some games to see stats.",
+                        systemImage: "chart.bar"
+                    )
+
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .adaptiveEmptyStateLayout()
             }
         }
         .navigationTitle("Stats")
-        .brandedScreenBackground()
         .adaptiveContentWidth()
         .onAppear {
             viewModel.refresh()
@@ -94,16 +99,26 @@ struct StatsView: View {
                         .font(.system(.headline, design: .serif))
                         .padding(.horizontal)
                         .padding(.top)
-                    
-                    ForEach(viewModel.players, id: \.id) { player in
-                        PlayerRow(
-                            name: player.name,
-                            mode: .display(subtitle: viewModel.statsSubtitle(for: player))
-                        )
+
+                    ForEach(viewModel.playersByPoints, id: \.id) { player in
+                        NavigationLink(value: player) {
+                            PlayerRow(
+                                name: viewModel.displayName(for: player),
+                                mode: .display(
+                                    subtitle: viewModel.statsSubtitle(for: player),
+                                    showAvatar: true,
+                                    playerId: player.id,
+                                    rank: viewModel.rank(for: player),
+                                    recentPlacements: viewModel.recentPlacements(for: player),
+                                    sparklinePoints: viewModel.sparklinePoints(for: player)
+                                )
+                            )
+                        }
+                        .buttonStyle(.plain)
                         .padding(.horizontal)
                         .padding(.vertical, 8)
-                        
-                        if player.id != viewModel.players.last?.id {
+
+                        if player.id != viewModel.playersByPoints.last?.id {
                             Divider()
                                 .padding(.leading)
                         }
@@ -118,14 +133,22 @@ struct StatsView: View {
     private var weeklySection: some View {
         ScrollView {
             BrandedSectionCard {
-                VStack(alignment: .leading, spacing: 2) {
-                    if !viewModel.tournamentName.isEmpty {
-                        Text(viewModel.tournamentName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if !viewModel.tournamentName.isEmpty {
+                            Text(viewModel.tournamentName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("Week \(viewModel.currentWeek) Standings")
+                            .font(.system(.headline, design: .serif))
                     }
-                    Text("Week \(viewModel.currentWeek) Standings")
-                        .font(.system(.headline, design: .serif))
+                    Spacer()
+                    ShareLink(item: viewModel.weeklyStandingsShareText) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .font(.subheadline)
+                    }
+                    .accessibilityLabel("Share week standings")
                 }
                 .padding(.horizontal)
                 .padding(.top)
@@ -133,7 +156,7 @@ struct StatsView: View {
                 ForEach(Array(viewModel.weeklyStandings.enumerated()), id: \.element.player.id) { index, item in
                     StandingsRow(
                         rank: index + 1,
-                        name: item.player.name,
+                        name: viewModel.displayName(for: item.player),
                         totalPoints: item.points.total,
                         placementPoints: item.points.placementPoints,
                         achievementPoints: item.points.achievementPoints,
@@ -155,15 +178,23 @@ struct StatsView: View {
     private var standingsSection: some View {
         ScrollView {
             BrandedSectionCard {
-                Text("All-Time Standings")
-                    .font(.system(.headline, design: .serif))
-                    .padding(.horizontal)
-                    .padding(.top)
+                HStack {
+                    Text("All-Time Standings")
+                        .font(.system(.headline, design: .serif))
+                    Spacer()
+                    ShareLink(item: viewModel.allTimeStandingsShareText) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .font(.subheadline)
+                    }
+                    .accessibilityLabel("Share all-time standings")
+                }
+                .padding(.horizontal)
+                .padding(.top)
                 
                 ForEach(Array(viewModel.tournamentStandings.enumerated()), id: \.element.player.id) { index, item in
                     StandingsRow(
                         rank: index + 1,
-                        name: item.player.name,
+                        name: viewModel.displayName(for: item.player),
                         totalPoints: item.totalPoints,
                         placementPoints: item.player.placementPoints,
                         achievementPoints: item.player.achievementPoints,
@@ -190,7 +221,6 @@ struct StatsView: View {
                     LazyVStack(spacing: 0) {
                         chartsSections
                     }
-                    .adaptiveContentWidth()
                 }
             } else {
                 ScrollView {
@@ -264,7 +294,7 @@ struct StatsView: View {
                     set: { viewModel.selectedPlayerId = $0 }
                 )) {
                     ForEach(viewModel.players, id: \.id) { player in
-                        Text(player.name).tag(player.id)
+                        Text(viewModel.displayName(for: player)).tag(player.id)
                     }
                 }
                 .pickerStyle(.menu)
@@ -346,7 +376,7 @@ struct StatsView: View {
             set: { viewModel.selectedPlayerId = $0 }
         )) {
             ForEach(viewModel.players, id: \.id) { player in
-                Text(player.name).tag(player.id)
+                Text(viewModel.displayName(for: player)).tag(player.id)
             }
         }
     }

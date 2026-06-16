@@ -11,6 +11,11 @@ enum AppConstants {
         /// Minimum touch target height per iOS HIG (44pt)
         static let minTouchTargetHeight: CGFloat = 44
     }
+
+    enum Player {
+        /// Optional nickname shown when distinguishing same-name players.
+        static let nameNoteMaxLength = 32
+    }
     
     // MARK: - Accessible Colors
     

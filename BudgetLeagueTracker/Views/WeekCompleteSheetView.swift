@@ -9,13 +9,14 @@ struct WeekCompleteSheetView: View {
     let week: Int
     let standings: [(player: Player, points: Int, placementPoints: Int, achievementPoints: Int)]
     let nextWeek: Int
+    var displayName: (Player) -> String = { $0.name }
     let onContinue: () -> Void
 
     private var shareText: String {
         let rows = standings.enumerated().map { index, standing in
             StandingsShareFormatter.WeeklyStanding(
                 rank: index + 1,
-                name: standing.player.name,
+                name: displayName(standing.player),
                 totalPoints: standing.points,
                 placementPoints: standing.placementPoints,
                 achievementPoints: standing.achievementPoints
@@ -44,7 +45,7 @@ struct WeekCompleteSheetView: View {
                             Section {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Label {
-                                        Text("Week \(week) champion: \(champion.player.name)")
+                                        Text("Week \(week) champion: \(displayName(champion.player))")
                                             .font(.system(.headline, design: .serif).weight(.bold))
                                     } icon: {
                                         Image(systemName: "crown.fill")
@@ -56,7 +57,7 @@ struct WeekCompleteSheetView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 .accessibilityElement(children: .combine)
-                                .accessibilityLabel("Week \(week) champion, \(champion.player.name), \(champion.points) points")
+                                .accessibilityLabel("Week \(week) champion, \(displayName(champion.player)), \(champion.points) points")
                             }
                         }
 
@@ -64,7 +65,7 @@ struct WeekCompleteSheetView: View {
                             ForEach(Array(standings.enumerated()), id: \.element.player.id) { index, standing in
                                 StandingsRow(
                                     rank: index + 1,
-                                    name: standing.player.name,
+                                    name: displayName(standing.player),
                                     totalPoints: standing.points,
                                     placementPoints: standing.placementPoints,
                                     achievementPoints: standing.achievementPoints,
@@ -104,7 +105,7 @@ struct WeekCompleteSheetView: View {
             .onAppear {
                 AppHaptics.success()
                 if let champion = standings.first {
-                    AppAccessibility.announce("Week \(week) complete. \(champion.player.name) leads with \(champion.points) points.")
+                    AppAccessibility.announce("Week \(week) complete. \(displayName(champion.player)) leads with \(champion.points) points.")
                 } else {
                     AppAccessibility.announce("Week \(week) complete. No scores recorded.")
                 }

@@ -4,7 +4,9 @@ import SwiftUI
 /// Allows viewing player stats and managing the player roster.
 struct PlayersView: View {
     @Bindable var viewModel: PlayersViewModel
-    
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var toastMessage: String?
+
     var body: some View {
         Group {
             if viewModel.hasPlayers {
@@ -14,101 +16,138 @@ struct PlayersView: View {
             }
         }
         .navigationTitle("Players")
-        .brandedScreenBackground()
+        .searchable(text: $viewModel.searchText, prompt: "Search players")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Sort by", selection: Binding(
+                        get: { viewModel.sortOption },
+                        set: { viewModel.updateSortOption($0) }
+                    )) {
+                        ForEach(PlayerSortOption.allCases) { option in
+                            Text(option.rawValue).tag(option)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down.circle")
+                }
+                .accessibilityLabel("Sort players")
+            }
+        }
         .adaptiveContentWidth()
+        .overlay(alignment: .bottomTrailing) {
+            if viewModel.hasPlayers {
+                addPlayerFAB
+            }
+        }
+        .sheet(isPresented: $viewModel.isShowingAddPlayerSheet, onDismiss: {
+            if let message = viewModel.consumePendingToast() {
+                showToast(message)
+            }
+        }) {
+            AddPlayerSheet(viewModel: viewModel)
+        }
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastBanner(message: toastMessage)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: toastMessage)
         .onAppear {
             viewModel.refresh()
         }
     }
-    
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if toastMessage == message {
+                toastMessage = nil
+            }
+        }
+    }
+
     // MARK: - Players List
-    
+
     @ViewBuilder
     private var playersList: some View {
         List {
-            // Add player section at top
-            Section {
-                addPlayerRow
-            }
-            
-            // Players section
-            Section("All Players") {
-                ForEach(viewModel.players, id: \.id) { player in
-                    NavigationLink(value: player) {
-                        PlayerRow(
-                            name: player.name,
-                            mode: .display(subtitle: viewModel.subtitle(for: player))
-                        )
+            if viewModel.filteredPlayers.isEmpty {
+                ContentUnavailableView {
+                    Label("No Results", systemImage: "person.slash")
+                } description: {
+                    Text("No players match “\(viewModel.searchText)”")
+                }
+                .brandedInsetListRow()
+            } else {
+                Section("All Players") {
+                    ForEach(viewModel.filteredPlayers, id: \.id) { player in
+                        NavigationLink(value: player) {
+                            PlayerRow(
+                                name: viewModel.displayName(for: player),
+                                mode: .display(
+                                    subtitle: viewModel.subtitle(for: player),
+                                    showAvatar: true,
+                                    playerId: player.id,
+                                    rank: viewModel.rank(for: player),
+                                    recentPlacements: viewModel.recentPlacements(for: player),
+                                    sparklinePoints: viewModel.sparklinePoints(for: player)
+                                )
+                            )
+                        }
+                        .brandedInsetListRow()
                     }
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .brandedListChrome()
     }
-    
+
     // MARK: - Empty State
-    
+
     @ViewBuilder
     private var emptyState: some View {
         VStack(spacing: 24) {
             Spacer()
-            
+
             EmptyStateView(
                 message: "No players yet",
                 hint: "Add players to track their stats across tournaments.",
                 systemImage: "person.crop.rectangle.stack"
             )
-            
-            Spacer()
-            
-            // Add player inline
-            VStack(spacing: 12) {
-                HStack {
-                    TextField("Player name", text: $viewModel.newPlayerName)
-                        .textFieldStyle(.roundedBorder)
-                        .textContentType(.name)
-                        .submitLabel(.done)
-                        .accessibilityLabel("Player name")
-                        .accessibilityIdentifier("playerNameField")
-                        .onSubmit {
-                            viewModel.addPlayer()
-                        }
 
-                    Button("Add") {
-                        viewModel.addPlayer()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!viewModel.canAddPlayer)
-                    .accessibilityLabel("Add player")
-                }
-                .padding(.horizontal)
+            Spacer()
+
+            PrimaryActionButton(title: "Add Player") {
+                viewModel.isShowingAddPlayerSheet = true
             }
+            .accessibilityIdentifier("Add Player")
+            .padding(.horizontal)
             .padding(.bottom, 32)
         }
         .adaptiveEmptyStateLayout()
     }
-    
-    // MARK: - Add Player Row
-    
-    @ViewBuilder
-    private var addPlayerRow: some View {
-        HStack {
-            TextField("Add new player", text: $viewModel.newPlayerName)
-                .textContentType(.name)
-                .submitLabel(.done)
-                .accessibilityLabel("Add new player")
-                .accessibilityIdentifier("addNewPlayerField")
-                .onSubmit {
-                    viewModel.addPlayer()
-                }
 
-            Button("Add") {
-                viewModel.addPlayer()
-            }
-            .disabled(!viewModel.canAddPlayer)
-            .accessibilityLabel("Add player")
+    // MARK: - FAB
+
+    @ViewBuilder
+    private var addPlayerFAB: some View {
+        FloatingActionButton(
+            systemImage: "plus",
+            accessibilityLabel: "Add player",
+            accessibilityIdentifier: "addPlayerFAB"
+        ) {
+            viewModel.isShowingAddPlayerSheet = true
         }
-        .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+        .padding(.trailing, 20)
+        .padding(.bottom, fabClearance)
+    }
+
+    private var fabClearance: CGFloat {
+        AdaptiveLayout.tabBarClearance(for: dynamicTypeSize)
     }
 }
 
