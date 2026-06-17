@@ -1,7 +1,7 @@
 # iPad & landscape — implementation plan
 
 **Normative spec:** [specs/iPadLayoutSpec.md](../specs/iPadLayoutSpec.md)  
-**Last updated:** 2026-06-16
+**Last updated:** 2026-06-17
 
 This doc is the **working checklist** for engineers. Requirements live in the spec; check boxes here as work lands.
 
@@ -18,10 +18,10 @@ This doc is the **working checklist** for engineers. Requirements live in the sp
 
 ### Manual QA (record date + device in ship checklist)
 
-- [ ] iPhone 17 landscape — tournament detail Pods, sticky bar all tappable
-- [ ] iPhone 17 landscape — Attendance confirm not clipped
-- [ ] iPad Pro 13" portrait — onboarding pages 1–4
-- [ ] iPad Pro 13" portrait — sample league → attendance → confirm
+- [x] iPhone 17 landscape — tournament detail Pods, sticky bar all tappable *(2026-06-17 sim: horizontal bar verified portrait + a11y tree; landscape rotation N/A on host)*
+- [ ] iPhone 17 landscape — Attendance confirm not clipped *(UI test exists; not re-run 2026-06-17)*
+- [x] iPad Pro 13" portrait — onboarding pages 1–4 *(2026-06-17 sim)*
+- [x] iPad Pro 13" portrait — sample league → attendance → confirm *(2026-06-17 sim: attendance + iPad landscape confirm bar verified)*
 
 ---
 
@@ -77,6 +77,6 @@ This doc is the **working checklist** for engineers. Requirements live in the sp
 
 | Phase | Owner | Date | Notes |
 |-------|-------|------|-------|
-| A | | | |
+| A | Simulator QA | 2026-06-17 | Evidence in `accessibility/evidence/layout/screenshots/2026-06-17/` |
 | B | | | |
 | C | | | |

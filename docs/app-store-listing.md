@@ -22,7 +22,7 @@ Track pods, standings & achievements
 
 ## Description (4000 characters max)
 
-League Keeper helps you run Magic: The Gathering budget leagues from your phone. Add players, set up multi-week tournaments, and track pods, placement, and achievements in one place.
+League Keeper helps you run Magic: The Gathering budget leagues from your iPhone or iPad. Add players, set up multi-week tournaments, and track pods, placement, and achievements in one place.
 
 RUN LEAGUES YOUR WAY
 • Create tournaments with your chosen number of weeks and optional random achievements per week.
@@ -63,7 +63,7 @@ Welcome to League Keeper. Track your MTG budget league with tournaments, pods, p
 
 ## Promotional text (170 characters, editable anytime without new version)
 
-Run your MTG budget league from your phone: pods, placement points, achievements, and standings. No account needed—data stays on your device.
+Run your MTG budget league from your iPhone or iPad: pods, placement points, achievements, and standings. No account needed—data stays on your device.
 
 ---
 

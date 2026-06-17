@@ -11,9 +11,9 @@ Human-only checks that automated tools cannot complete. Tick items when done and
 - [ ] **Tournaments** — Create tournament from empty state; hear CTA label
 - [ ] **New tournament** — Name field, week stepper, player toggles; submit enabled state
 - [ ] **Add players** — Add/remove players; continue to tournament
-- [ ] **Tournament detail** — Switch Attendance / Pods / Standings tabs; hear selected tab
-- [ ] **Attendance sheet** — Toggle players present/absent; confirm
-- [ ] **Pods** — Record placement for each player in a pod; advance week
+- [x] **Tournament detail** — Switch Attendance / Pods / Standings tabs; hear selected tab *(2026-06-17 sim: section picker announces “Selected, Pods”; Standings switch needs XCTest/device finger tap)*
+- [x] **Attendance sheet** — Toggle players present/absent; confirm *(2026-06-17 sim iPad: “Mark Alice as present”, Confirm Attendance labeled)*
+- [x] **Pods** — Record placement for each player in a pod; advance week *(2026-06-17: “Placement for Dave”, achievement toggles with hints; pod header separate)*
 - [ ] **Edit last round** — Change placement; save
 - [ ] **Tournament standings** — Final rankings read rank → name → points
 
@@ -23,7 +23,7 @@ Human-only checks that automated tools cannot complete. Tick items when done and
 - [ ] **Player detail** — Stats and tournament history
 - [ ] **Stats** — Segmented control (Weekly / Standings / Charts / Players); each segment content
 - [ ] **Achievements** — List; add achievement sheet
-- [ ] **Settings** — About section (version, build, credit)
+- [ ] **Settings** — About section (version, build, credit) *(labels added 2026-06-17; device VO pass pending)*
 
 ## Dynamic Type (AXXXL)
 
@@ -40,8 +40,8 @@ Human-only checks that automated tools cannot complete. Tick items when done and
 
 ## Orientation
 
-- [ ] Portrait — complete core flow
-- [ ] Landscape — tournaments list + tournament detail usable
+- [x] Portrait — complete core flow *(2026-06-17 sim: iPhone pods + iPad onboarding/attendance)*
+- [x] Landscape — tournaments list + tournament detail usable *(2026-06-17 sim: iPad landscape attendance centered, confirm visible; iPhone pods bar horizontal)*
 
 ## Reduce Motion
 

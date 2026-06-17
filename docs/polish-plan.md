@@ -1,6 +1,6 @@
 # 1.0 polish plan
 
-**Last updated:** 2026-06-16  
+**Last updated:** 2026-06-17  
 **Perspective:** League host at the table + pre–TestFlight / App Store readiness.
 
 Tournament host UX Sprints 1–3 are complete ([tournament-ux-improvements.md](tournament-ux-improvements.md)). This document captures the **next wave** of polish: table-side delight, trust signals, layout consistency, accessibility sign-off, and release hygiene.
@@ -126,7 +126,7 @@ Recommended order: **Sprint 4** (table delight) → **Sprint 5** (trust + layout
 **Sprint 6 exit criteria**
 
 - [ ] `SUMMARY.md` Overall status moves toward Pass for core flow
-- [ ] [1.0-ship-checklist.md](release/1.0-ship-checklist.md) accessibility + iPad sections checked
+- [ ] [1.0-ship-checklist.md](release/1.0-ship-checklist.md) accessibility + iPad sections checked *(Phase A iPad/landscape sim QA logged 2026-06-17)*
 - [ ] Snapshot suite passes in CI
 - [ ] Internal TestFlight build exercised end-to-end on iPhone + iPad
 

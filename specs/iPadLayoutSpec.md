@@ -79,8 +79,9 @@ Simulator walkthrough: fresh iPad install → onboarding → Load sample league 
 
 | Token | Value | When |
 |-------|-------|------|
-| `contentMaxWidth` | **680 pt** | `horizontalSizeClass == .regular` (iPad portrait, iPad landscape, iPhone Plus landscape) |
-| `contentMaxWidthLandscapePhone` | **600 pt** | Optional tighter cap on iPhone landscape if needed after QA |
+| `contentMaxWidth` | **920 pt** | `horizontalSizeClass == .regular` (iPad portrait, iPad landscape, iPhone Plus landscape) |
+| `sidebarWidth` | **320 pt** | Two-column sidebar on regular width |
+| `columnSpacing` | **20 pt** | Gap between sidebar and main column |
 
 Apply to: root tab stacks, onboarding scroll content, tournament detail outer `VStack`, full-screen covers where content is form-like.
 
@@ -324,4 +325,5 @@ Sign-off recorded in [1.0-ship-checklist.md](../docs/release/1.0-ship-checklist.
 | Date | Change |
 |------|--------|
 | 2026-06-16 | Initial spec from simulator audit (iPad Pro 13", iPhone 17) |
+| 2026-06-17 | iPad layout fix: 920pt max width, two-column Pods + Attendance grid, consistent width on sheets |
 | 2026-06-16 | Phase A–B code: `adaptiveContentWidth`, stacked pods bar, onboarding iPad wide layout |
