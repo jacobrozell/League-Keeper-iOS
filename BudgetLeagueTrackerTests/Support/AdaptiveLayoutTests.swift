@@ -97,4 +97,13 @@ struct AdaptiveLayoutTests {
         #expect(AdaptiveLayout.sidebarWidth == 320)
         #expect(AdaptiveLayout.columnSpacing == 20)
     }
+
+    @Test("table card grid columns")
+    func tableCardGridColumns() {
+        #expect(AdaptiveLayout.tableCardGridColumns(tableCount: 0, horizontalSizeClass: .compact).count == 1)
+        #expect(AdaptiveLayout.tableCardGridColumns(tableCount: 4, horizontalSizeClass: .compact).count == 1)
+        #expect(AdaptiveLayout.tableCardGridColumns(tableCount: 1, horizontalSizeClass: .regular).count == 1)
+        #expect(AdaptiveLayout.tableCardGridColumns(tableCount: 2, horizontalSizeClass: .regular).count == 2)
+        #expect(AdaptiveLayout.tableCardGridColumns(tableCount: 6, horizontalSizeClass: .regular).count == 2)
+    }
 }

@@ -56,6 +56,7 @@ struct RoundFlowView: View {
                 } main: {
                     roundPhaseMainContent
                 }
+                .padding(.horizontal, 16)
             } else {
                 roundPhaseMainContent
             }
@@ -79,6 +80,7 @@ struct RoundFlowView: View {
                 reviewPhaseList(includeSidebarSections: !usesSidebarLayout)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder
@@ -107,6 +109,15 @@ struct RoundFlowView: View {
 
     @ViewBuilder
     private func seatingPhaseList(includeSidebarSections: Bool) -> some View {
+        if usesSidebarLayout && !includeSidebarSections {
+            ipadSeatingEmptyContent
+        } else {
+            seatingPhasePhoneList(includeSidebarSections: includeSidebarSections)
+        }
+    }
+
+    @ViewBuilder
+    private func seatingPhasePhoneList(includeSidebarSections: Bool) -> some View {
         List {
             if showsSeatPlayersCoachMark {
                 Section {
@@ -148,10 +159,53 @@ struct RoundFlowView: View {
         .listStyle(.insetGrouped)
     }
 
+    @ViewBuilder
+    private var ipadSeatingEmptyContent: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                if showsSeatPlayersCoachMark {
+                    CoachMarkBanner(
+                        title: "Ready to seat players",
+                        message: "When everyone is at the table, tap Seat Players to create tables for Round \(viewModel.currentRound).",
+                        onDismiss: { onDismissSeatPlayersCoachMark?() }
+                    )
+                }
+
+                EmptyStateView(
+                    message: "No tables yet",
+                    hint: "Seat players into tables of four for Round \(viewModel.currentRound)."
+                )
+
+                PrimaryActionButton(
+                    title: viewModel.seatPlayersButtonTitle,
+                    action: seatPlayersWithFeedback,
+                    isDisabled: !viewModel.canSeatPlayers,
+                    accessibilityLabel: viewModel.seatPlayersButtonTitle,
+                    accessibilityIdentifier: "Seat Players"
+                )
+                .frame(maxWidth: 360)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(24)
+            .padding(.top, 12)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
     // MARK: - Seatings ready
 
     @ViewBuilder
     private func seatingsReadyList(includeSidebarSections: Bool) -> some View {
+        if usesSidebarLayout && !includeSidebarSections {
+            ipadSeatingsReadyContent
+        } else {
+            seatingsReadyPhoneList(includeSidebarSections: includeSidebarSections)
+        }
+    }
+
+    @ViewBuilder
+    private func seatingsReadyPhoneList(includeSidebarSections: Bool) -> some View {
         List {
             if includeSidebarSections {
                 if let hint = viewModel.tableLayoutHint {
@@ -179,10 +233,63 @@ struct RoundFlowView: View {
         .listStyle(.insetGrouped)
     }
 
+    @ViewBuilder
+    private var ipadSeatingsReadyContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if viewModel.pods.count == 1 {
+                    Spacer(minLength: 32)
+                }
+
+                Text("Review who's at each table, then start scoring.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Tables for Round \(viewModel.currentRound)")
+                    .font(.title3.weight(.semibold))
+
+                LazyVGrid(
+                    columns: AdaptiveLayout.tableCardGridColumns(
+                        tableCount: viewModel.pods.count,
+                        horizontalSizeClass: horizontalSizeClass
+                    ),
+                    alignment: .leading,
+                    spacing: 16
+                ) {
+                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                        TableSeatingCard(
+                            tableNumber: index + 1,
+                            playerNames: pod.map { viewModel.displayName(for: $0) },
+                            style: .card
+                        )
+                    }
+                }
+
+                if viewModel.pods.count == 1 {
+                    Spacer(minLength: 32)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, minHeight: viewModel.pods.count == 1 ? 520 : nil, alignment: .topLeading)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
     // MARK: - Scoring
 
     @ViewBuilder
     private func scoringPhase(includeBonusesInList: Bool) -> some View {
+        if usesSidebarLayout && !includeBonusesInList {
+            ipadScoringContent
+        } else {
+            scoringPhasePhoneList(includeBonusesInList: includeBonusesInList)
+        }
+    }
+
+    @ViewBuilder
+    private func scoringPhasePhoneList(includeBonusesInList: Bool) -> some View {
         let tableIndex = viewModel.currentScoringTableIndex
         let players = viewModel.playersForTable(at: tableIndex)
 
@@ -258,6 +365,87 @@ struct RoundFlowView: View {
     }
 
     @ViewBuilder
+    private var ipadScoringContent: some View {
+        let tableIndex = viewModel.currentScoringTableIndex
+        let players = viewModel.playersForTable(at: tableIndex)
+
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                scoringProgressHeader(tableIndex: tableIndex)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Finish order")
+                        .font(.headline)
+                    Text("Best finish at the top — drag or use the arrows.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(players.enumerated()), id: \.element.id) { index, player in
+                            TableRankRow(
+                                rank: index + 1,
+                                name: viewModel.displayName(for: player),
+                                placementLabel: viewModel.placementLabel(for: index + 1),
+                                canMoveUp: index > 0,
+                                canMoveDown: index < players.count - 1,
+                                onMoveUp: { viewModel.movePlayerUp(inTable: tableIndex, at: index) },
+                                onMoveDown: { viewModel.movePlayerDown(inTable: tableIndex, at: index) }
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+
+                            if index < players.count - 1 {
+                                Divider()
+                                    .padding(.leading, 16)
+                            }
+                        }
+                    }
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+
+                if viewModel.pods.count > 1 {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("All tables")
+                            .font(.headline)
+                        ForEach(viewModel.pods.indices, id: \.self) { index in
+                            Button {
+                                viewModel.selectScoringTable(index)
+                            } label: {
+                                HStack {
+                                    Text("Table \(index + 1)")
+                                    Spacer()
+                                    if viewModel.isTableConfirmed(index) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    } else if index == tableIndex {
+                                        Text("Scoring")
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .accessibilityLabel(
+                                "Table \(index + 1)\(viewModel.isTableConfirmed(index) ? ", scored" : index == tableIndex ? ", scoring now" : "")"
+                            )
+                        }
+                    }
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
     private func scoringProgressHeader(tableIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Table \(tableIndex + 1) of \(viewModel.pods.count)")
@@ -273,6 +461,15 @@ struct RoundFlowView: View {
 
     @ViewBuilder
     private func reviewPhaseList(includeSidebarSections: Bool) -> some View {
+        if usesSidebarLayout && !includeSidebarSections {
+            ipadReviewContent
+        } else {
+            reviewPhasePhoneList(includeSidebarSections: includeSidebarSections)
+        }
+    }
+
+    @ViewBuilder
+    private func reviewPhasePhoneList(includeSidebarSections: Bool) -> some View {
         List {
             Section {
                 HintText(message: "Everything looks right? Finish the round to save scores.")
@@ -302,6 +499,54 @@ struct RoundFlowView: View {
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    @ViewBuilder
+    private var ipadReviewContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Everything looks right? Finish the round to save scores.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Round \(viewModel.currentRound) results")
+                    .font(.title3.weight(.semibold))
+
+                LazyVGrid(
+                    columns: AdaptiveLayout.tableCardGridColumns(
+                        tableCount: viewModel.pods.count,
+                        horizontalSizeClass: horizontalSizeClass
+                    ),
+                    alignment: .leading,
+                    spacing: 16
+                ) {
+                    ForEach(viewModel.pods.indices, id: \.self) { index in
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Table \(index + 1)")
+                                .font(.headline)
+
+                            ForEach(viewModel.placementSummary(forTable: index), id: \.name) { row in
+                                HStack {
+                                    Text(row.name)
+                                    Spacer()
+                                    Text(viewModel.placementLabel(for: row.place))
+                                        .foregroundStyle(row.place == 1 ? AppConstants.AccessibleColors.activeStatus : .secondary)
+                                }
+                                .font(.subheadline)
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Shared sections
@@ -522,7 +767,9 @@ struct RoundFlowView: View {
                 }
             }
             .padding()
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
         .background(.bar)
     }
 

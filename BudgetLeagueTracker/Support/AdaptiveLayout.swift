@@ -62,6 +62,15 @@ enum AdaptiveLayout {
     static func usesTwoColumnPlayerGrid(horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
         horizontalSizeClass == .regular
     }
+
+    /// Grid columns for table cards on regular-width layouts.
+    static func tableCardGridColumns(tableCount: Int, horizontalSizeClass: UserInterfaceSizeClass?) -> [GridItem] {
+        guard horizontalSizeClass == .regular else {
+            return [GridItem(.flexible())]
+        }
+        let columnCount = tableCount <= 1 ? 1 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 16), count: columnCount)
+    }
 }
 
 private struct AdaptiveContentWidth: ViewModifier {

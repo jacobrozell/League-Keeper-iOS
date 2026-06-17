@@ -110,24 +110,26 @@ struct TournamentDetailView: View {
     private var ongoingContent: some View {
         VStack(spacing: 0) {
             progressHeader
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             sectionTabPicker
+                .frame(maxWidth: .infinity)
 
-            // Tab content
             Group {
                 switch viewModel.activeTab {
                 case .attendance:
                     attendanceTabContent
+                        .adaptiveContentWidth()
                 case .round:
                     roundTabContent
                 case .standings:
                     standingsTabContent
+                        .adaptiveContentWidth()
                 }
             }
             .id(viewModel.activeTab)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .adaptiveContentWidth()
     }
 
     @ViewBuilder
@@ -153,6 +155,7 @@ struct TournamentDetailView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
                 .background(Color(.secondarySystemBackground))
             } else {
                 Picker("Section", selection: sectionTabSelection) {
@@ -165,6 +168,8 @@ struct TournamentDetailView: View {
                 .accessibilitySelectedSection("Section", value: viewModel.activeTab.rawValue)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground))
             }
         }
     }

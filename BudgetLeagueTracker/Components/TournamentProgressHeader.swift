@@ -65,6 +65,7 @@ struct TournamentProgressHeader: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
     }
 
