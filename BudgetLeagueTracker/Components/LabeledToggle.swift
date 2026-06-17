@@ -10,6 +10,7 @@ struct LabeledToggle: View {
         Toggle(title, isOn: $isOn)
             .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
             .accessibilityLabel(accessibilityLabel ?? title)
+            .accessibilityValue(isOn ? "On" : "Off")
     }
 }
 

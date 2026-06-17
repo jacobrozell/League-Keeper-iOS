@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 /// VoiceOver helpers — announcements and reusable accessibility modifiers.
+@MainActor
 enum AppAccessibility {
     /// Speaks a short status message (toasts, confirmations). Skipped during UI tests.
     static func announce(_ message: String) {

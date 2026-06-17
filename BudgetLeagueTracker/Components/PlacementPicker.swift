@@ -27,6 +27,7 @@ struct PlacementPicker: View {
         .accessibilityIdentifier("placement-\(playerName)")
         .accessibilityLabel("Placement for \(playerName)")
         .accessibilityValue(placementLabel)
+        .accessibilityHint(isDisabled ? "Placement locked" : "Select finishing place for \(playerName)")
     }
 
     private var placementPicker: some View {

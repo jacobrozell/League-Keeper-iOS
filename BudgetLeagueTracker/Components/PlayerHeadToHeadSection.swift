@@ -14,6 +14,10 @@ struct PlayerHeadToHeadSection: View {
             Text("Head-to-Head")
                 .font(.headline)
 
+            Text("Compare win records when two players sat at the same pod table — not a league format or partner preference.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
             if opponents.isEmpty {
                 Text("Add more players to compare head-to-head records.")
                     .font(.subheadline)

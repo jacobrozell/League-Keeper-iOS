@@ -64,6 +64,7 @@ struct AchievementCheckItem: View {
         .disabled(isDisabled)
         .accessibilityLabel("\(name), \(points) points")
         .accessibilityValue(isChecked ? "checked" : (isDisabled ? "disabled" : "unchecked"))
+        .accessibilityHintIf(achievementDescription)
     }
 }
 

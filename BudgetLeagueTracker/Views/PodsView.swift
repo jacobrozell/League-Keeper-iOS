@@ -121,6 +121,7 @@ struct PodsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(viewModel.displayName(for: player))
                     .font(.headline)
+                    .accessibilityHidden(true)
                 
                 PlacementPicker(
                     playerName: viewModel.displayName(for: player),

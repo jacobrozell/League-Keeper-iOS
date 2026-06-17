@@ -137,10 +137,11 @@ final class AccessibilityAuditTests: XCTestCase {
         relaunch(with: ["--uitesting", "UI-Testing-Seed-EditRound"])
         XCUIDevice.shared.orientation = .portrait
 
-        let editRoundButton = app.buttons["Edit Last Round"]
-        if !editRoundButton.waitForExistence(timeout: 8) {
+        if !app.descendants(matching: .any)["tournamentDetailSectionPicker"].waitForExistence(timeout: 2) {
             app.openSeededOngoingTournament()
         }
+        app.openPodsMoreMenu()
+        let editRoundButton = app.buttons["Edit Last Round"]
         XCTAssertTrue(editRoundButton.waitForExistence(timeout: 8))
         editRoundButton.tap()
 
@@ -217,7 +218,7 @@ final class AccessibilityAuditTests: XCTestCase {
             print("Warning: Some buttons may be below recommended 44pt: \(smallButtons)")
         }
         
-        // Check tab bar items â€” system tab bars enlarge hit regions beyond reported frames.
+        // Check tab bar items — system tab bars enlarge hit regions beyond reported frames.
         let tabBar = app.tabBars.firstMatch
         if tabBar.exists {
             for button in tabBar.buttons.allElementsBoundByIndex {
@@ -368,7 +369,7 @@ final class AccessibilityAuditTests: XCTestCase {
         }
         
         // Check toggles in the form (player selection) have accessibility labels
-        // Only assert on our toggles (identifier "toggle-â€¦") to avoid system/off-screen switches
+        // Only assert on our toggles (identifier "toggle-…") to avoid system/off-screen switches
         for toggle in app.switches.allElementsBoundByIndex {
             let id = toggle.identifier
             if id.hasPrefix("toggle-") {

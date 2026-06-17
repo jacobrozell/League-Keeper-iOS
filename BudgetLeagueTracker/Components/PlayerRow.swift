@@ -111,6 +111,7 @@ struct PlayerRow: View {
     private func toggleableContent(isOn: Binding<Bool>) -> some View {
         Toggle(name, isOn: isOn)
             .accessibilityLabel("Mark \(name) as present")
+            .accessibilityValue(isOn.wrappedValue ? "Present" : "Absent")
             .accessibilityIdentifier("toggle-\(name)")
     }
 }

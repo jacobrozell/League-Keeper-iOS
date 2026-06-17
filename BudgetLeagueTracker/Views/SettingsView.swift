@@ -118,10 +118,16 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("App", value: appDisplayName)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("App, \(appDisplayName)")
                     .brandedInsetListRow()
                 LabeledContent("Version", value: appVersion)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Version, \(appVersion)")
                     .brandedInsetListRow()
                 LabeledContent("Build", value: buildNumber)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Build, \(buildNumber)")
                     .brandedInsetListRow()
             } header: {
                 Text("About")
