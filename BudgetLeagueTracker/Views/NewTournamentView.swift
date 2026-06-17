@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// New Tournament view - create a new tournament with name, settings, and player selection.
 struct NewTournamentView: View {
@@ -32,16 +33,21 @@ struct NewTournamentView: View {
             
             // Players
             Section {
-                ForEach(viewModel.allPlayers, id: \.id) { player in
-                    PlayerRow(
-                        name: viewModel.displayName(for: player),
-                        mode: .toggleable(
-                            isOn: Binding(
-                                get: { viewModel.isSelected(player) },
-                                set: { _ in viewModel.togglePlayer(player) }
+                if viewModel.filteredPlayers.isEmpty, !viewModel.searchText.isEmpty {
+                    Text("No players match your search.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.filteredPlayers, id: \.id) { player in
+                        PlayerRow(
+                            name: viewModel.displayName(for: player),
+                            mode: .toggleable(
+                                isOn: Binding(
+                                    get: { viewModel.isSelected(player) },
+                                    set: { _ in viewModel.togglePlayer(player) }
+                                )
                             )
                         )
-                    )
+                    }
                 }
                 
                 addPlayerRow
@@ -76,6 +82,9 @@ struct NewTournamentView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .adaptiveContentWidth()
+        .searchable(text: $viewModel.searchText, prompt: "Search players")
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("New Tournament")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -91,11 +100,14 @@ struct NewTournamentView: View {
                 }
                 .accessibilityIdentifier("Cancel")
             }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    dismissKeyboard()
+                }
+            }
         }
         .onAppear {
-            // #region agent log
-            AgentLog.write(location: "NewTournamentView.swift:onAppear", message: "onAppear", data: [:], hypothesisId: "C")
-            // #endregion
             viewModel.refresh()
         }
     }
@@ -126,6 +138,10 @@ struct NewTournamentView: View {
             .accessibilityIdentifier("Add player")
         }
         .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

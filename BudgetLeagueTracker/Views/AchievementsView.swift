@@ -212,8 +212,9 @@ struct AchievementsView: View {
                 onToggleAlwaysOn: { viewModel.toggleAlwaysOn(achievement) },
                 onRemove: { viewModel.removeAchievement(achievement) }
             )
-            .padding(.horizontal)
-            .padding(.top, 8)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
 
             // Stats Row (only if there are game results)
             if viewModel.hasGameResults {
@@ -301,8 +302,9 @@ struct AchievementsView: View {
         }
         .background(Color(hex: palette.surface))
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.horizontal)
-        .padding(.top, 16)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 4)
     }
 }
 

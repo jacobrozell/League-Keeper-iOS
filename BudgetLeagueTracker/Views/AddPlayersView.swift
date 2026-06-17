@@ -40,6 +40,7 @@ struct AddPlayersView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .adaptiveContentWidth()
         .navigationTitle("Add Players")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {

@@ -11,18 +11,18 @@ struct PodLayoutHintTests {
 
     @Test("remainder only when fewer than pod size")
     func smallGroup() {
-        #expect(PodLayoutHint.message(presentCount: 3) == "3 present — pods will seat 3 players.")
+        #expect(PodLayoutHint.message(presentCount: 3) == "3 present — one table will seat 3 players.")
     }
 
-    @Test("full pods plus remainder")
+    @Test("full tables plus remainder")
     func mixedPods() {
         #expect(
             PodLayoutHint.message(presentCount: 5)
-                == "5 present — expect 1 pod of 4 and 1 pod of 1."
+                == "5 present — expect 1 table of 4 and 1 table of 1."
         )
         #expect(
             PodLayoutHint.message(presentCount: 7)
-                == "7 present — expect 1 pod of 4 and 1 pod of 3."
+                == "7 present — expect 1 table of 4 and 1 table of 3."
         )
     }
 }

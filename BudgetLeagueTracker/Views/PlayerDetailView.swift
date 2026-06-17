@@ -43,6 +43,7 @@ struct PlayerDetailView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .adaptiveContentWidth()
         .navigationTitle(viewModel.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

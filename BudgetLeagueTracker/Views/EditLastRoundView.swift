@@ -10,6 +10,7 @@ struct EditLastRoundView: View {
     var body: some View {
         NavigationStack {
             content
+                .adaptiveContentWidth()
                 .navigationTitle(viewModel.title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {

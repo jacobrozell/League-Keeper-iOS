@@ -1,26 +1,11 @@
 import Foundation
 import SwiftData
 
-// #region agent log
-enum AgentLog {
-    static func write(location: String, message: String, data: [String: Any] = [:], hypothesisId: String) {
-        let payload: [String: Any] = ["location": location, "message": message, "data": data, "hypothesisId": hypothesisId, "timestamp": Int(Date().timeIntervalSince1970 * 1000), "sessionId": "debug-session"]
-        guard let payloadData = try? JSONSerialization.data(withJSONObject: payload) else { return }
-        let path = "/Users/jrozell/Desktop/MTG/.cursor/debug.log"
-        var dataToWrite = payloadData
-        dataToWrite.append("\n".data(using: .utf8)!)
-        if !FileManager.default.fileExists(atPath: path) { FileManager.default.createFile(atPath: path, contents: nil) }
-        if let fh = FileHandle(forWritingAtPath: path) { fh.seekToEndOfFile(); fh.write(dataToWrite); try? fh.close() }
-    }
-}
-// #endregion
-
 /// ViewModel for the New Tournament view.
 /// Handles tournament creation with name, settings, and player selection.
 @Observable
 final class NewTournamentViewModel {
     private let context: ModelContext
-    private let instanceId = UUID().uuidString
 
     // MARK: - Published State
     
@@ -41,6 +26,9 @@ final class NewTournamentViewModel {
     
     /// Name for adding a new player
     var newPlayerName: String = ""
+
+    /// Search filter for the player roster
+    var searchText: String = ""
     
     /// When true, Create stays on tournaments list (dismiss sheet) instead of navigating to attendance.
     var isSheetMode: Bool = false
@@ -62,14 +50,21 @@ final class NewTournamentViewModel {
     var selectedPlayerCount: Int {
         selectedPlayerIds.count
     }
+
+    /// Players shown in the roster, filtered by search text.
+    var filteredPlayers: [Player] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return allPlayers }
+        return allPlayers.filter {
+            displayName(for: $0).localizedCaseInsensitiveContains(query)
+                || $0.name.localizedCaseInsensitiveContains(query)
+        }
+    }
     
     // MARK: - Initialization
     
     init(context: ModelContext) {
         self.context = context
-        // #region agent log
-        AgentLog.write(location: "NewTournamentViewModel.swift:init", message: "ViewModel init", data: ["instanceId": instanceId], hypothesisId: "A")
-        // #endregion
         refresh()
     }
     
@@ -77,14 +72,8 @@ final class NewTournamentViewModel {
     
     /// Refreshes player list from SwiftData. Does not change selection (preserves user toggles).
     func refresh() {
-        // #region agent log
-        AgentLog.write(location: "NewTournamentViewModel.swift:refresh", message: "refresh entry", data: ["selectedCountBefore": selectedPlayerIds.count], hypothesisId: "B")
-        // #endregion
         let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\.name)])
         allPlayers = (try? context.fetch(descriptor)) ?? []
-        // #region agent log
-        AgentLog.write(location: "NewTournamentViewModel.swift:refresh", message: "refresh exit", data: ["selectedCountAfter": selectedPlayerIds.count, "allPlayersCount": allPlayers.count], hypothesisId: "B")
-        // #endregion
     }
     
     /// Toggles player selection.
@@ -117,18 +106,12 @@ final class NewTournamentViewModel {
     
     /// Adds a new player and selects them.
     func addPlayer() {
-        // #region agent log
-        AgentLog.write(location: "NewTournamentViewModel.swift:addPlayer", message: "addPlayer entry", data: ["tournamentName": tournamentName, "selectedCount": selectedPlayerIds.count, "instanceId": instanceId], hypothesisId: "A,B,E")
-        // #endregion
         guard canAddPlayer else { return }
         
         if let player = LeagueEngine.addPlayer(context: context, name: newPlayerName) {
             selectedPlayerIds.insert(player.id)
             newPlayerName = ""
             refresh()
-            // #region agent log
-            AgentLog.write(location: "NewTournamentViewModel.swift:addPlayer", message: "addPlayer after refresh", data: ["selectedCount": selectedPlayerIds.count], hypothesisId: "B")
-            // #endregion
         }
     }
     

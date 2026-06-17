@@ -4,6 +4,14 @@ import SwiftData
 /// Root content view with TabView navigation.
 /// Manages screen-driven navigation for flows.
 struct ContentView: View {
+    private enum AppTab: Hashable {
+        case tournaments
+        case players
+        case stats
+        case achievements
+        case settings
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Query private var leagueStates: [LeagueState]
     @Query private var players: [Player]
@@ -25,6 +33,7 @@ struct ContentView: View {
     @State private var showTournamentStandings = false
     @State private var showOnboarding = false
     @State private var onboardingSampleError: String?
+    @State private var selectedTab: AppTab = .tournaments
     @State private var tournamentsNavigationPath: [Tournament] = []
     /// ViewModel for New Tournament screen; persisted so adding a player doesn't recreate it and lose form state.
     @State private var newTournamentViewModel: NewTournamentViewModel?
@@ -42,36 +51,36 @@ struct ContentView: View {
     }
     
     var body: some View {
-        TabView {
-            Tab {
+        TabView(selection: $selectedTab) {
+            Tab(value: AppTab.tournaments) {
                 tournamentsStack
             } label: {
                 Label("Tournaments", systemImage: "trophy.fill")
                     .accessibilityIdentifier("tabTournaments")
             }
 
-            Tab {
+            Tab(value: AppTab.players) {
                 playersStack
             } label: {
                 Label("Players", systemImage: "person.crop.rectangle.stack")
                     .accessibilityIdentifier("tabPlayers")
             }
 
-            Tab {
+            Tab(value: AppTab.stats) {
                 statsStack
             } label: {
                 Label("Stats", systemImage: "chart.bar")
                     .accessibilityIdentifier("tabStats")
             }
 
-            Tab {
+            Tab(value: AppTab.achievements) {
                 achievementsStack
             } label: {
                 Label("Achievements", systemImage: "star")
                     .accessibilityIdentifier("tabAchievements")
             }
 
-            Tab {
+            Tab(value: AppTab.settings) {
                 settingsStack
             } label: {
                 Label("Settings", systemImage: "gearshape.fill")
@@ -223,6 +232,7 @@ struct ContentView: View {
         case .loadSample:
             do {
                 let result = try DemoLeagueLoader.load(into: modelContext)
+                selectedTab = .tournaments
                 openTournamentDetail(tournamentId: result.tournamentId)
             } catch {
                 onboardingSampleError = error.localizedDescription

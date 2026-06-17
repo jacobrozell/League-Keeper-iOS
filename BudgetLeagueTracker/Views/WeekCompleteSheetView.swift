@@ -85,6 +85,7 @@ struct WeekCompleteSheetView: View {
                 .accessibilityIdentifier("weekCompleteContinue")
                 .padding()
             }
+            .adaptiveContentWidth()
             .navigationTitle("Week \(week) Complete")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

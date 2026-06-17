@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Attendance view - record who is present and weekly settings.
 struct AttendanceView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Bindable var viewModel: AttendanceViewModel
     /// When true, shows a banner that attendance is already confirmed for this week.
     var showsConfirmedBanner: Bool = false
@@ -46,16 +47,21 @@ struct AttendanceView: View {
             }
             
             Section {
-                ForEach(viewModel.players, id: \.id) { player in
-                    PlayerRow(
-                        name: viewModel.displayName(for: player),
-                        mode: .toggleable(isOn: Binding(
-                            get: { viewModel.isPresent(player.id) },
-                            set: { _ in viewModel.togglePresence(for: player.id) }
-                        ))
-                    )
+                if AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: horizontalSizeClass) {
+                    LazyVGrid(
+                        columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                        spacing: 12
+                    ) {
+                        ForEach(viewModel.players, id: \.id) { player in
+                            attendancePlayerRow(player)
+                        }
+                    }
+                } else {
+                    ForEach(viewModel.players, id: \.id) { player in
+                        attendancePlayerRow(player)
+                    }
                 }
-                
+
                 addPlayerRow
             } header: {
                 HStack {
@@ -88,6 +94,7 @@ struct AttendanceView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .adaptiveContentWidth()
         .navigationTitle("Attendance – Week \(viewModel.currentWeek)")
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
@@ -109,6 +116,17 @@ struct AttendanceView: View {
         }
     }
     
+    @ViewBuilder
+    private func attendancePlayerRow(_ player: Player) -> some View {
+        PlayerRow(
+            name: viewModel.displayName(for: player),
+            mode: .toggleable(isOn: Binding(
+                get: { viewModel.isPresent(player.id) },
+                set: { _ in viewModel.togglePresence(for: player.id) }
+            ))
+        )
+    }
+
     @ViewBuilder
     private var addPlayerRow: some View {
         HStack {

@@ -29,6 +29,7 @@ struct EditTournamentView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .adaptiveContentWidth()
             .navigationTitle("Edit Tournament")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

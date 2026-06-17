@@ -53,6 +53,7 @@ struct TournamentStandingsView: View {
                     }
                 )
             }
+            .adaptiveContentWidth()
             .navigationTitle(viewModel.isFinal ? "Final Rankings" : "Tournament Rankings")
             .toolbar {
                 if !viewModel.sortedPlayers.isEmpty {

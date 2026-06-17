@@ -3,7 +3,13 @@ import SwiftUI
 /// Shared size-class and Dynamic Type helpers for adaptive navigation and list chrome.
 enum AdaptiveLayout {
     /// Max content width on regular horizontal size class (iPad, wide layouts).
-    static let contentMaxWidth: CGFloat = 680
+    static let contentMaxWidth: CGFloat = 920
+
+    /// Fixed width for sidebar panels in two-column iPad layouts.
+    static let sidebarWidth: CGFloat = 320
+
+    /// Horizontal gap between sidebar and main column.
+    static let columnSpacing: CGFloat = 20
 
     /// Extra bottom inset so empty-state actions clear the tab bar at large Dynamic Type.
     static func tabBarClearance(for dynamicType: DynamicTypeSize) -> CGFloat {
@@ -29,16 +35,31 @@ enum AdaptiveLayout {
         dynamicType.isAccessibilitySize || verticalSizeClass == .compact
     }
 
-    /// Use menu-style section pickers when vertical space is tight or Dynamic Type is large.
+    /// Use menu-style section pickers when segmented labels won't fit (large Dynamic Type only).
     static func usesMenuSectionPicker(
         dynamicType: DynamicTypeSize,
         verticalSizeClass: UserInterfaceSizeClass?
     ) -> Bool {
-        usesMenuPickerStyle(dynamicType: dynamicType, verticalSizeClass: verticalSizeClass)
+        dynamicType.isAccessibilitySize
+    }
+
+    /// Stack the pods action bar vertically only at large accessibility text sizes.
+    static func usesStackedPodsActionBar(dynamicType: DynamicTypeSize) -> Bool {
+        dynamicType.isAccessibilitySize
     }
 
     /// Whether content should use the readable max width (iPad and other regular-width layouts).
     static func usesReadableContentWidth(horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        horizontalSizeClass == .regular
+    }
+
+    /// Side-by-side sidebar + main content on iPad and other regular-width layouts.
+    static func usesTwoColumnLayout(horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        horizontalSizeClass == .regular
+    }
+
+    /// Two-column grid for player toggle lists on regular-width layouts.
+    static func usesTwoColumnPlayerGrid(horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
         horizontalSizeClass == .regular
     }
 }
@@ -72,6 +93,31 @@ private struct AdaptiveEmptyStateLayout: ViewModifier {
             .scrollBounceBehavior(.basedOnSize)
         } else {
             content.safeAreaPadding(.bottom, clearance)
+        }
+    }
+}
+
+/// Sidebar + main column on iPad; stacked vertically on iPhone.
+struct AdaptiveSidebarLayout<Sidebar: View, Main: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ViewBuilder let sidebar: () -> Sidebar
+    @ViewBuilder let main: () -> Main
+
+    var body: some View {
+        if AdaptiveLayout.usesTwoColumnLayout(horizontalSizeClass: horizontalSizeClass) {
+            HStack(alignment: .top, spacing: AdaptiveLayout.columnSpacing) {
+                sidebar()
+                    .frame(width: AdaptiveLayout.sidebarWidth, alignment: .top)
+                main()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        } else {
+            VStack(spacing: 0) {
+                sidebar()
+                main()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 }

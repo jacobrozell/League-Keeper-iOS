@@ -41,6 +41,14 @@ struct AdaptiveLayoutTests {
         #expect(!AdaptiveLayout.usesReadableContentWidth(horizontalSizeClass: .compact))
     }
 
+    @Test("two-column layout on regular horizontal size class")
+    func twoColumnOnRegular() {
+        #expect(AdaptiveLayout.usesTwoColumnLayout(horizontalSizeClass: .regular))
+        #expect(!AdaptiveLayout.usesTwoColumnLayout(horizontalSizeClass: .compact))
+        #expect(AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: .regular))
+        #expect(!AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: .compact))
+    }
+
     @Test("uses menu section picker for accessibility text sizes")
     func menuPickerForAccessibilityText() {
         #expect(
@@ -57,14 +65,20 @@ struct AdaptiveLayoutTests {
         )
     }
 
-    @Test("uses menu picker in landscape compact height at default text")
-    func menuPickerInLandscape() {
+    @Test("keeps segmented section picker in landscape at default text")
+    func segmentedSectionPickerInLandscape() {
         #expect(
-            AdaptiveLayout.usesMenuPickerStyle(
+            !AdaptiveLayout.usesMenuSectionPicker(
                 dynamicType: .large,
                 verticalSizeClass: .compact
             )
         )
+    }
+
+    @Test("stacks pods action bar for accessibility text sizes")
+    func stackedPodsActionBarForAccessibility() {
+        #expect(AdaptiveLayout.usesStackedPodsActionBar(dynamicType: .accessibility1))
+        #expect(!AdaptiveLayout.usesStackedPodsActionBar(dynamicType: .large))
     }
 
     @Test("does not use menu picker in portrait at default text size")
@@ -77,8 +91,10 @@ struct AdaptiveLayoutTests {
         )
     }
 
-    @Test("content max width token")
-    func contentMaxWidthToken() {
-        #expect(AdaptiveLayout.contentMaxWidth == 680)
+    @Test("layout width tokens")
+    func layoutWidthTokens() {
+        #expect(AdaptiveLayout.contentMaxWidth == 920)
+        #expect(AdaptiveLayout.sidebarWidth == 320)
+        #expect(AdaptiveLayout.columnSpacing == 20)
     }
 }
