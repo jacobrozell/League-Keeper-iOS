@@ -187,11 +187,11 @@ struct TournamentProgressHeader: View {
         roundLabel: "Round 1",
         steps: [
             TournamentProgressStep(id: "attendance", title: "Attendance", state: .complete),
-            TournamentProgressStep(id: "pods", title: "Pods", state: .current),
+            TournamentProgressStep(id: "seat", title: "Seat", state: .current),
             TournamentProgressStep(id: "score", title: "Score", state: .upcoming)
         ],
         currentRound: 1,
         roundsPerWeek: 3,
-        nextStepHint: "Generate pods for Round 1"
+        nextStepHint: "Seat players for Round 1"
     )
 }

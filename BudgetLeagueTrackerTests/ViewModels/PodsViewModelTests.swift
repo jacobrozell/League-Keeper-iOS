@@ -63,17 +63,16 @@ struct PodsViewModelTests {
             #expect(viewModel.pods[1].count == 4)
         }
         
-        @Test("Initializes default placements for each player")
-        func initializesDefaultPlacements() throws {
+        @Test("Does not pre-fill placements when seating")
+        func doesNotInitializeDefaultPlacements() throws {
             let context = try TestHelpers.contextWithTournament()
             try context.save()
             
             let viewModel = PodsViewModel(context: context)
             viewModel.generatePods()
             
-            // Each player should have a placement
             let tournament = try TestHelpers.fetchActiveTournament(from: context)
-            #expect(tournament?.roundPlacements.count == 4)
+            #expect(tournament?.roundPlacements.isEmpty == true)
         }
     }
     

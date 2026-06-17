@@ -176,14 +176,14 @@ struct TournamentDetailViewModelTests {
     @MainActor
     struct PlacementTests {
         
-        @Test("Returns default placement of 4")
-        func returnsDefaultPlacement() throws {
+        @Test("Returns nil when no placement recorded")
+        func returnsNilWithoutPlacement() throws {
             let context = try TestHelpers.contextWithTournament()
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
-            
+
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            
-            #expect(viewModel.placement(for: "unknown-player") == 4)
+
+            #expect(viewModel.placement(for: "unknown-player") == nil)
         }
         
         @Test("setPlacement updates tournament data")
@@ -279,8 +279,8 @@ struct TournamentDetailViewModelTests {
             #expect(viewModel.canNextRound == false)
         }
 
-        @Test("Returns true after pods are generated")
-        func returnsTrueAfterGeneratePods() throws {
+        @Test("Returns true after every table is confirmed")
+        func returnsTrueAfterAllTablesConfirmed() throws {
             let context = try TestHelpers.contextWithTournament()
             let players = TestFixtures.insertStandardPlayers(into: context)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
@@ -288,9 +288,25 @@ struct TournamentDetailViewModelTests {
             try context.save()
 
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            viewModel.generatePods()
+            viewModel.seatPlayers()
+            viewModel.startScoring()
+            viewModel.confirmAllTables()
 
             #expect(viewModel.canNextRound == true)
+        }
+
+        @Test("Returns false after seating before tables are confirmed")
+        func returnsFalseAfterSeatingOnly() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.seatPlayers()
+
+            #expect(viewModel.canNextRound == false)
         }
     }
 
@@ -364,7 +380,7 @@ struct TournamentDetailViewModelTests {
 
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
 
-            #expect(viewModel.activeTab == .pods)
+            #expect(viewModel.activeTab == .round)
         }
     }
 
@@ -395,8 +411,8 @@ struct TournamentDetailViewModelTests {
 
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
 
-            #expect(viewModel.hostStep == .pods)
-            #expect(viewModel.nextStepHint.contains("Generate pods"))
+            #expect(viewModel.hostStep == .seatPlayers)
+            #expect(viewModel.nextStepHint.contains("Seat players"))
         }
 
         @Test("Moves to score round after pods are generated")
@@ -411,15 +427,32 @@ struct TournamentDetailViewModelTests {
             viewModel.generatePods()
 
             #expect(viewModel.hostStep == .scoreRound)
+            #expect(viewModel.nextStepHint.contains("Review tables"))
+        }
+
+        @Test("Marks seat complete and score current after seating")
+        func progressStepsAfterSeating() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.seatPlayers()
+
+            let steps = viewModel.progressSteps
+            #expect(steps.first { $0.id == "seat" }?.state == .complete)
+            #expect(steps.first { $0.id == "score" }?.state == .current)
         }
     }
 
-    @Suite("generatePodsButtonTitle")
+    @Suite("seatPlayersButtonTitle")
     @MainActor
-    struct GeneratePodsButtonTitleTests {
+    struct SeatPlayersButtonTitleTests {
 
-        @Test("Includes current round number")
-        func includesRound() throws {
+        @Test("Uses seat players wording")
+        func seatPlayersTitle() throws {
             let context = try TestHelpers.contextWithTournament()
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
             tournament.currentRound = 2
@@ -427,7 +460,7 @@ struct TournamentDetailViewModelTests {
 
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
 
-            #expect(viewModel.generatePodsButtonTitle == "Generate Round 2 Pods")
+            #expect(viewModel.seatPlayersButtonTitle == "Seat Players")
         }
     }
 
@@ -447,7 +480,9 @@ struct TournamentDetailViewModelTests {
             try context.save()
 
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            viewModel.generatePods()
+            viewModel.seatPlayers()
+            viewModel.startScoring()
+            viewModel.confirmAllTables()
             viewModel.nextRound()
 
             #expect(viewModel.showWeekCompleteSheet == true)
@@ -479,12 +514,25 @@ struct TournamentDetailViewModelTests {
         }
     }
 
-    @Suite("pod expansion")
+    @Suite("roundPhase")
     @MainActor
-    struct PodExpansionTests {
+    struct RoundPhaseTests {
 
-        @Test("Expands only the first pod after generation")
-        func expandsFirstPod() throws {
+        @Test("Starts in seating before tables exist")
+        func seatingPhase() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.roundPhase == .seating)
+        }
+
+        @Test("Moves to seatings ready after seating players")
+        func seatingsReadyPhase() throws {
             let context = try TestHelpers.contextWithTournament()
             let players = TestFixtures.insertStandardPlayers(into: context)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
@@ -492,10 +540,25 @@ struct TournamentDetailViewModelTests {
             try context.save()
 
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            viewModel.generatePods()
+            viewModel.seatPlayers()
 
-            #expect(viewModel.isPodExpanded(0))
-            #expect(viewModel.isPodExpanded(1) == false)
+            #expect(viewModel.roundPhase == .seatingsReady)
+        }
+
+        @Test("Moves to review after all tables are confirmed")
+        func reviewPhase() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map { $0.id }
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.seatPlayers()
+            viewModel.startScoring()
+            viewModel.confirmAllTables()
+
+            #expect(viewModel.roundPhase == .review)
         }
     }
     

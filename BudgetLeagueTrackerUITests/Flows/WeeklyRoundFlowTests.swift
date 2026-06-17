@@ -107,11 +107,9 @@ final class WeeklyRoundFlowTests: XCTestCase {
         }
     }
 
-    /// Taps the Generate pods action (sticky bar or empty-state CTA).
-    private func tapGenerate() {
-        let generate = app.buttons.matching(identifier: "Generate").firstMatch
-        XCTAssertTrue(generate.waitForExistence(timeout: 5))
-        generate.tap()
+    /// Ensures pods exist, tapping Generate only when needed.
+    private func ensurePodsForCurrentRound() {
+        app.ensurePodsForCurrentRound()
     }
 
     /// Scores every visible placement picker so the round can advance.
@@ -142,11 +140,7 @@ final class WeeklyRoundFlowTests: XCTestCase {
         
         // For each of 3 rounds
         for round in 1...3 {
-            // Generate pods
-            let generateButton = app.buttons["Generate"]
-            guard generateButton.waitForExistence(timeout: 3) else { return }
-            generateButton.tap()
-            
+            ensurePodsForCurrentRound()
             // Tap Next Round (waitForExistence handles delay)
             advanceRound()
             
@@ -164,19 +158,12 @@ final class WeeklyRoundFlowTests: XCTestCase {
         guard createTournamentAndGoToAttendance() else { return }
         confirmAttendance()
         
-        // Generate and complete a round
-        let generateButton = app.buttons["Generate"]
-        guard generateButton.waitForExistence(timeout: 3) else { return }
-        generateButton.tap()
-        
-        // Save the round
+        ensurePodsForCurrentRound()
         advanceRound()
-        
-        // Now we should be in round 2 - Generate pods for round 2
-        guard generateButton.waitForExistence(timeout: 3) else { return }
-        generateButton.tap()
-        
-        // Edit should be available
+
+        ensurePodsForCurrentRound()
+        // Edit should be available in the More menu
+        app.openPodsMoreMenu()
         let editButton = app.buttons["Edit Last Round"]
         guard editButton.waitForExistence(timeout: 3) else { return }
         
@@ -198,8 +185,7 @@ final class WeeklyRoundFlowTests: XCTestCase {
             cancelButton.tap()
         }
         
-        // Verify we're back on tournament detail screen
-        XCTAssertTrue(generateButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.waitForRoundReady(timeout: 3))
     }
     
     func testToggleAchievementsOff() {
@@ -217,10 +203,7 @@ final class WeeklyRoundFlowTests: XCTestCase {
         
         confirmAttendance()
         
-        // Generate pods
-        let generateButton = app.buttons["Generate"]
-        guard generateButton.waitForExistence(timeout: 3) else { return }
-        generateButton.tap()
+        ensurePodsForCurrentRound()
         
         // Achievement checkboxes should not be visible when achievements are off
         // Verify pods are generated
@@ -230,23 +213,20 @@ final class WeeklyRoundFlowTests: XCTestCase {
     func testPlacementSelection() {
         guard createTournamentAndGoToAttendance() else { return }
         confirmAttendance()
-        
-        // Generate pods
-        let generateButton = app.buttons["Generate"]
-        guard generateButton.waitForExistence(timeout: 3) else { return }
-        generateButton.tap()
-        
-        // Wait for pods to appear by checking for Next Round button
-        guard app.buttons["Next Round"].waitForExistence(timeout: 3) else { return }
-        
-        // Find a placement picker (segmented control)
-        let picker = app.segmentedControls.firstMatch
-        if picker.exists {
-            // Tap on "2" segment
-            picker.buttons["2"].tap()
-            
-            // Verify selection changed
-            XCTAssertTrue(picker.buttons["2"].isSelected)
+
+        let seatButton = app.buttons["Seat Players"]
+        if seatButton.waitForExistence(timeout: 3) {
+            seatButton.tap()
+        }
+
+        let startScoring = app.buttons["Start Scoring"]
+        if startScoring.waitForExistence(timeout: 3) {
+            startScoring.tap()
+        }
+
+        let moveUp = app.buttons.matching(NSPredicate(format: "label CONTAINS 'up'")).firstMatch
+        if moveUp.waitForExistence(timeout: 3), moveUp.isEnabled {
+            moveUp.tap()
         }
     }
 
@@ -255,10 +235,7 @@ final class WeeklyRoundFlowTests: XCTestCase {
         app.launchArguments = ["--uitesting", "UI-Testing-Seed-WeekCompleteReady"]
         app.launch()
 
-        let generateButton = app.buttons.matching(identifier: "Generate").firstMatch
-        XCTAssertTrue(generateButton.waitForExistence(timeout: 8), "Seeded tournament detail should show Generate")
-
-        tapGenerate()
+        app.ensurePodsForCurrentRound()
 
         let nextRound = app.buttons.matching(identifier: "Next Round").firstMatch
         XCTAssertTrue(nextRound.waitForExistence(timeout: 5))

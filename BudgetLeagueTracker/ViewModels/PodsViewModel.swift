@@ -94,14 +94,6 @@ final class PodsViewModel {
         
         // Clear any previous round data first
         LeagueEngine.clearRoundData(context: context)
-        
-        // Initialize placements with defaults and auto-save
-        for pod in pods {
-            for (index, player) in pod.enumerated() {
-                let defaultPlace = min(index + 1, 4)
-                LeagueEngine.updatePlacement(context: context, playerId: player.id, placement: defaultPlace)
-            }
-        }
     }
     
     /// Sets placement for a player (auto-saves immediately).

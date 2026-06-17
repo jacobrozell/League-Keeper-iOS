@@ -110,20 +110,31 @@ final class TournamentsScreenTests: XCTestCase {
         // Wait for main screen to load first
         let navBar = app.navigationBars.firstMatch
         XCTAssertTrue(navBar.waitForExistence(timeout: 5))
-        
+
         let tabBar = app.tabBars.firstMatch
         guard tabBar.waitForExistence(timeout: 5) else {
-            // Tab bar might be hidden, skip test
             return
         }
-        
+
         let achievementsTab = tabBar.buttons["Achievements"]
         guard achievementsTab.exists else { return }
         achievementsTab.tap()
-        
-        // Verify Achievements screen appears
+
         let achievementsTitle = app.navigationBars["Achievements"]
         XCTAssertTrue(achievementsTitle.waitForExistence(timeout: 5))
+    }
+
+    func testTournamentDetailStandingsSection() {
+        app.terminate()
+        app.launchArguments = ["--uitesting", "UI-Testing-Seed-TournamentDetail"]
+        app.launch()
+
+        let detailPicker = app.descendants(matching: .any)["tournamentDetailSectionPicker"]
+        XCTAssertTrue(detailPicker.waitForExistence(timeout: 8))
+
+        app.selectTournamentDetailSection("Standings")
+
+        XCTAssertTrue(app.staticTexts["View by week"].waitForExistence(timeout: 5))
     }
 
     // MARK: - Appearance and orientation (dark mode, landscape)

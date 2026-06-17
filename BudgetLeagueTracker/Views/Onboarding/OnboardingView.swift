@@ -35,7 +35,7 @@ struct OnboardingView: View {
             symbol: "trophy.fill",
             title: AppInfo.displayName,
             subtitle: AppInfo.subtitle,
-            body: "Run Magic: The Gathering budget leagues from your iPhone or iPad — tournaments, pods, placement points, and achievements in one place."
+            body: "Run Magic: The Gathering budget leagues from your iPhone or iPad — tournaments, tables, placement points, and achievements in one place."
         ),
         Page(
             id: 1,
@@ -48,8 +48,8 @@ struct OnboardingView: View {
             id: 2,
             symbol: "calendar.badge.clock",
             title: "Each week in three steps",
-            subtitle: "Attendance → Pods → Standings",
-            body: "Mark who showed up, generate pods of four, score placements and achievements across three rounds, then review weekly standings."
+            subtitle: "Attendance → Round → Standings",
+            body: "Mark who showed up, seat players at tables of four, score finish order and achievements across three rounds, then review weekly standings."
         ),
         Page(
             id: 3,
@@ -381,7 +381,6 @@ struct OnboardingView: View {
 
 #Preview("iPad", traits: .landscapeLeft) {
     OnboardingView { _ in }
-        .previewDevice(PreviewDevice(rawValue: "iPad Pro 11-inch (M4)"))
 }
 
 #Preview("Landscape", traits: .landscapeLeft) {

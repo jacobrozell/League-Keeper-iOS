@@ -63,9 +63,21 @@ final class Tournament: Identifiable {
     
     /// JSON-encoded dictionary of current round placements (playerId -> place 1-4)
     var roundPlacementsData: Data?
+
+    /// JSON-encoded nested array of player IDs for the current round's pods
+    var currentRoundPodsPlayerIdsData: Data?
     
     /// JSON-encoded set of current round achievement checks ("playerId:achievementId")
     var roundAchievementChecksData: Data?
+
+    /// JSON-encoded indices of tables the host has confirmed for the current round
+    var confirmedTableIndicesData: Data?
+
+    /// JSON-encoded player ID order per table for drag-to-rank scoring
+    var tableScoringOrdersData: Data?
+
+    /// Whether the host has started scoring tables for the current round
+    var roundScoringStarted: Bool = false
     
     // MARK: - Initialization
     
@@ -183,6 +195,17 @@ final class Tournament: Identifiable {
             roundPlacementsData = try? JSONEncoder().encode(newValue)
         }
     }
+
+    /// Player IDs grouped into pods for the current round.
+    var currentRoundPodsPlayerIds: [[String]] {
+        get {
+            guard let data = currentRoundPodsPlayerIdsData else { return [] }
+            return (try? JSONDecoder().decode([[String]].self, from: data)) ?? []
+        }
+        set {
+            currentRoundPodsPlayerIdsData = try? JSONEncoder().encode(newValue)
+        }
+    }
     
     /// Decodes and returns the current round achievement checks
     var roundAchievementChecks: Set<String> {
@@ -192,6 +215,28 @@ final class Tournament: Identifiable {
         }
         set {
             roundAchievementChecksData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    /// Table indices confirmed by the host for the current round
+    var confirmedTableIndices: Set<Int> {
+        get {
+            guard let data = confirmedTableIndicesData else { return [] }
+            return (try? JSONDecoder().decode(Set<Int>.self, from: data)) ?? []
+        }
+        set {
+            confirmedTableIndicesData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    /// Player IDs in finish order for each table (index aligns with `currentRoundPodsPlayerIds`)
+    var tableScoringOrders: [[String]] {
+        get {
+            guard let data = tableScoringOrdersData else { return [] }
+            return (try? JSONDecoder().decode([[String]].self, from: data)) ?? []
+        }
+        set {
+            tableScoringOrdersData = try? JSONEncoder().encode(newValue)
         }
     }
     

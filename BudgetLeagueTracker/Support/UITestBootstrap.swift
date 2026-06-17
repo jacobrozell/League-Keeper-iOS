@@ -153,15 +153,24 @@ enum UITestBootstrap {
         )
 
         LeagueEngine.clearRoundData(context: context)
-        for pod in pods {
-            for (index, player) in pod.enumerated() {
+        tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
+        tournament.tableScoringOrders = pods.map { $0.map(\.id) }
+        tournament.roundScoringStarted = true
+
+        for (tableIndex, pod) in pods.enumerated() {
+            for (placeIndex, player) in pod.enumerated() {
                 LeagueEngine.updatePlacement(
                     context: context,
                     playerId: player.id,
-                    placement: min(index + 1, 4)
+                    placement: placeIndex + 1
                 )
             }
+            var confirmed = tournament.confirmedTableIndices
+            confirmed.insert(tableIndex)
+            tournament.confirmedTableIndices = confirmed
         }
+
+        try? context.save()
     }
 
     private static func setScreen(_ screen: Screen, in context: ModelContext) {

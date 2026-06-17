@@ -490,8 +490,7 @@ enum LeagueEngine {
         tournament.podHistorySnapshots = snapshots
         
         // Clear round data
-        tournament.roundPlacements = [:]
-        tournament.roundAchievementChecks = []
+        clearTransientRoundState(on: tournament)
         
         try? context.save()
     }
@@ -501,10 +500,19 @@ enum LeagueEngine {
     static func clearRoundData(context: ModelContext) {
         guard let tournament = fetchActiveTournament(context: context) else { return }
         
-        tournament.roundPlacements = [:]
-        tournament.roundAchievementChecks = []
+        clearTransientRoundState(on: tournament)
         
         try? context.save()
+    }
+
+    /// Resets in-progress round scoring state without touching pod history.
+    static func clearTransientRoundState(on tournament: Tournament) {
+        tournament.roundPlacements = [:]
+        tournament.roundAchievementChecks = []
+        tournament.currentRoundPodsPlayerIds = []
+        tournament.confirmedTableIndices = []
+        tournament.tableScoringOrders = []
+        tournament.roundScoringStarted = false
     }
     
     /// Undoes the last saved pod.

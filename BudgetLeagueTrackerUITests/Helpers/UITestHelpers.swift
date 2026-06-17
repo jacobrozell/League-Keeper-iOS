@@ -111,18 +111,108 @@ extension XCUIApplication {
         }
     }
     
-    /// Generates pods and advances to next round
-    func generateAndAdvanceRound() {
-        let generateButton = buttons["Generate"]
-        if generateButton.waitForExistence(timeout: 3) {
-            generateButton.tap()
+    /// Waits until the round tab is ready for interaction.
+    @discardableResult
+    func waitForRoundReady(timeout: TimeInterval = 8) -> Bool {
+        let readyButtons = [
+            "Seat Players",
+            "Start Scoring",
+            "Done with Table",
+            "Next Table",
+            "Next Round",
+            "Reshuffle Tables"
+        ]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for title in readyButtons {
+                if buttons[title].exists { return true }
+            }
+            if buttons.matching(identifier: "Next Round").firstMatch.exists { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        
-        // Wait for pods to generate by checking for Next Round button
-        let nextRoundButton = buttons["Next Round"]
+        return false
+    }
+
+    /// Seats players, scores every table, and waits until the round can be finished.
+    func ensureRoundScored(timeout: TimeInterval = 12) {
+        XCTAssertTrue(waitForRoundReady(timeout: timeout), "Round tab should be ready")
+
+        let seatButton = buttons["Seat Players"]
+        if seatButton.waitForExistence(timeout: 2) {
+            seatButton.tap()
+        }
+
+        let startScoring = buttons["Start Scoring"]
+        if startScoring.waitForExistence(timeout: 3) {
+            startScoring.tap()
+        }
+
+        confirmAllTables(timeout: timeout)
+
+        XCTAssertTrue(
+            buttons.matching(identifier: "Next Round").firstMatch.waitForExistence(timeout: timeout),
+            "Finish round button should appear after all tables are scored"
+        )
+    }
+
+    /// Legacy name used by existing UI tests.
+    func ensurePodsForCurrentRound(timeout: TimeInterval = 12) {
+        ensureRoundScored(timeout: timeout)
+    }
+
+    private func confirmAllTables(timeout: TimeInterval) {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if buttons.matching(identifier: "Next Round").firstMatch.exists {
+                return
+            }
+
+            let doneButton = buttons["Done with Table"]
+            if doneButton.waitForExistence(timeout: 1) {
+                doneButton.tap()
+                continue
+            }
+
+            let nextTable = buttons["Next Table"]
+            if nextTable.waitForExistence(timeout: 1) {
+                nextTable.tap()
+                continue
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+    }
+
+    /// Scores the current round and advances to the next round or week.
+    func generateAndAdvanceRound() {
+        ensureRoundScored()
+        let nextRoundButton = buttons.matching(identifier: "Next Round").firstMatch
         if nextRoundButton.waitForExistence(timeout: 3) {
             nextRoundButton.tap()
+            let confirm = alerts.buttons["Finish Round"]
+            if confirm.waitForExistence(timeout: 2) {
+                confirm.tap()
+            } else if alerts.buttons["End Week"].waitForExistence(timeout: 1) {
+                alerts.buttons["End Week"].tap()
+            } else if alerts.buttons["End Tournament"].waitForExistence(timeout: 1) {
+                alerts.buttons["End Tournament"].tap()
+            }
         }
+    }
+
+    /// Opens the More menu on the tournament round sticky action bar.
+    func openPodsMoreMenu() {
+        let moreMenu = buttons["roundMoreMenu"]
+        XCTAssertTrue(moreMenu.waitForExistence(timeout: 5), "Round more menu should exist")
+        moreMenu.tap()
+    }
+
+    /// Selects a section on the tournament detail segmented control.
+    func selectTournamentDetailSection(_ title: String) {
+        let picker = descendants(matching: .any)["tournamentDetailSectionPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), "Tournament detail section picker should exist")
+        picker.buttons[title].tap()
     }
     
     // MARK: - Verification Helpers

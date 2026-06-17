@@ -100,12 +100,8 @@ final class TournamentCompletionFlowTests: XCTestCase {
         
         // Complete 3 rounds
         for _ in 1...3 {
-            let generateButton = app.buttons["Generate"]
-            if generateButton.waitForExistence(timeout: 3) {
-                generateButton.tap()
-            }
-            
-            // Wait for pod controls to appear instead of sleeping
+            app.ensurePodsForCurrentRound()
+
             let nextRoundButton = app.buttons["Next Round"]
             if nextRoundButton.waitForExistence(timeout: 3) {
                 nextRoundButton.tap()
