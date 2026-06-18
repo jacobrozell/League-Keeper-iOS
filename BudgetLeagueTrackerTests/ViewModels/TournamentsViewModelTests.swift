@@ -406,8 +406,8 @@ struct TournamentsViewModelTests {
     @MainActor
     struct ListSubtitleTests {
 
-        @Test("Shows resume wording before attendance is confirmed")
-        func resumeSubtitle() throws {
+        @Test("Shows continue wording before attendance is confirmed")
+        func continueSubtitle() throws {
             let context = try TestHelpers.contextWithTournament()
             TestFixtures.insertStandardPlayers(into: context)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
@@ -418,7 +418,7 @@ struct TournamentsViewModelTests {
             let viewModel = TournamentsViewModel(context: context)
             let subtitle = viewModel.listSubtitle(for: tournament)
 
-            #expect(subtitle.contains("Resume Week 2"))
+            #expect(subtitle.contains("Continue Week 2"))
             #expect(subtitle.contains("players"))
         }
 
@@ -429,15 +429,15 @@ struct TournamentsViewModelTests {
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
             tournament.presentPlayerIds = players.map { $0.id }
             tournament.currentRound = 2
-            tournament.activeAchievementIds = ["a1", "a2"]
-            tournament.achievementsOnThisWeek = true
             try context.save()
 
             let viewModel = TournamentsViewModel(context: context)
             let subtitle = viewModel.listSubtitle(for: tournament)
 
+            #expect(subtitle.contains("Week"))
             #expect(subtitle.contains("Round 2"))
-            #expect(subtitle.contains("2 achievements"))
+            #expect(subtitle.contains("players"))
+            #expect(!subtitle.contains("achievements"))
         }
     }
 }

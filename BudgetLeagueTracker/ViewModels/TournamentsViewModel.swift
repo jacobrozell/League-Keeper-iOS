@@ -101,17 +101,13 @@ final class TournamentsViewModel {
         case .ongoing:
             var segments: [String]
             if tournament.presentPlayerIds.isEmpty {
-                segments = ["Resume Week \(tournament.currentWeek)"]
+                segments = ["Continue Week \(tournament.currentWeek)"]
             } else {
-                segments = ["Week \(tournament.currentWeek) · Round \(tournament.currentRound)"]
+                segments = ["Week \(tournament.currentWeek), Round \(tournament.currentRound)"]
             }
             let count = rosterCount(for: tournament)
             if count > 0 {
-                segments.append("\(count)\u{00A0}players")
-            }
-            let achievements = activeAchievementCount(for: tournament)
-            if tournament.achievementsOnThisWeek, achievements > 0 {
-                segments.append("\(achievements)\u{00A0}achievements")
+                segments.append("\(count) players")
             }
             return segments.joined(separator: " · ")
         case .completed:
@@ -139,12 +135,11 @@ final class TournamentsViewModel {
             pointsByPlayer[result.playerId, default: 0] += result.totalPoints
         }
         
-        // Find player with most points
-        guard let winnerId = pointsByPlayer.max(by: { $0.value < $1.value })?.key,
-              let winner = players.first(where: { $0.id == winnerId }) else {
+        // Find player with most points (deterministic tiebreak)
+        guard let winner = StandingsRanking.winnerPlayer(from: pointsByPlayer, among: players) else {
             return nil
         }
-        
+
         return winner.name
     }
     

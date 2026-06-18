@@ -104,7 +104,11 @@ struct BarChartView: View {
             }
             return result
         }
-        
+
+        let seriesColors = [barColor, secondaryColor ?? Color(uiColor: .systemGray)]
+        let seriesOrder = Self.uniqueSeriesOrder(in: chartData)
+        let seriesRange = seriesOrder.indices.map { seriesColors[$0 % seriesColors.count] }
+
         Chart(chartData) { item in
             BarMark(
                 x: .value("Category", item.label),
@@ -114,14 +118,19 @@ struct BarChartView: View {
             .position(by: .value("Series", item.series))
         }
         .frame(height: height)
-        .chartForegroundStyleScale([
-            chartData.first?.series ?? "Primary": barColor,
-            chartData.dropFirst().first(where: { $0.series != chartData.first?.series })?.series ?? "Secondary": secondaryColor ?? Color(uiColor: .systemGray)
-        ])
+        .chartForegroundStyleScale(domain: seriesOrder, range: seriesRange)
         .chartLegend(showLegend ? .visible : .hidden)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
         .accessibilityValue(ChartAccessibility.barChartSummary(title: title, data: data))
+    }
+
+    private static func uniqueSeriesOrder(in chartData: [GroupedBarData]) -> [String] {
+        var order: [String] = []
+        for item in chartData where !order.contains(item.series) {
+            order.append(item.series)
+        }
+        return order
     }
     
     // MARK: - Empty State

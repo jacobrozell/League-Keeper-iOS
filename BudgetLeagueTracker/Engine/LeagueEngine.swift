@@ -482,10 +482,11 @@ enum LeagueEngine {
         var playerDeltas: [String: PlayerDelta] = [:]
         var weeklyDeltas: [String: WeeklyPlayerPoints] = [:]
         var checkRecords: [AchievementCheck] = []
-        
-        // Generate a pod ID for this group of results (for head-to-head tracking)
-        let podId = UUID().uuidString
-        
+
+        // One pod ID per table so head-to-head only pairs players who shared a pod.
+        let roundPodGroups = tournament.currentRoundPodsPlayerIds
+        let podIdByPlayer = podIds(forPlacements: placements, podGroups: roundPodGroups)
+
         // Process each player with a placement
         for (playerId, place) in placements {
             let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
@@ -533,7 +534,7 @@ enum LeagueEngine {
                 placementPoints: placementPts,
                 achievementPoints: achievementPts,
                 achievementIds: earnedAchievementIds,
-                podId: podId
+                podId: podIdByPlayer[playerId] ?? UUID().uuidString
             )
             context.insert(gameResult)
         }
@@ -574,6 +575,36 @@ enum LeagueEngine {
         // Clear round data
         clearTransientRoundState(on: tournament)
         
+        try? context.save()
+    }
+
+    /// Maps each placed player to a pod identifier.
+    /// Players in the same recorded pod group share an ID; uncovered players share one fallback ID.
+    private static func podIds(
+        forPlacements placements: [String: Int],
+        podGroups: [[String]]
+    ) -> [String: String] {
+        var podIdByPlayer: [String: String] = [:]
+        for group in podGroups {
+            let groupPodId = UUID().uuidString
+            for playerId in group {
+                podIdByPlayer[playerId] = groupPodId
+            }
+        }
+        let uncovered = placements.keys.filter { podIdByPlayer[$0] == nil }
+        if !uncovered.isEmpty {
+            let fallbackPodId = UUID().uuidString
+            for playerId in uncovered {
+                podIdByPlayer[playerId] = fallbackPodId
+            }
+        }
+        return podIdByPlayer
+    }
+
+    /// Records pod groupings for the current round (used by tests and legacy pod flows).
+    static func recordRoundPods(context: ModelContext, pods: [[String]]) {
+        guard let tournament = fetchActiveTournament(context: context) else { return }
+        tournament.currentRoundPodsPlayerIds = pods
         try? context.save()
     }
     
@@ -765,7 +796,8 @@ enum LeagueEngine {
         }
         tournament.weeklyPointsByPlayer = weeklyPoints
         
-        // Step 6: Delete old GameResults and create new ones
+        // Step 6: Delete old GameResults and create new ones, preserving each player's pod ID.
+        var existingPodIdByPlayer: [String: String] = [:]
         let gameResultDescriptor = FetchDescriptor<GameResult>()
         if let allResults = try? context.fetch(gameResultDescriptor) {
             for playerId in lastSnapshot.playerIds {
@@ -775,14 +807,16 @@ enum LeagueEngine {
                     $0.round == editRound &&
                     $0.playerId == playerId
                 }
+                if let podId = matchingResults.first?.podId {
+                    existingPodIdByPlayer[playerId] = podId
+                }
                 for result in matchingResults {
                     context.delete(result)
                 }
             }
         }
-        
-        // Create new GameResults with a new pod ID
-        let podId = UUID().uuidString
+
+        let fallbackPodId = UUID().uuidString
         for (playerId, place) in newPlacements {
             let delta = newPlayerDeltas[playerId]!
             let earnedAchievementIds = newCheckRecords
@@ -798,7 +832,7 @@ enum LeagueEngine {
                 placementPoints: delta.placementPoints,
                 achievementPoints: delta.achievementPoints,
                 achievementIds: earnedAchievementIds,
-                podId: podId
+                podId: existingPodIdByPlayer[playerId] ?? fallbackPodId
             )
             context.insert(gameResult)
         }

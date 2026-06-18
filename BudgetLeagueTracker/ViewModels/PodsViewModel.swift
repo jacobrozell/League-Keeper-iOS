@@ -42,11 +42,10 @@ final class PodsViewModel {
         
         let presentPlayers = allPlayers.filter { presentPlayerIds.contains($0.id) }
         
-        return presentPlayers
-            .map { player in
-                (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
-            }
-            .sorted { $0.points.total > $1.points.total }
+        let rows = presentPlayers.map { player in
+            (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
+        }
+        return StandingsRanking.sortWeeklyStandings(rows)
     }
     
     // MARK: - Initialization
@@ -95,6 +94,7 @@ final class PodsViewModel {
         
         // Clear any previous round data first
         LeagueEngine.clearRoundData(context: context)
+        LeagueEngine.recordRoundPods(context: context, pods: pods.map { $0.map(\.id) })
     }
     
     /// Sets placement for a player (auto-saves immediately).

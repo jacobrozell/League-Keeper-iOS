@@ -99,7 +99,7 @@ final class TournamentDetailViewModel {
     }
     
     var roundString: String {
-        "Round \(currentRound)"
+        "Round \(currentRound) of \(AppConstants.League.roundsPerWeek)"
     }
 
     /// Whether tables have been seated for the current round.
@@ -150,7 +150,7 @@ final class TournamentDetailViewModel {
         case .attendance:
             return "Mark who's here this week"
         case .seatPlayers:
-            return "Seat players for Round \(currentRound)"
+            return "Seat players at tables of four for Round \(currentRound)"
         case .scoreRound:
             switch roundPhase {
             case .seatingsReady:
@@ -187,8 +187,8 @@ final class TournamentDetailViewModel {
 
         return [
             TournamentProgressStep(id: "attendance", title: "Attendance", state: attendanceState),
-            TournamentProgressStep(id: "seat", title: "Seat", state: seatState),
-            TournamentProgressStep(id: "score", title: "Score", state: scoreState)
+            TournamentProgressStep(id: "seat", title: "Seat Tables", state: seatState),
+            TournamentProgressStep(id: "score", title: "Score Round", state: scoreState)
         ]
     }
 
@@ -394,11 +394,10 @@ final class TournamentDetailViewModel {
         
         let presentPlayers = allPlayers.filter { presentPlayerIds.contains($0.id) }
         
-        return presentPlayers
-            .map { player in
-                (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
-            }
-            .sorted { $0.points.total > $1.points.total }
+        let rows = presentPlayers.map { player in
+            (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
+        }
+        return StandingsRanking.sortWeeklyStandings(rows)
     }
     
     // MARK: - Computed Properties: Standings
@@ -428,7 +427,14 @@ final class TournamentDetailViewModel {
                 guard let player = allPlayers.first(where: { $0.id == playerId }) else { return nil }
                 return (player: player, points: stats.points, placementPoints: stats.placementPoints, achievementPoints: stats.achievementPoints, wins: stats.wins)
             }
-            .sorted { $0.points > $1.points }
+            .sorted { lhs, rhs in
+                StandingsRanking.ranksHigher(
+                    points: lhs.points,
+                    player: lhs.player,
+                    than: rhs.points,
+                    player: rhs.player
+                )
+            }
     }
     
     /// Standings for a specific week (from game results).
@@ -448,7 +454,14 @@ final class TournamentDetailViewModel {
                 guard let player = allPlayers.first(where: { $0.id == playerId }) else { return nil }
                 return (player: player, points: stats.points, placementPoints: stats.placementPoints, achievementPoints: stats.achievementPoints)
             }
-            .sorted { $0.points > $1.points }
+            .sorted { lhs, rhs in
+                StandingsRanking.ranksHigher(
+                    points: lhs.points,
+                    player: lhs.player,
+                    than: rhs.points,
+                    player: rhs.player
+                )
+            }
     }
     
     /// Standings options for the week picker: Tournament (overall) + Week 1..N.

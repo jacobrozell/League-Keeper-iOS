@@ -56,7 +56,14 @@ final class TournamentStandingsViewModel {
                 guard let player = roster.first(where: { $0.id == playerId }) else { return nil }
                 return (player, row.points, row.placementPoints, row.achievementPoints, row.wins)
             }
-            .sorted { $0.totalPoints > $1.totalPoints }
+            .sorted { lhs, rhs in
+                StandingsRanking.ranksHigher(
+                    points: lhs.totalPoints,
+                    player: lhs.player,
+                    than: rhs.totalPoints,
+                    player: rhs.player
+                )
+            }
     }
     
     /// Closes tournament standings and returns to tournaments list.

@@ -57,12 +57,12 @@ final class StatsViewModel {
         
         let presentPlayers = players.filter { presentIds.contains($0.id) }
         
-        return presentPlayers
+        let rows = presentPlayers
             .map { player in
                 (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
             }
             .filter { $0.points.total > 0 }
-            .sorted { $0.points.total > $1.points.total }
+        return StandingsRanking.sortWeeklyStandings(rows)
     }
     
     /// Whether any player has scored this week.
@@ -72,11 +72,11 @@ final class StatsViewModel {
     
     /// Tournament standings showing all players sorted by total points descending.
     var tournamentStandings: [(player: Player, totalPoints: Int)] {
-        players
-            .map { player in
+        StandingsRanking.sortByTotalPoints(
+            players.map { player in
                 (player: player, totalPoints: player.placementPoints + player.achievementPoints)
             }
-            .sorted { $0.totalPoints > $1.totalPoints }
+        )
     }
     
     var hasWeeklyStandings: Bool {
@@ -87,9 +87,12 @@ final class StatsViewModel {
     
     /// Player points comparison data for grouped bar chart.
     var playerPointsComparison: [PlayerPointsData] {
-        players
-            .sorted { $0.totalPoints > $1.totalPoints }
-            .map { PlayerPointsData(player: $0, displayName: displayName(for: $0)) }
+        StandingsRanking.sortByTotalPoints(
+            players.map { player in
+                (player: player, totalPoints: player.placementPoints + player.achievementPoints)
+            }
+        )
+        .map { PlayerPointsData(player: $0.player, displayName: displayName(for: $0.player)) }
     }
     
     // MARK: - Chart Data: Achievement Leaderboard
