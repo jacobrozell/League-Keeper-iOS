@@ -51,8 +51,8 @@ final class TournamentDetailViewModel {
     
     // MARK: - Navigation State
     
-    var showAttendance: Bool = false
     var showEditLastRound: Bool = false
+    var editSnapshotIndex: Int?
     var showWeekCompleteSheet: Bool = false
     var completedWeekNumber: Int?
     
@@ -88,6 +88,10 @@ final class TournamentDetailViewModel {
     
     var dateRangeString: String {
         tournament?.dateRangeString ?? ""
+    }
+
+    var tournamentRules: TournamentRules {
+        tournament?.rules ?? AppConstants.TournamentRulesDefaults.defaultRules
     }
     
     var weekProgressString: String {
@@ -242,7 +246,91 @@ final class TournamentDetailViewModel {
     }
     
     var canEdit: Bool {
-        podHistoryCount > 0
+        !editableRoundsThisWeek.isEmpty
+    }
+
+    /// Whether the host can drag players between tables before scoring starts.
+    var canEditSeatings: Bool {
+        roundPhase == .seatingsReady
+    }
+
+    /// Scored rounds from the current week that can be corrected.
+    var editableRoundsThisWeek: [EditableRoundOption] {
+        guard let tournament else { return [] }
+        return tournament.podHistorySnapshots.enumerated().compactMap { index, snapshot in
+            guard snapshot.week == currentWeek else { return nil }
+            return EditableRoundOption(
+                snapshotIndex: index,
+                week: snapshot.week,
+                round: snapshot.round,
+                playerCount: snapshot.playerIds.count
+            )
+        }
+    }
+
+    /// Rows for table-facing standings display.
+    var standingsDisplayRows: [StandingsDisplayRow] {
+        standingsForDisplay.enumerated().map { index, standing in
+            StandingsDisplayRow(
+                id: standing.player.id,
+                rank: index + 1,
+                name: displayName(for: standing.player),
+                totalPoints: standing.totalPoints
+            )
+        }
+    }
+
+    var standingsDisplaySubtitle: String {
+        if let week = selectedStandingsWeek {
+            return "Week \(week) standings"
+        }
+        return "Tournament standings"
+    }
+
+    var standingsDisplayShareText: String {
+        if let week = selectedStandingsWeek {
+            let rows = standingsForDisplay.enumerated().map { index, standing in
+                StandingsShareFormatter.WeeklyStanding(
+                    rank: index + 1,
+                    name: displayName(for: standing.player),
+                    totalPoints: standing.totalPoints,
+                    placementPoints: standing.placementPoints,
+                    achievementPoints: standing.achievementPoints
+                )
+            }
+            return StandingsShareFormatter.weeklyStandings(
+                tournamentName: tournamentName,
+                week: week,
+                standings: rows
+            )
+        }
+
+        let rows = standingsForDisplay.enumerated().map { index, standing in
+            StandingsShareFormatter.TournamentStanding(
+                rank: index + 1,
+                name: displayName(for: standing.player),
+                totalPoints: standing.totalPoints,
+                placementPoints: standing.placementPoints,
+                achievementPoints: standing.achievementPoints,
+                wins: standing.wins ?? 0
+            )
+        }
+        return StandingsShareFormatter.finalStandings(
+            tournamentName: tournamentName,
+            standings: rows
+        )
+    }
+
+    var editRoundConfirmationButtonTitle: String {
+        editableRoundsThisWeek.count == 1 ? "Edit" : "Choose Round"
+    }
+
+    var editRoundConfirmationMessage: String {
+        if editableRoundsThisWeek.count == 1, let round = editableRoundsThisWeek.first {
+            return "Fix Week \(round.week) Round \(round.round) placements or achievements."
+        }
+        let count = editableRoundsThisWeek.count
+        return "Pick one of \(count) scored rounds from this week to fix placements or achievements."
     }
 
     /// Whether the host can advance to the next round or week.
@@ -384,32 +472,13 @@ final class TournamentDetailViewModel {
     /// Standings to display based on selectedStandingsWeek (overall or specific week).
     var standingsForDisplay: [(player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int?)] {
         if let week = selectedStandingsWeek {
-            let weekResults = weekStandings(week: week)
-            if weekResults.isEmpty {
-                return zeroPointStandings(includeWins: false)
+            return weekStandings(week: week).map {
+                ($0.player, $0.points, $0.placementPoints, $0.achievementPoints, nil as Int?)
             }
-            return weekResults.map { ($0.player, $0.points, $0.placementPoints, $0.achievementPoints, nil as Int?) }
         }
-        let overall = overallStandings
-        if overall.isEmpty {
-            return zeroPointStandings(includeWins: true)
+        return overallStandings.map {
+            ($0.player, $0.points, $0.placementPoints, $0.achievementPoints, $0.wins as Int?)
         }
-        return overall.map { ($0.player, $0.points, $0.placementPoints, $0.achievementPoints, $0.wins as Int?) }
-    }
-
-    /// Roster rows with zero points when no scores exist yet.
-    private func zeroPointStandings(includeWins: Bool) -> [(player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int?)] {
-        let rosterPlayers: [Player]
-        if hasPresentPlayers {
-            rosterPlayers = allPlayers.filter { presentPlayerIds.contains($0.id) }
-        } else {
-            rosterPlayers = allPlayers
-        }
-        return rosterPlayers
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-            .map { player in
-                (player, 0, 0, 0, includeWins ? 0 as Int? : nil)
-            }
     }
     
     /// Final standings for completed tournaments (same as overallStandings when completed).
@@ -510,7 +579,7 @@ final class TournamentDetailViewModel {
     }
 
     /// Records an explicit tab choice from the section picker.
-    func setTab(_ tab: TournamentDetailTab, userInitiated: Bool = false) {
+    func setTab(_ tab: TournamentDetailTab, userInitiated: Bool = true) {
         if userInitiated {
             hasUserSelectedTab = true
         }
@@ -526,7 +595,7 @@ final class TournamentDetailViewModel {
     /// Re-randomizes table groupings for the current round.
     func reshuffleTables() {
         guard canSeatPlayers else { return }
-        seatPlayers()
+        seatPlayers(forceRandom: true)
     }
 
     /// Legacy alias.
@@ -537,17 +606,21 @@ final class TournamentDetailViewModel {
     // MARK: - Actions: Round / Table Management
     
     /// Seats players at tables for the current round.
-    func seatPlayers() {
+    func seatPlayers(forceRandom: Bool = false) {
         guard let tournament = tournament else { return }
 
         setAsActiveTournament()
         LeagueEngine.clearRoundData(context: context)
 
+        let previousPlacements = tournament.podHistorySnapshots.last?.placements ?? [:]
+
         pods = LeagueEngine.generatePodsForRound(
             players: allPlayers,
             presentPlayerIds: presentPlayerIds,
             currentRound: currentRound,
-            weeklyPointsByPlayer: tournament.weeklyPointsByPlayer
+            standingsBasedSeating: tournament.standingsBasedSeating,
+            previousRoundPlacements: previousPlacements,
+            forceRandom: forceRandom
         )
 
         tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
@@ -718,13 +791,41 @@ final class TournamentDetailViewModel {
         return tournament.roundAchievementChecks.contains("\(playerId):\(achievementId)")
     }
     
-    /// Opens the edit view for the last completed round.
+    /// Moves a player from one table to another before scoring begins.
+    func movePlayer(_ playerId: String, fromTable: Int, toTable: Int) {
+        guard canEditSeatings,
+              let tournament,
+              fromTable != toTable,
+              fromTable >= 0,
+              toTable >= 0,
+              fromTable < pods.count,
+              toTable < pods.count,
+              let playerIndex = pods[fromTable].firstIndex(where: { $0.id == playerId }) else { return }
+
+        let player = pods[fromTable].remove(at: playerIndex)
+        pods[toTable].append(player)
+
+        tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
+        tournament.tableScoringOrders = pods.map { $0.map(\.id) }
+        try? context.save()
+        refresh()
+    }
+
+    /// Opens the edit sheet for a specific scored round snapshot.
+    func editRound(snapshotIndex: Int) {
+        editSnapshotIndex = snapshotIndex
+        showEditLastRound = true
+    }
+
+    /// Legacy entry point — edits the most recent scored round.
     func editLastRound() {
+        editSnapshotIndex = nil
         showEditLastRound = true
     }
     
     /// Called when the edit last round view saves changes.
     func onEditLastRoundSaved() {
+        editSnapshotIndex = nil
         if let tournament {
             LeagueEngine.clearTransientRoundState(on: tournament)
             try? context.save()
@@ -763,6 +864,7 @@ final class TournamentDetailViewModel {
         guard let tournament else { return }
         tournament.confirmedTableIndices = []
         tournament.roundPlacements = [:]
+        tournament.roundAchievementChecks = []
         tournament.roundScoringStarted = true
         currentScoringTableIndex = 0
         try? context.save()
@@ -778,10 +880,10 @@ final class TournamentDetailViewModel {
         try? context.save()
     }
     
-    /// Presents the attendance sheet (caller presents via .sheet(isPresented: $viewModel.showAttendance)).
+    /// Switches to the Attendance tab to edit who's present this week.
     func goToAttendance() {
         setAsActiveTournament()
-        showAttendance = true
+        setTab(.attendance)
     }
 
     func displayName(for player: Player) -> String {

@@ -32,11 +32,14 @@ struct TournamentsView: View {
             viewModel.dismissNewTournamentSheet()
         }) {
             if let vm = viewModel.newTournamentSheetViewModel {
-                NewTournamentView(viewModel: vm, isSheetMode: true, onCreated: {
-                    viewModel.dismissNewTournamentSheet()
-                }, onCancel: {
-                    viewModel.dismissNewTournamentSheet()
-                })
+                NavigationStack {
+                    NewTournamentView(viewModel: vm, isSheetMode: true, onCreated: {
+                        viewModel.dismissNewTournamentSheet()
+                    }, onCancel: {
+                        viewModel.dismissNewTournamentSheet()
+                    })
+                }
+                .presentationDetents([.large])
             }
         }
         .sheet(item: $viewModel.editingTournament, onDismiss: {

@@ -333,7 +333,7 @@ struct ScreenSnapshotTests {
             let context = try TestHelpers.contextWithTournament()
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
             let viewModel = EditLastRoundViewModel(context: context, tournamentId: tournament.id)
-            let view = EditLastRoundView(viewModel: viewModel, onSave: {}).frame(width: 390, height: 844)
+            let view = EditLastRoundView(viewModel: viewModel, onSave: { _ in }).frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
     }
@@ -364,6 +364,7 @@ struct ScreenSnapshotTests {
             context.insert(tournament)
             try context.save()
             let viewModel = TournamentsViewModel(context: context)
+            viewModel.openEdit(tournament)
             let view = EditTournamentView(viewModel: viewModel, tournament: tournament)
                 .frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)

@@ -101,6 +101,22 @@ struct StatsView: View {
     
     @ViewBuilder
     private var weeklySection: some View {
+        if viewModel.weeklyStandings.isEmpty {
+            BrandedSectionCard {
+                EmptyStateView(
+                    message: "No scores yet this week",
+                    hint: "Finish a table to see weekly standings here.",
+                    systemImage: "list.number"
+                )
+                .padding()
+            }
+        } else {
+            weeklyStandingsList
+        }
+    }
+
+    @ViewBuilder
+    private var weeklyStandingsList: some View {
         BrandedSectionCard {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {

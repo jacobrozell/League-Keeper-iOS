@@ -225,6 +225,27 @@ struct TournamentsViewModelTests {
             #expect(viewModel.editName == "Edit Me")
             #expect(viewModel.editWeeks == tournament.totalWeeks)
             #expect(viewModel.editRandomPerWeek == tournament.randomAchievementsPerWeek)
+            #expect(viewModel.editRules == tournament.rules)
+        }
+
+        @Test("openEdit loads custom rules from tournament")
+        func openEditLoadsCustomRules() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            var customRules = AppConstants.TournamentRulesDefaults.defaultRules
+            customRules.entryFeeCents = 0
+            customRules.deckBudgetCents = 10_000
+            customRules.targetBracket = nil
+            customRules.playstyleNotes = "No combos please"
+
+            let tournament = TestFixtures.tournament(name: "Custom Rules")
+            tournament.rules = customRules
+            context.insert(tournament)
+            try context.save()
+
+            let viewModel = TournamentsViewModel(context: context)
+            viewModel.openEdit(tournament)
+
+            #expect(viewModel.editRules == customRules)
         }
         
         @Test("saveEdit updates tournament and clears editing")
@@ -245,6 +266,27 @@ struct TournamentsViewModelTests {
             let updated = LeagueEngine.fetchTournament(context: context, id: tournament.id)
             #expect(updated?.name == "Updated Name")
             #expect(updated?.totalWeeks == 8)
+        }
+
+        @Test("saveEdit persists updated rules")
+        func saveEditPersistsRules() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let tournament = TestFixtures.tournament(name: "Rules Test")
+            context.insert(tournament)
+            try context.save()
+
+            var updatedRules = AppConstants.TournamentRulesDefaults.defaultRules
+            updatedRules.entryFeeCents = 0
+            updatedRules.signupBoosterPrize = false
+            updatedRules.commanderPriceLimitCents = 5_000
+
+            let viewModel = TournamentsViewModel(context: context)
+            viewModel.openEdit(tournament)
+            viewModel.editRules = updatedRules
+            viewModel.saveEdit()
+
+            let saved = LeagueEngine.fetchTournament(context: context, id: tournament.id)
+            #expect(saved?.rules == updatedRules)
         }
         
         @Test("requestDelete sets tournamentToDelete")

@@ -5,6 +5,7 @@ import SwiftUI
 struct PlacementPicker: View {
     let playerName: String
     @Binding var selection: Int
+    var maxPlace: Int = AppConstants.League.podSize
     var isDisabled: Bool = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -31,8 +32,9 @@ struct PlacementPicker: View {
     }
 
     private var placementPicker: some View {
-        Picker("Placement", selection: $selection) {
-            ForEach(1...4, id: \.self) { place in
+        let upperBound = min(max(maxPlace, 1), AppConstants.League.podSize)
+        return Picker("Placement", selection: $selection) {
+            ForEach(1...upperBound, id: \.self) { place in
                 Text(Self.shortLabel(for: place))
                     .tag(place)
             }

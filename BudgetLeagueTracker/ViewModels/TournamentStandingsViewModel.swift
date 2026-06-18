@@ -2,18 +2,19 @@ import Foundation
 import SwiftData
 
 /// ViewModel for the Tournament Standings view.
-/// Shows all players sorted by total tournament points.
+/// Shows players ranked by points earned in this tournament only.
 @Observable
 final class TournamentStandingsViewModel {
     private let context: ModelContext
     
     // MARK: - Published State
     
-    var sortedPlayers: [Player] = []
+    var standings: [(player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int)] = []
     var isFinal: Bool = false
     var tournamentName: String = ""
 
     private var roster: [Player] = []
+    private var tournamentId: String?
     
     // MARK: - Initialization
     
@@ -27,21 +28,35 @@ final class TournamentStandingsViewModel {
     /// Refreshes state from SwiftData.
     func refresh() {
         let descriptor = FetchDescriptor<Player>()
-        let allPlayers = (try? context.fetch(descriptor)) ?? []
-        roster = allPlayers
+        roster = (try? context.fetch(descriptor)) ?? []
 
-        // Sort by total points descending
-        sortedPlayers = allPlayers.sorted { $0.totalPoints > $1.totalPoints }
-        
-        if let tournament = LeagueEngine.fetchActiveTournament(context: context) {
-            isFinal = tournament.isFinalWeek || tournament.status == .completed
-            tournamentName = tournament.name
-        } else if let state = LeagueEngine.fetchLeagueState(context: context),
-                  let tournamentId = state.activeTournamentId,
-                  let tournament = LeagueEngine.fetchTournament(context: context, id: tournamentId) {
-            isFinal = tournament.status == .completed
-            tournamentName = tournament.name
+        guard let tournament = resolveTournament() else {
+            standings = []
+            return
         }
+
+        tournamentId = tournament.id
+        isFinal = tournament.isFinalWeek || tournament.status == .completed
+        tournamentName = tournament.name
+
+        let results = StatsEngine.fetchResultsForTournament(tournament.id, context: context)
+        var stats: [String: (points: Int, placementPoints: Int, achievementPoints: Int, wins: Int)] = [:]
+        for result in results {
+            let current = stats[result.playerId] ?? (0, 0, 0, 0)
+            stats[result.playerId] = (
+                points: current.points + result.totalPoints,
+                placementPoints: current.placementPoints + result.placementPoints,
+                achievementPoints: current.achievementPoints + result.achievementPoints,
+                wins: current.wins + (result.isWin ? 1 : 0)
+            )
+        }
+
+        standings = stats
+            .compactMap { playerId, row -> (player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int)? in
+                guard let player = roster.first(where: { $0.id == playerId }) else { return nil }
+                return (player, row.points, row.placementPoints, row.achievementPoints, row.wins)
+            }
+            .sorted { $0.totalPoints > $1.totalPoints }
     }
     
     /// Closes tournament standings and returns to tournaments list.
@@ -51,5 +66,16 @@ final class TournamentStandingsViewModel {
 
     func displayName(for player: Player) -> String {
         PlayerDisambiguation.displayName(for: player, among: roster)
+    }
+
+    private func resolveTournament() -> Tournament? {
+        if let tournament = LeagueEngine.fetchActiveTournament(context: context) {
+            return tournament
+        }
+        if let state = LeagueEngine.fetchLeagueState(context: context),
+           let id = state.activeTournamentId {
+            return LeagueEngine.fetchTournament(context: context, id: id)
+        }
+        return nil
     }
 }

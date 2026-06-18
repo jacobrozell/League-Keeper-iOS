@@ -8,6 +8,7 @@ struct PrimaryActionButton: View {
     var isDisabled: Bool = false
     var accessibilityLabel: String?
     var accessibilityIdentifier: String?
+    var disabledAccessibilityHint: String?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
@@ -24,6 +25,7 @@ struct PrimaryActionButton: View {
         .tint(Color("AccentColor"))
         .disabled(isDisabled)
         .accessibilityLabel(accessibilityLabel ?? title)
+        .accessibilityHintIf(isDisabled ? disabledAccessibilityHint : nil)
 
         if let accessibilityIdentifier {
             button.accessibilityIdentifier(accessibilityIdentifier)

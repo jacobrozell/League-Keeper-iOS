@@ -89,7 +89,8 @@ final class PodsViewModel {
             players: allPlayers,
             presentPlayerIds: presentPlayerIds,
             currentRound: currentRound,
-            weeklyPointsByPlayer: tournament.weeklyPointsByPlayer
+            standingsBasedSeating: tournament.standingsBasedSeating,
+            previousRoundPlacements: tournament.podHistorySnapshots.last?.placements ?? [:]
         )
         
         // Clear any previous round data first

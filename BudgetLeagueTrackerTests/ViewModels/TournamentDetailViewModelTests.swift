@@ -82,6 +82,31 @@ struct TournamentDetailViewModelTests {
             
             #expect(viewModel.roundString.contains("Round"))
         }
+
+        @Test("tournamentRules reflects stored tournament rules")
+        func tournamentRulesReflectsStoredRules() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            var customRules = AppConstants.TournamentRulesDefaults.defaultRules
+            customRules.entryFeeCents = 0
+            customRules.deckBudgetCents = 10_000
+            tournament.rules = customRules
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.tournamentRules == customRules)
+            #expect(viewModel.tournamentRules.compactSummary().contains("Free entry"))
+            #expect(viewModel.tournamentRules.compactSummary().contains("$100 budget"))
+        }
+
+        @Test("tournamentRules falls back to defaults when tournament missing")
+        func tournamentRulesFallback() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: "missing")
+
+            #expect(viewModel.tournamentRules == AppConstants.TournamentRulesDefaults.defaultRules)
+        }
     }
     
     @Suite("hasPresentPlayers")
@@ -247,6 +272,51 @@ struct TournamentDetailViewModelTests {
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             
             #expect(viewModel.canEdit == false)
+        }
+
+        @Test("Lists editable rounds from the current week only")
+        func editableRoundsThisWeek() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentWeek = 2
+            tournament.podHistorySnapshots = [
+                PodSnapshot(week: 1, round: 3, playerIds: ["p1"], placements: ["p1": 1], achievementChecks: [], playerDeltas: [:], weeklyDeltas: [:]),
+                PodSnapshot(week: 2, round: 1, playerIds: ["p1", "p2"], placements: ["p1": 1, "p2": 2], achievementChecks: [], playerDeltas: [:], weeklyDeltas: [:])
+            ]
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.editableRoundsThisWeek.count == 1)
+            #expect(viewModel.editableRoundsThisWeek.first?.round == 1)
+            #expect(viewModel.canEdit == true)
+        }
+    }
+
+    @Suite("Manual seating")
+    @MainActor
+    struct ManualSeatingTests {
+
+        @Test("Moves player between tables before scoring")
+        func movesPlayerBetweenTables() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let players = TestFixtures.players("A", "B", "C", "D", "E", "F", "G", "H")
+            players.forEach { context.insert($0) }
+            tournament.presentPlayerIds = players.map(\.id)
+            try context.save()
+
+            var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.seatPlayers()
+            #expect(viewModel.pods.count == 2)
+            #expect(viewModel.pods[0].count == 4)
+
+            let movingPlayer = viewModel.pods[0][0]
+            viewModel.movePlayer(movingPlayer.id, fromTable: 0, toTable: 1)
+
+            #expect(viewModel.pods[0].count == 3)
+            #expect(viewModel.pods[1].contains { $0.id == movingPlayer.id })
+            #expect(viewModel.canEditSeatings == true)
         }
     }
 
@@ -696,20 +766,19 @@ struct TournamentDetailViewModelTests {
     @MainActor
     struct GoToAttendanceTests {
         
-        @Test("Sets active tournament and shows attendance sheet")
-        func setsActiveTournamentAndShowsAttendanceSheet() throws {
+        @Test("Sets active tournament and switches to attendance tab")
+        func setsActiveTournamentAndSwitchesToAttendanceTab() throws {
             let context = try TestHelpers.contextWithTournament()
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
             
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            #expect(viewModel.showAttendance == false)
+            #expect(viewModel.activeTab != .attendance)
             
             viewModel.goToAttendance()
             
-            // goToAttendance() sets active tournament and presents attendance via sheet (showAttendance), not global screen
             let state = try TestHelpers.fetchLeagueState(from: context)
             #expect(state?.activeTournamentId == tournament.id)
-            #expect(viewModel.showAttendance == true)
+            #expect(viewModel.activeTab == .attendance)
         }
     }
 }

@@ -429,4 +429,25 @@ struct ComponentSnapshotTests {
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 350, height: 200)), record: SnapshotTestConfiguration.record)
         }
     }
+
+    // MARK: - TournamentRulesHintButton Snapshots
+
+    @Suite("TournamentRulesHintButton")
+    @MainActor
+    struct TournamentRulesHintButtonSnapshots {
+        @Test("Default summary")
+        func defaultSummary() {
+            let view = TournamentRulesHintButton(
+                summary: AppConstants.TournamentRulesDefaults.defaultRules.compactSummary(),
+                action: {}
+            )
+            .padding()
+            .frame(width: 390)
+            assertSnapshot(
+                of: view,
+                as: .image(precision: 0.98, layout: .fixed(width: 390, height: 80)),
+                record: SnapshotTestConfiguration.record
+            )
+        }
+    }
 }

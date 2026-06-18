@@ -7,14 +7,14 @@ struct TournamentStandingsView: View {
     @Bindable var viewModel: TournamentStandingsViewModel
 
     private var shareText: String {
-        let rows = viewModel.sortedPlayers.enumerated().map { index, player in
+        let rows = viewModel.standings.enumerated().map { index, standing in
             StandingsShareFormatter.TournamentStanding(
                 rank: index + 1,
-                name: viewModel.displayName(for: player),
-                totalPoints: player.totalPoints,
-                placementPoints: player.placementPoints,
-                achievementPoints: player.achievementPoints,
-                wins: player.wins
+                name: viewModel.displayName(for: standing.player),
+                totalPoints: standing.totalPoints,
+                placementPoints: standing.placementPoints,
+                achievementPoints: standing.achievementPoints,
+                wins: standing.wins
             )
         }
         return StandingsShareFormatter.finalStandings(
@@ -26,18 +26,18 @@ struct TournamentStandingsView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                if viewModel.sortedPlayers.isEmpty {
+                if viewModel.standings.isEmpty {
                     EmptyStateView(message: "No standings to display")
                 } else {
                     List {
-                        ForEach(Array(viewModel.sortedPlayers.enumerated()), id: \.element.id) { index, player in
+                        ForEach(Array(viewModel.standings.enumerated()), id: \.element.player.id) { index, standing in
                             StandingsRow(
                                 rank: index + 1,
-                                name: viewModel.displayName(for: player),
-                                totalPoints: player.totalPoints,
-                                placementPoints: player.placementPoints,
-                                achievementPoints: player.achievementPoints,
-                                wins: player.wins,
+                                name: viewModel.displayName(for: standing.player),
+                                totalPoints: standing.totalPoints,
+                                placementPoints: standing.placementPoints,
+                                achievementPoints: standing.achievementPoints,
+                                wins: standing.wins,
                                 mode: .tournament
                             )
                         }
@@ -56,7 +56,7 @@ struct TournamentStandingsView: View {
             .adaptiveContentWidth()
             .navigationTitle(viewModel.isFinal ? "Final Rankings" : "Tournament Rankings")
             .toolbar {
-                if !viewModel.sortedPlayers.isEmpty {
+                if !viewModel.standings.isEmpty {
                     ToolbarItem(placement: .primaryAction) {
                         ShareLink(
                             item: shareText,
@@ -72,6 +72,14 @@ struct TournamentStandingsView: View {
             }
             .onAppear {
                 viewModel.refresh()
+                if viewModel.isFinal {
+                    AppHaptics.success()
+                    if let champion = viewModel.standings.first {
+                        AppAccessibility.announce(
+                            "Tournament complete. \(viewModel.displayName(for: champion.player)) wins with \(champion.totalPoints) points."
+                        )
+                    }
+                }
             }
         }
     }

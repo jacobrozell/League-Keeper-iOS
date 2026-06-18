@@ -22,9 +22,10 @@ struct CoachMarkBanner: View {
 
             Button(dismissTitle, action: onDismiss)
                 .font(.subheadline.weight(.semibold))
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("coachMarkDismiss")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("coachMarkBanner")
     }
 }

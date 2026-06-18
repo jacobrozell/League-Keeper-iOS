@@ -216,6 +216,8 @@ struct LeagueStateSupportingTypesTests {
             )
             
             #expect(snapshot.playerIds.count == 4)
+            #expect(snapshot.week == 1)
+            #expect(snapshot.round == 1)
             #expect(snapshot.placements["p1"] == 1)
             #expect(snapshot.achievementChecks.count == 1)
             #expect(snapshot.playerDeltas["p1"]?.wins == 1)

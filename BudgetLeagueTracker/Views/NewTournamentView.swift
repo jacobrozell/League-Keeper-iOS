@@ -17,7 +17,7 @@ struct NewTournamentView: View {
             }
             
             // Settings
-            Section("Settings") {
+            Section {
                 LabeledStepper(
                     title: "Weeks",
                     value: $viewModel.totalWeeks,
@@ -29,7 +29,19 @@ struct NewTournamentView: View {
                     value: $viewModel.randomAchievementsPerWeek,
                     range: AppConstants.League.randomAchievementsPerWeekRange
                 )
+
+                LabeledToggle(
+                    title: "Standings-based seating",
+                    isOn: $viewModel.standingsBasedSeating
+                )
+            } header: {
+                Text("Settings")
+            } footer: {
+                Text("Round 1 is always random. When on, rounds 2 and 3 group players by where they finished last round (1sts at table 1, 2nds at table 2, and so on).")
+                    .font(.caption)
             }
+
+            TournamentRulesFormSection(rules: $viewModel.rules)
             
             // Players
             Section {

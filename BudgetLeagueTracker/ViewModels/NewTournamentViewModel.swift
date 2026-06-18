@@ -17,6 +17,12 @@ final class NewTournamentViewModel {
     
     /// Random achievements per week
     var randomAchievementsPerWeek: Int = AppConstants.League.defaultRandomAchievementsPerWeek
+
+    /// When true, rounds 2–3 seat by previous-round finish instead of random.
+    var standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating
+
+    /// Deck, prize, and playstyle rules for the new tournament.
+    var rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
     
     /// All existing players
     var allPlayers: [Player] = []
@@ -127,7 +133,9 @@ final class NewTournamentViewModel {
             totalWeeks: totalWeeks,
             randomPerWeek: randomAchievementsPerWeek,
             playerIds: Array(selectedPlayerIds),
-            presentAttendance: !isSheetMode
+            presentAttendance: !isSheetMode,
+            standingsBasedSeating: standingsBasedSeating,
+            rules: rules
         )
     }
     

@@ -149,7 +149,8 @@ enum UITestBootstrap {
             players: allPlayers,
             presentPlayerIds: tournament.presentPlayerIds,
             currentRound: tournament.currentRound,
-            weeklyPointsByPlayer: tournament.weeklyPointsByPlayer
+            standingsBasedSeating: tournament.standingsBasedSeating,
+            previousRoundPlacements: tournament.podHistorySnapshots.last?.placements ?? [:]
         )
 
         LeagueEngine.clearRoundData(context: context)

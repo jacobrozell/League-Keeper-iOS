@@ -27,6 +27,9 @@ final class EditLastRoundViewModel {
     /// Editable achievement checks ("playerId:achievementId" -> checked)
     private(set) var achievementChecks: Set<String> = []
     
+    /// Index of the snapshot being edited in tournament pod history.
+    private let snapshotIndex: Int?
+
     /// The original snapshot being edited
     private var originalSnapshot: PodSnapshot?
     
@@ -52,12 +55,24 @@ final class EditLastRoundViewModel {
     var subtitle: String {
         "Week \(weekNumber)"
     }
+
+    var maxPlacement: Int {
+        max(players.count, 1)
+    }
+
+    /// Whether placements are a unique 1…N ranking for everyone at the table.
+    var hasValidPlacements: Bool {
+        guard !players.isEmpty else { return false }
+        let places = players.map { placement(for: $0.id) }
+        return Set(places) == Set(1...players.count)
+    }
     
     // MARK: - Initialization
     
-    init(context: ModelContext, tournamentId: String) {
+    init(context: ModelContext, tournamentId: String, snapshotIndex: Int? = nil) {
         self.context = context
         self.tournamentId = tournamentId
+        self.snapshotIndex = snapshotIndex
         loadSnapshot()
     }
     
@@ -66,12 +81,21 @@ final class EditLastRoundViewModel {
     /// Loads the last snapshot and reconstructs editable state.
     private func loadSnapshot() {
         guard let tournament = fetchTournament() else { return }
-        guard let snapshot = tournament.podHistorySnapshots.last else { return }
-        
+        let snapshots = tournament.podHistorySnapshots
+        let resolvedIndex: Int
+        if let snapshotIndex {
+            guard snapshots.indices.contains(snapshotIndex) else { return }
+            resolvedIndex = snapshotIndex
+        } else {
+            guard let lastIndex = snapshots.indices.last else { return }
+            resolvedIndex = lastIndex
+        }
+        let snapshot = snapshots[resolvedIndex]
+
         originalSnapshot = snapshot
-        weekNumber = tournament.currentWeek
-        roundNumber = tournament.currentRound
-        achievementsEnabled = tournament.achievementsOnThisWeek
+        weekNumber = snapshot.week
+        roundNumber = snapshot.round
+        achievementsEnabled = tournament.achievementsOnThisWeek || !snapshot.achievementChecks.isEmpty
         
         // Load placements from snapshot
         placements = snapshot.placements
@@ -85,7 +109,7 @@ final class EditLastRoundViewModel {
             roster = allPlayers
             players = allPlayers.filter { snapshot.playerIds.contains($0.id) }
             // Sort by placement for consistent display
-            players.sort { (placements[$0.id] ?? 4) < (placements[$1.id] ?? 4) }
+            players.sort { (placements[$0.id] ?? players.count) < (placements[$1.id] ?? players.count) }
         }
         
         // Load achievements
@@ -99,7 +123,7 @@ final class EditLastRoundViewModel {
     
     /// Returns the current placement for a player.
     func placement(for playerId: String) -> Int {
-        placements[playerId] ?? 4
+        placements[playerId] ?? maxPlacement
     }
     
     /// Sets the placement for a player.
@@ -129,6 +153,24 @@ final class EditLastRoundViewModel {
             achievementChecks.insert(key)
         }
     }
+
+    func isAchievementCheckDisabled(playerId: String, achievementId: String) -> Bool {
+        guard !isAchievementChecked(playerId: playerId, achievementId: achievementId),
+              let tournament = fetchTournament(),
+              let achievement = achievements.first(where: { $0.id == achievementId }),
+              achievement.exclusivity == .onePerWeekPerPlayer else {
+            return false
+        }
+
+        return LeagueEngine.playerHasEarnedAchievementThisWeek(
+            context: context,
+            tournamentId: tournament.id,
+            week: weekNumber,
+            playerId: playerId,
+            achievementId: achievementId,
+            excludingRound: roundNumber
+        )
+    }
     
     // MARK: - Actions
     
@@ -136,6 +178,7 @@ final class EditLastRoundViewModel {
     func save() {
         LeagueEngine.applyEditedRound(
             context: context,
+            snapshotIndex: snapshotIndex,
             newPlacements: placements,
             newAchievementChecks: achievementChecks
         )

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Edit Tournament view - sheet to edit name, weeks, and random achievements per week.
 struct EditTournamentView: View {
@@ -14,7 +15,7 @@ struct EditTournamentView: View {
                         .textContentType(.organizationName)
                 }
                 
-                Section("Settings") {
+                Section {
                     LabeledStepper(
                         title: "Weeks",
                         value: $viewModel.editWeeks,
@@ -26,10 +27,24 @@ struct EditTournamentView: View {
                         value: $viewModel.editRandomPerWeek,
                         range: AppConstants.League.randomAchievementsPerWeekRange
                     )
+
+                    LabeledToggle(
+                        title: "Standings-based seating",
+                        isOn: $viewModel.editStandingsBasedSeating
+                    )
+                } header: {
+                    Text("Settings")
+                } footer: {
+                    Text("Round 1 is always random. When on, rounds 2 and 3 group players by previous-round finish.")
+                        .font(.caption)
                 }
+
+                TournamentRulesFormSection(rules: $viewModel.editRules)
+                    .id(tournament.id)
             }
             .listStyle(.insetGrouped)
             .adaptiveContentWidth()
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Edit Tournament")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -48,9 +63,19 @@ struct EditTournamentView: View {
                     .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                     .disabled(viewModel.editName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        dismissKeyboard()
+                    }
+                }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

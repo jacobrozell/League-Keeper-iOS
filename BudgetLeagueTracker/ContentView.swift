@@ -162,8 +162,9 @@ struct ContentView: View {
                 }
             }
             .navigationDestination(for: Tournament.self) { tournament in
-                TournamentDetailView(
-                    viewModel: TournamentDetailViewModel(context: modelContext, tournamentId: tournament.id),
+                TournamentDetailRoute(
+                    context: modelContext,
+                    tournamentId: tournament.id,
                     showsAttendanceCoachMark: attendanceCoachMarkStore.shouldShowCoachMark,
                     onDismissAttendanceCoachMark: { attendanceCoachMarkStore.markSeen() },
                     showsGeneratePodsCoachMark: generatePodsCoachMarkStore.shouldShowCoachMark,

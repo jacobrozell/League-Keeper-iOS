@@ -8,6 +8,7 @@ struct RoundFlowView: View {
     var onShowToast: (String) -> Void
     var onRequestFinishRound: () -> Void
     var onRequestEditLastRound: () -> Void
+    var onRequestReopenScoring: () -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -218,15 +219,34 @@ struct RoundFlowView: View {
             }
 
             Section {
-                HintText(message: "Review who's at each table, then start scoring.")
+                HintText(message: viewModel.canEditSeatings
+                    ? "Review who's at each table. Use the move control to swap players between tables, then start scoring."
+                    : "Review who's at each table, then start scoring.")
             }
 
-            Section("Tables for Round \(viewModel.currentRound)") {
-                ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
-                    TableSeatingCard(
-                        tableNumber: index + 1,
-                        playerNames: pod.map { viewModel.displayName(for: $0) }
-                    )
+            if viewModel.canEditSeatings {
+                Section("Tables for Round \(viewModel.currentRound)") {
+                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                        EditableTableSeatingCard(
+                            tableNumber: index + 1,
+                            players: pod,
+                            displayName: viewModel.displayName(for:),
+                            tableCount: viewModel.pods.count,
+                            onMovePlayer: { playerId, destination in
+                                viewModel.movePlayer(playerId, fromTable: index, toTable: destination)
+                                movePlayerWithFeedback(toTable: destination + 1)
+                            }
+                        )
+                    }
+                }
+            } else {
+                Section("Tables for Round \(viewModel.currentRound)") {
+                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                        TableSeatingCard(
+                            tableNumber: index + 1,
+                            playerNames: pod.map { viewModel.displayName(for: $0) }
+                        )
+                    }
                 }
             }
         }
@@ -257,12 +277,18 @@ struct RoundFlowView: View {
                     alignment: .leading,
                     spacing: 16
                 ) {
-                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
-                        TableSeatingCard(
-                            tableNumber: index + 1,
-                            playerNames: pod.map { viewModel.displayName(for: $0) },
-                            style: .card
-                        )
+                    if viewModel.canEditSeatings {
+                        ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                            editableTableCard(tableIndex: index, pod: pod)
+                        }
+                    } else {
+                        ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                            TableSeatingCard(
+                                tableNumber: index + 1,
+                                playerNames: pod.map { viewModel.displayName(for: $0) },
+                                style: .card
+                            )
+                        }
                     }
                 }
 
@@ -729,15 +755,34 @@ struct RoundFlowView: View {
                         }
 
                         ForEach(players, id: \.id) { player in
-                            Toggle(isOn: Binding(
-                                get: { viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id) },
-                                set: { _ in viewModel.toggleAchievementCheck(playerId: player.id, achievementId: achievement.id) }
-                            )) {
-                                Text(viewModel.displayName(for: player))
-                                    .font(.body)
+                            let disabled = viewModel.isAchievementCheckDisabled(
+                                playerId: player.id,
+                                achievementId: achievement.id
+                            )
+                            VStack(alignment: .leading, spacing: 4) {
+                                Toggle(isOn: Binding(
+                                    get: { viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id) },
+                                    set: { _ in viewModel.toggleAchievementCheck(playerId: player.id, achievementId: achievement.id) }
+                                )) {
+                                    Text(viewModel.displayName(for: player))
+                                        .font(.body)
+                                }
+                                .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+                                .disabled(disabled)
+                                .accessibilityLabel("\(viewModel.displayName(for: player)), \(achievement.name)")
+                                .accessibilityValue(
+                                    viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id)
+                                        ? "checked"
+                                        : (disabled ? "disabled, already earned this week" : "unchecked")
+                                )
+
+                                if disabled {
+                                    Text("Already earned this week")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.leading, 4)
+                                }
                             }
-                            .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
-                            .disabled(viewModel.isAchievementCheckDisabled(playerId: player.id, achievementId: achievement.id))
                         }
                     }
                 }
@@ -841,10 +886,7 @@ struct RoundFlowView: View {
         case .review:
             SecondaryButton(
                 title: "Back to Scoring",
-                action: {
-                    viewModel.reopenScoring()
-                    onShowToast("Update table results, then review again")
-                },
+                action: onRequestReopenScoring,
                 accessibilityLabel: "Back to scoring"
             )
             PrimaryActionButton(
@@ -864,7 +906,7 @@ struct RoundFlowView: View {
     private func roundMoreMenu(stacked: Bool) -> some View {
         Menu {
             if viewModel.canEdit {
-                Button("Edit Last Round") {
+                Button("Edit Scored Round") {
                     onRequestEditLastRound()
                 }
                 .accessibilityIdentifier("Edit Last Round")
@@ -917,6 +959,44 @@ struct RoundFlowView: View {
         } else {
             onShowToast("Table \(tableNumber) saved")
         }
+    }
+
+    private func movePlayerWithFeedback(toTable tableNumber: Int) {
+        AppHaptics.lightImpact()
+        onShowToast("Player moved to Table \(tableNumber)")
+    }
+
+    @ViewBuilder
+    private func editableTableCard(tableIndex: Int, pod: [Player]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Table \(tableIndex + 1)")
+                .font(.title3.weight(.semibold))
+
+            ForEach(pod, id: \.id) { player in
+                HStack {
+                    Text(viewModel.displayName(for: player))
+                        .font(.body)
+                    Spacer()
+                    Menu {
+                        ForEach(viewModel.pods.indices, id: \.self) { destination in
+                            if destination != tableIndex {
+                                Button("Move to Table \(destination + 1)") {
+                                    viewModel.movePlayer(player.id, fromTable: tableIndex, toTable: destination)
+                                    movePlayerWithFeedback(toTable: destination + 1)
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.body.weight(.semibold))
+                    }
+                    .accessibilityLabel("Move \(viewModel.displayName(for: player))")
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 

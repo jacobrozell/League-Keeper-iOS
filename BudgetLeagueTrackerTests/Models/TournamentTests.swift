@@ -25,6 +25,7 @@ struct TournamentTests {
             #expect(tournament.currentRound == AppConstants.League.defaultCurrentRound)
             #expect(tournament.achievementsOnThisWeek == AppConstants.League.defaultAchievementsOnThisWeek)
             #expect(tournament.endDate == nil)
+            #expect(tournament.rules == AppConstants.TournamentRulesDefaults.defaultRules)
         }
         
         @Test("Custom initialization")

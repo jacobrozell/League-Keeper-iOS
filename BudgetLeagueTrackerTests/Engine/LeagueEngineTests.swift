@@ -435,6 +435,78 @@ struct LeagueEngineTests {
             #expect(state?.screen == .pods)
         }
     }
+
+    @Suite("updateAttendance")
+    @MainActor
+    struct UpdateAttendanceTests {
+
+        @Test("Updates present players without resetting round progress")
+        func updatesWithoutResettingProgress() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let presentIds = ["p1", "p2"]
+
+            LeagueEngine.confirmAttendance(
+                context: context,
+                presentIds: presentIds,
+                achievementsOnThisWeek: true
+            )
+
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRound = 2
+            tournament.weeklyPointsByPlayer = [
+                "p1": WeeklyPlayerPoints(placementPoints: 4, achievementPoints: 1),
+                "p2": WeeklyPlayerPoints(placementPoints: 2, achievementPoints: 0)
+            ]
+            tournament.podHistorySnapshots = [PodSnapshot(
+                playerIds: presentIds,
+                placements: ["p1": 1, "p2": 2],
+                achievementChecks: [],
+                playerDeltas: [:],
+                weeklyDeltas: [:]
+            )]
+            try context.save()
+
+            LeagueEngine.updateAttendance(
+                context: context,
+                presentIds: ["p1", "p2", "p3"],
+                achievementsOnThisWeek: false
+            )
+
+            let updated = try TestHelpers.fetchActiveTournament(from: context)
+            #expect(updated?.presentPlayerIds == ["p1", "p2", "p3"])
+            #expect(updated?.achievementsOnThisWeek == false)
+            #expect(updated?.currentRound == 2)
+            #expect(updated?.weeklyPointsByPlayer["p1"]?.total == 5)
+            #expect(updated?.podHistorySnapshots.count == 1)
+        }
+
+        @Test("Clears table seatings when present roster changes")
+        func clearsTablesWhenRosterChanges() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let presentIds = ["p1", "p2"]
+
+            LeagueEngine.confirmAttendance(
+                context: context,
+                presentIds: presentIds,
+                achievementsOnThisWeek: true
+            )
+
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.currentRoundPodsPlayerIds = [["p1", "p2"]]
+            try context.save()
+
+            let cleared = LeagueEngine.updateAttendance(
+                context: context,
+                presentIds: ["p1", "p2", "p3"],
+                achievementsOnThisWeek: true
+            )
+
+            let updated = try TestHelpers.fetchActiveTournament(from: context)
+            #expect(cleared == true)
+            #expect(updated?.currentRoundPodsPlayerIds.isEmpty == true)
+            #expect(updated?.currentRound == 1)
+        }
+    }
     
     @Suite("addWeeklyPlayer")
     @MainActor
@@ -489,8 +561,7 @@ struct LeagueEngineTests {
             let pods = LeagueEngine.generatePodsForRound(
                 players: players,
                 presentPlayerIds: presentIds,
-                currentRound: 1,
-                weeklyPointsByPlayer: [:]
+                currentRound: 1
             )
             
             // Should have 2 complete pods of 4
@@ -503,31 +574,68 @@ struct LeagueEngineTests {
             #expect(assignedPlayers.count == 8)
         }
         
-        @Test("Round 2+ sorts by weekly points descending")
-        func laterRoundsSortByPoints() throws {
-            let players = TestFixtures.players("Low", "Medium", "High", "VeryHigh")
+        @Test("Round 2+ groups by previous-round placement when standings-based")
+        func laterRoundsGroupByPreviousPlacement() throws {
+            let players = TestFixtures.players("First", "Second", "Third", "Fourth")
             let presentIds = players.map { $0.id }
-            
-            let weeklyPoints: [String: WeeklyPlayerPoints] = [
-                players[0].id: WeeklyPlayerPoints(placementPoints: 2, achievementPoints: 0),  // 2
-                players[1].id: WeeklyPlayerPoints(placementPoints: 5, achievementPoints: 0),  // 5
-                players[2].id: WeeklyPlayerPoints(placementPoints: 8, achievementPoints: 0),  // 8
-                players[3].id: WeeklyPlayerPoints(placementPoints: 10, achievementPoints: 2)  // 12
+
+            let previousPlacements = [
+                players[0].id: 1,
+                players[1].id: 2,
+                players[2].id: 3,
+                players[3].id: 4
             ]
-            
+
             let pods = LeagueEngine.generatePodsForRound(
                 players: players,
                 presentPlayerIds: presentIds,
                 currentRound: 2,
-                weeklyPointsByPlayer: weeklyPoints
+                standingsBasedSeating: true,
+                previousRoundPlacements: previousPlacements
             )
-            
-            // Should be sorted: VeryHigh (12), High (8), Medium (5), Low (2)
-            #expect(pods.count == 1)
-            #expect(pods[0][0].name == "VeryHigh")
-            #expect(pods[0][1].name == "High")
-            #expect(pods[0][2].name == "Medium")
-            #expect(pods[0][3].name == "Low")
+
+            #expect(pods.count == 4)
+            #expect(pods[0].map(\.name) == ["First"])
+            #expect(pods[1].map(\.name) == ["Second"])
+            #expect(pods[2].map(\.name) == ["Third"])
+            #expect(pods[3].map(\.name) == ["Fourth"])
+        }
+
+        @Test("Round 2+ shuffles when standings-based seating is off")
+        func laterRoundsShuffleWhenRandomMode() throws {
+            let players = TestFixtures.players("A", "B", "C", "D", "E", "F", "G", "H")
+            let presentIds = players.map { $0.id }
+
+            let pods = LeagueEngine.generatePodsForRound(
+                players: players,
+                presentPlayerIds: presentIds,
+                currentRound: 2,
+                standingsBasedSeating: false
+            )
+
+            #expect(pods.count == 2)
+            #expect(pods[0].count == 4)
+            #expect(pods[1].count == 4)
+        }
+
+        @Test("forceRandom reshuffles even when standings-based")
+        func forceRandomOverridesStandingsMode() throws {
+            let players = TestFixtures.players("First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth")
+            let presentIds = players.map { $0.id }
+            let previousPlacements = Dictionary(uniqueKeysWithValues: zip(presentIds, [1, 2, 3, 4, 1, 2, 3, 4]))
+
+            let pods = LeagueEngine.generatePodsForRound(
+                players: players,
+                presentPlayerIds: presentIds,
+                currentRound: 2,
+                standingsBasedSeating: true,
+                previousRoundPlacements: previousPlacements,
+                forceRandom: true
+            )
+
+            #expect(pods.count == 2)
+            #expect(pods[0].count == 4)
+            #expect(pods[1].count == 4)
         }
         
         @Test("Handles incomplete final pod")
@@ -538,8 +646,7 @@ struct LeagueEngineTests {
             let pods = LeagueEngine.generatePodsForRound(
                 players: players,
                 presentPlayerIds: presentIds,
-                currentRound: 1,
-                weeklyPointsByPlayer: [:]
+                currentRound: 1
             )
             
             #expect(pods.count == 2)
@@ -554,8 +661,7 @@ struct LeagueEngineTests {
             let pods = LeagueEngine.generatePodsForRound(
                 players: players,
                 presentPlayerIds: [],  // No one present
-                currentRound: 1,
-                weeklyPointsByPlayer: [:]
+                currentRound: 1
             )
             
             #expect(pods.isEmpty)
@@ -570,8 +676,7 @@ struct LeagueEngineTests {
             let pods = LeagueEngine.generatePodsForRound(
                 players: players,
                 presentPlayerIds: presentIds,
-                currentRound: 1,
-                weeklyPointsByPlayer: [:]
+                currentRound: 1
             )
             
             // All pods except possibly the last should have 4 players
@@ -951,6 +1056,43 @@ struct LeagueEngineTests {
             updated = try TestHelpers.fetchActiveTournament(from: context)
             #expect(updated?.podHistorySnapshots.count == 1) // Still 1, replaced not added
             #expect(updated?.podHistorySnapshots.first?.placements[player.id] == 3) // Updated
+        }
+
+        @Test("Edits snapshot at a specific index without reordering history")
+        func editsSnapshotAtIndex() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let player = TestFixtures.player()
+            context.insert(player)
+
+            let tournament = TestFixtures.tournament()
+            tournament.presentPlayerIds = [player.id]
+            tournament.weeklyPointsByPlayer = [player.id: WeeklyPlayerPoints()]
+            context.insert(tournament)
+
+            let state = try TestHelpers.fetchLeagueState(from: context)!
+            state.activeTournamentId = tournament.id
+
+            tournament.roundPlacements = [player.id: 1]
+            try context.save()
+            LeagueEngine.finalizeRound(context: context)
+
+            tournament.currentRound = 2
+            tournament.roundPlacements = [player.id: 2]
+            try context.save()
+            LeagueEngine.finalizeRound(context: context)
+
+            LeagueEngine.applyEditedRound(
+                context: context,
+                snapshotIndex: 0,
+                newPlacements: [player.id: 4],
+                newAchievementChecks: []
+            )
+
+            let updated = try TestHelpers.fetchActiveTournament(from: context)
+            #expect(updated?.podHistorySnapshots.count == 2)
+            #expect(updated?.podHistorySnapshots[0].placements[player.id] == 4)
+            #expect(updated?.podHistorySnapshots[1].placements[player.id] == 2)
+            #expect(player.placementPoints == 4)
         }
         
         @Test("Updates GameResult records")

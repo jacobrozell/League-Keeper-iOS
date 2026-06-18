@@ -78,6 +78,12 @@ final class Tournament: Identifiable {
 
     /// Whether the host has started scoring tables for the current round
     var roundScoringStarted: Bool = false
+
+    /// When true, rounds 2+ seat players by previous-round finish (1sts at table 1, etc.). Round 1 is always random.
+    var standingsBasedSeating: Bool = true
+
+    /// JSON-encoded deck, prize, and playstyle rules for this tournament.
+    var rulesData: Data?
     
     // MARK: - Initialization
     
@@ -92,7 +98,8 @@ final class Tournament: Identifiable {
         status: TournamentStatus = .ongoing,
         currentWeek: Int = AppConstants.League.defaultCurrentWeek,
         currentRound: Int = AppConstants.League.defaultCurrentRound,
-        achievementsOnThisWeek: Bool = AppConstants.League.defaultAchievementsOnThisWeek
+        achievementsOnThisWeek: Bool = AppConstants.League.defaultAchievementsOnThisWeek,
+        rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
     ) {
         self.id = id
         self.name = name
@@ -104,6 +111,7 @@ final class Tournament: Identifiable {
         self.currentWeek = currentWeek
         self.currentRound = currentRound
         self.achievementsOnThisWeek = achievementsOnThisWeek
+        self.rules = rules
     }
     
     // MARK: - Status Convenience
@@ -240,6 +248,20 @@ final class Tournament: Identifiable {
         }
     }
     
+    // MARK: - Tournament Rules
+
+    /// Deck, prize, and playstyle rules. Falls back to client defaults when unset.
+    var rules: TournamentRules {
+        get {
+            guard let data = rulesData else { return AppConstants.TournamentRulesDefaults.defaultRules }
+            return (try? JSONDecoder().decode(TournamentRules.self, from: data))
+                ?? AppConstants.TournamentRulesDefaults.defaultRules
+        }
+        set {
+            rulesData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
     // MARK: - Computed Properties
     
     /// Whether this is the final week

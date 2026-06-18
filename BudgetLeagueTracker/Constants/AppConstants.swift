@@ -84,6 +84,48 @@ enum AppConstants {
         
         /// Default value for achievements on this week
         static let defaultAchievementsOnThisWeek = true
+
+        /// Default: rounds 2–3 group by previous-round placement (client league style).
+        static let defaultStandingsBasedSeating = true
+    }
+
+    // MARK: - Tournament Rules (Budget Commander defaults)
+
+    enum TournamentRulesDefaults {
+        static let entryFeeCents = 1_000
+        static let signupBoosterPrize = true
+        static let podWinnerBoosterPrize = true
+        static let deckBudgetCents = 7_500
+        static let pricingSource = DeckPricingSource.lowestOfTCGPlayerOrMoxfield
+        static let maxCardPriceCents = 1_000
+        static let commanderExcludedFromBudget = true
+        static let basicLandsExcludedFromBudget = true
+        static let commanderPriceLimitCents: Int? = nil
+        static let targetBracket = 2
+        static let playstyleNotes = "Keep it casual and fun — aim for Bracket 2."
+
+        static let entryFeeDollarsRange = 0...100
+        static let deckBudgetDollarsRange = 0...500
+        static let cardPriceDollarsRange = 0...100
+        static let commanderPriceDollarsRange = 1...500
+        static let bracketRange = 1...5
+        static let playstyleNotesMaxLength = 200
+
+        static var defaultRules: TournamentRules {
+            TournamentRules(
+                entryFeeCents: entryFeeCents,
+                signupBoosterPrize: signupBoosterPrize,
+                podWinnerBoosterPrize: podWinnerBoosterPrize,
+                deckBudgetCents: deckBudgetCents,
+                pricingSource: pricingSource,
+                maxCardPriceCents: maxCardPriceCents,
+                commanderExcludedFromBudget: commanderExcludedFromBudget,
+                basicLandsExcludedFromBudget: basicLandsExcludedFromBudget,
+                commanderPriceLimitCents: commanderPriceLimitCents,
+                targetBracket: targetBracket,
+                playstyleNotes: playstyleNotes
+            )
+        }
     }
     
     // MARK: - Scoring

@@ -132,6 +132,28 @@ struct AttendanceViewModelTests {
             
             #expect(viewModel.canConfirmAttendance == false)
         }
+
+        @Test("Uses update path when attendance already confirmed")
+        func usesUpdatePathWhenAlreadyConfirmed() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let players = TestFixtures.insertStandardPlayers(into: context)
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.presentPlayerIds = players.map(\.id)
+            tournament.currentRound = 2
+            tournament.weeklyPointsByPlayer = [
+                players[0].id: WeeklyPlayerPoints(placementPoints: 4, achievementPoints: 0)
+            ]
+            try context.save()
+
+            let viewModel = AttendanceViewModel(context: context)
+            viewModel.togglePresence(for: players[1].id)
+
+            viewModel.confirmAttendance()
+
+            let updated = try TestHelpers.fetchActiveTournament(from: context)
+            #expect(updated?.currentRound == 2)
+            #expect(updated?.weeklyPointsByPlayer[players[0].id]?.placementPoints == 4)
+        }
     }
     
     @Suite("Computed Properties")

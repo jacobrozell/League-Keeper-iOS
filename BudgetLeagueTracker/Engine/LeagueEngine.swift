@@ -21,7 +21,9 @@ enum LeagueEngine {
         totalWeeks: Int,
         randomPerWeek: Int,
         playerIds: [String],
-        presentAttendance: Bool = true
+        presentAttendance: Bool = true,
+        standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
+        rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
     ) {
         let clampedWeeks = min(max(totalWeeks, AppConstants.League.weeksRange.lowerBound),
                                AppConstants.League.weeksRange.upperBound)
@@ -32,8 +34,10 @@ enum LeagueEngine {
         let tournament = Tournament(
             name: name,
             totalWeeks: clampedWeeks,
-            randomAchievementsPerWeek: clampedRandom
+            randomAchievementsPerWeek: clampedRandom,
+            rules: rules
         )
+        tournament.standingsBasedSeating = standingsBasedSeating
         context.insert(tournament)
         
         // Roll active achievements for week 1
@@ -82,7 +86,9 @@ enum LeagueEngine {
         id: String,
         name: String,
         totalWeeks: Int,
-        randomPerWeek: Int
+        randomPerWeek: Int,
+        standingsBasedSeating: Bool,
+        rules: TournamentRules
     ) {
         guard let tournament = fetchTournament(context: context, id: id) else { return }
         
@@ -92,6 +98,8 @@ enum LeagueEngine {
                                    AppConstants.League.weeksRange.upperBound)
         tournament.randomAchievementsPerWeek = min(max(randomPerWeek, AppConstants.League.randomAchievementsPerWeekRange.lowerBound),
                                                   AppConstants.League.randomAchievementsPerWeekRange.upperBound)
+        tournament.standingsBasedSeating = standingsBasedSeating
+        tournament.rules = rules
         
         try? context.save()
     }
@@ -186,11 +194,8 @@ enum LeagueEngine {
     
     // MARK: - Attendance
     
-    /// Confirms attendance for the current week.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - presentIds: IDs of players who are present
-    ///   - achievementsOnThisWeek: Whether achievements count this week
+    /// Confirms attendance for the current week (first save for the week).
+    /// Resets round state and weekly scoring — use `updateAttendance` when attendance was already confirmed.
     static func confirmAttendance(
         context: ModelContext,
         presentIds: [String],
@@ -220,12 +225,60 @@ enum LeagueEngine {
         // Clear any leftover round data
         tournament.roundPlacements = [:]
         tournament.roundAchievementChecks = []
+        tournament.currentRoundPodsPlayerIds = []
+        tournament.tableScoringOrders = []
+        tournament.confirmedTableIndices = []
+        tournament.roundScoringStarted = false
         
         if let state = fetchLeagueState(context: context) {
             state.screen = .pods
         }
         
         try? context.save()
+    }
+
+    /// Updates who's present without resetting round progress or weekly scores.
+    /// Clears in-progress table seatings when the present roster changes.
+    /// - Returns: `true` when table seatings were cleared and the host should reseat players.
+    @discardableResult
+    static func updateAttendance(
+        context: ModelContext,
+        presentIds: [String],
+        achievementsOnThisWeek: Bool
+    ) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
+        guard !tournament.presentPlayerIds.isEmpty else {
+            confirmAttendance(
+                context: context,
+                presentIds: presentIds,
+                achievementsOnThisWeek: achievementsOnThisWeek
+            )
+            return false
+        }
+
+        let previousPresent = Set(tournament.presentPlayerIds)
+        let newPresent = Set(presentIds)
+        let attendanceChanged = previousPresent != newPresent
+        let hadTables = !tournament.currentRoundPodsPlayerIds.isEmpty
+
+        tournament.presentPlayerIds = presentIds
+        tournament.achievementsOnThisWeek = achievementsOnThisWeek
+
+        recordAttendanceSnapshot(
+            tournament: tournament,
+            week: tournament.currentWeek,
+            presentIds: presentIds
+        )
+
+        if attendanceChanged, hadTables {
+            clearTransientRoundState(on: tournament)
+            try? context.save()
+            return true
+        }
+
+        try? context.save()
+        return false
     }
     
     /// Adds a new player during attendance (joins league and is marked present).
@@ -262,36 +315,64 @@ enum LeagueEngine {
     ///   - players: All players in the league
     ///   - presentPlayerIds: IDs of present players
     ///   - currentRound: The current round number
-    ///   - weeklyPointsByPlayer: Weekly points for sorting (rounds 2+)
+    ///   - standingsBasedSeating: When true, rounds 2+ group by previous-round finish (1sts at table 1, etc.)
+    ///   - previousRoundPlacements: Finish positions from the prior round (playerId -> place 1–4)
+    ///   - forceRandom: When true, always shuffle (e.g. host tapped Reshuffle Tables)
     /// - Returns: Array of player groups (pods)
     static func generatePodsForRound(
         players: [Player],
         presentPlayerIds: [String],
         currentRound: Int,
-        weeklyPointsByPlayer: [String: WeeklyPlayerPoints]
+        standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
+        previousRoundPlacements: [String: Int] = [:],
+        forceRandom: Bool = false
     ) -> [[Player]] {
         let presentPlayers = players.filter { presentPlayerIds.contains($0.id) }
         guard !presentPlayers.isEmpty else { return [] }
-        
-        var sortedPlayers: [Player]
-        
-        if currentRound == 1 {
-            // Round 1: Shuffle randomly
-            sortedPlayers = presentPlayers.shuffled()
-        } else {
-            // Later rounds: Sort by weekly total points (descending)
-            sortedPlayers = presentPlayers.sorted { player1, player2 in
-                let points1 = weeklyPointsByPlayer[player1.id]?.total ?? 0
-                let points2 = weeklyPointsByPlayer[player2.id]?.total ?? 0
-                return points1 > points2
-            }
-        }
-        
-        // Split into pods of podSize
+
         let podSize = AppConstants.League.podSize
+        let useRandomSeating = forceRandom
+            || currentRound == 1
+            || !standingsBasedSeating
+            || previousRoundPlacements.isEmpty
+
+        if useRandomSeating {
+            return chunkIntoPods(presentPlayers.shuffled(), podSize: podSize)
+        }
+
+        return podsGroupedByPreviousPlacement(
+            presentPlayers: presentPlayers,
+            previousPlacements: previousRoundPlacements,
+            podSize: podSize
+        )
+    }
+
+    /// Groups present players by finish place in the previous round (table 1 = all 1sts, etc.).
+    private static func podsGroupedByPreviousPlacement(
+        presentPlayers: [Player],
+        previousPlacements: [String: Int],
+        podSize: Int
+    ) -> [[Player]] {
+        var groups: [Int: [Player]] = [:]
+        for player in presentPlayers {
+            let place = previousPlacements[player.id] ?? podSize
+            let clampedPlace = min(max(place, 1), podSize)
+            groups[clampedPlace, default: []].append(player)
+        }
+
+        var pods: [[Player]] = []
+        for place in 1...podSize {
+            guard var group = groups[place], !group.isEmpty else { continue }
+            group.shuffle()
+            pods.append(group)
+        }
+        return pods
+    }
+
+    private static func chunkIntoPods(_ sortedPlayers: [Player], podSize: Int) -> [[Player]] {
         var pods: [[Player]] = []
         var currentPod: [Player] = []
-        
+
         for player in sortedPlayers {
             currentPod.append(player)
             if currentPod.count == podSize {
@@ -299,12 +380,11 @@ enum LeagueEngine {
                 currentPod = []
             }
         }
-        
-        // Handle remainder (incomplete pod)
+
         if !currentPod.isEmpty {
             pods.append(currentPod)
         }
-        
+
         return pods
     }
     
@@ -481,6 +561,8 @@ enum LeagueEngine {
         // Push snapshot for undo
         var snapshots = tournament.podHistorySnapshots
         snapshots.append(PodSnapshot(
+            week: tournament.currentWeek,
+            round: tournament.currentRound,
             playerIds: Array(placements.keys),
             placements: placements,
             achievementChecks: checkRecords,
@@ -549,14 +631,13 @@ enum LeagueEngine {
         tournament.podHistorySnapshots = snapshots
         
         // Delete the corresponding GameResults
-        // We need to find GameResults that match this pod's players, week, and round
         let gameResultDescriptor = FetchDescriptor<GameResult>()
         if let allResults = try? context.fetch(gameResultDescriptor) {
             for playerId in lastSnapshot.playerIds {
                 let matchingResults = allResults.filter {
                     $0.tournamentId == tournament.id &&
-                    $0.week == tournament.currentWeek &&
-                    $0.round == tournament.currentRound &&
+                    $0.week == lastSnapshot.week &&
+                    $0.round == lastSnapshot.round &&
                     $0.playerId == playerId
                 }
                 for result in matchingResults {
@@ -568,21 +649,34 @@ enum LeagueEngine {
         try? context.save()
     }
     
-    /// Applies edited round data, replacing the last snapshot with updated values.
+    /// Applies edited round data, replacing a snapshot with updated values.
     /// Reverses old deltas, calculates new deltas, and updates GameResults.
     /// - Parameters:
     ///   - context: The SwiftData model context
+    ///   - snapshotIndex: Index in pod history to edit; `nil` edits the most recent snapshot.
     ///   - newPlacements: Updated placements (playerId -> place 1-4)
     ///   - newAchievementChecks: Updated achievement checks ("playerId:achievementId")
     static func applyEditedRound(
         context: ModelContext,
+        snapshotIndex: Int? = nil,
         newPlacements: [String: Int],
         newAchievementChecks: Set<String>
     ) {
         guard let tournament = fetchActiveTournament(context: context) else { return }
         
         var snapshots = tournament.podHistorySnapshots
-        guard let lastSnapshot = snapshots.popLast() else { return }
+        let index: Int
+        if let snapshotIndex {
+            guard snapshots.indices.contains(snapshotIndex) else { return }
+            index = snapshotIndex
+        } else {
+            guard let lastIndex = snapshots.indices.last else { return }
+            index = lastIndex
+        }
+
+        let lastSnapshot = snapshots.remove(at: index)
+        let editWeek = lastSnapshot.week
+        let editRound = lastSnapshot.round
         
         // Fetch all players and achievements
         let playerDescriptor = FetchDescriptor<Player>()
@@ -677,8 +771,8 @@ enum LeagueEngine {
             for playerId in lastSnapshot.playerIds {
                 let matchingResults = allResults.filter {
                     $0.tournamentId == tournament.id &&
-                    $0.week == tournament.currentWeek &&
-                    $0.round == tournament.currentRound &&
+                    $0.week == editWeek &&
+                    $0.round == editRound &&
                     $0.playerId == playerId
                 }
                 for result in matchingResults {
@@ -697,8 +791,8 @@ enum LeagueEngine {
             
             let gameResult = GameResult(
                 tournamentId: tournament.id,
-                week: tournament.currentWeek,
-                round: tournament.currentRound,
+                week: editWeek,
+                round: editRound,
                 playerId: playerId,
                 placement: place,
                 placementPoints: delta.placementPoints,
@@ -711,13 +805,15 @@ enum LeagueEngine {
         
         // Step 7: Replace snapshot in history with updated one
         let newSnapshot = PodSnapshot(
+            week: editWeek,
+            round: editRound,
             playerIds: Array(newPlacements.keys),
             placements: newPlacements,
             achievementChecks: newCheckRecords,
             playerDeltas: newPlayerDeltas,
             weeklyDeltas: newWeeklyDeltas
         )
-        snapshots.append(newSnapshot)
+        snapshots.insert(newSnapshot, at: index)
         tournament.podHistorySnapshots = snapshots
         
         try? context.save()

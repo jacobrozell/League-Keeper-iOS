@@ -30,19 +30,31 @@ struct TableBonusesSection: View {
                         .accessibilityLabel("\(achievement.name), \(achievement.points) points")
 
                         ForEach(players, id: \.id) { player in
-                            Toggle(isOn: Binding(
-                                get: { isChecked(player.id, achievement.id) },
-                                set: { _ in onToggle(player.id, achievement.id) }
-                            )) {
-                                Text(displayName(player))
-                                    .font(.body)
+                            let disabled = isDisabled(player.id, achievement.id)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Toggle(isOn: Binding(
+                                    get: { isChecked(player.id, achievement.id) },
+                                    set: { _ in onToggle(player.id, achievement.id) }
+                                )) {
+                                    Text(displayName(player))
+                                        .font(.body)
+                                }
+                                .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+                                .disabled(disabled)
+                                .accessibilityLabel("\(displayName(player)), \(achievement.name)")
+                                .accessibilityValue(
+                                    isChecked(player.id, achievement.id)
+                                        ? "checked"
+                                        : (disabled ? "disabled, already earned this week" : "unchecked")
+                                )
+
+                                if disabled {
+                                    Text("Already earned this week")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.leading, 4)
+                                }
                             }
-                            .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
-                            .disabled(isDisabled(player.id, achievement.id))
-                            .accessibilityLabel("\(displayName(player)), \(achievement.name)")
-                            .accessibilityValue(
-                                isChecked(player.id, achievement.id) ? "checked" : "unchecked"
-                            )
                         }
                     }
                     .padding(.vertical, 4)

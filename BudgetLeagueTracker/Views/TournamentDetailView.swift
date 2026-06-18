@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 /// Tournament detail view - landing page for a tournament.
 /// Shows different content based on tournament status (ongoing vs completed).
@@ -13,10 +14,16 @@ struct TournamentDetailView: View {
     var onDismissAttendanceCoachMark: (() -> Void)? = nil
     var showsGeneratePodsCoachMark: Bool = false
     var onDismissGeneratePodsCoachMark: (() -> Void)? = nil
+    @State private var attendanceCoachMarkDismissed = false
+    @State private var generatePodsCoachMarkDismissed = false
     @State private var attendanceViewModel: AttendanceViewModel?
     @State private var showFinalStandingsSheet = false
     @State private var showNextRoundConfirmation = false
     @State private var showEditLastRoundConfirmation = false
+    @State private var showReopenScoringConfirmation = false
+    @State private var showRulesSheet = false
+    @State private var showStandingsDisplay = false
+    @State private var showEditRoundPicker = false
     @State private var toastMessage: String?
     
     var body: some View {
@@ -31,6 +38,42 @@ struct TournamentDetailView: View {
         .navigationBarTitleDisplayMode(
             viewModel.isOngoing && viewModel.hasPresentPlayers ? .inline : .large
         )
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 16) {
+                    if !viewModel.standingsDisplayRows.isEmpty {
+                        Button {
+                            showStandingsDisplay = true
+                        } label: {
+                            Label("Table Display", systemImage: "display")
+                        }
+                        .labelStyle(.iconOnly)
+                        .accessibilityLabel("Table display mode")
+                        .accessibilityIdentifier("Standings Display")
+                    }
+
+                    Button {
+                        showRulesSheet = true
+                    } label: {
+                        Label("House Rules", systemImage: "book.closed")
+                    }
+                    .labelStyle(.iconOnly)
+                    .accessibilityLabel("House Rules")
+                    .accessibilityIdentifier("Tournament Rules")
+                }
+            }
+        }
+        .sheet(isPresented: $showRulesSheet) {
+            NavigationStack {
+                TournamentRulesSummaryView(rules: viewModel.tournamentRules)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showRulesSheet = false }
+                        }
+                    }
+            }
+            .presentationDetents([.large])
+        }
         .onAppear {
             viewModel.setAsActiveTournament()
             viewModel.refresh()
@@ -40,20 +83,35 @@ struct TournamentDetailView: View {
             EditLastRoundView(
                 viewModel: EditLastRoundViewModel(
                     context: modelContext,
-                    tournamentId: viewModel.tournamentId
+                    tournamentId: viewModel.tournamentId,
+                    snapshotIndex: viewModel.editSnapshotIndex
                 ),
-                onSave: { viewModel.onEditLastRoundSaved() }
+                onSave: { editedRound in
+                    viewModel.onEditLastRoundSaved()
+                    AppHaptics.success()
+                    showToast("Round \(editedRound) updated")
+                }
             )
         }
-        .sheet(isPresented: $viewModel.showAttendance) {
-            AttendanceView(
-                viewModel: AttendanceViewModel(context: modelContext),
-                onConfirm: {
-                    viewModel.showAttendance = false
-                    showToast("Attendance updated")
-                    viewModel.refresh()
-                    viewModel.setTab(.round)
-                }
+        .sheet(isPresented: $showEditRoundPicker) {
+            EditRoundPickerView(
+                rounds: viewModel.editableRoundsThisWeek,
+                onSelect: { index in
+                    showEditRoundPicker = false
+                    viewModel.editRound(snapshotIndex: index)
+                },
+                onCancel: { showEditRoundPicker = false }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .fullScreenCover(isPresented: $showStandingsDisplay) {
+            StandingsDisplayView(
+                title: viewModel.tournamentName,
+                subtitle: viewModel.standingsDisplaySubtitle,
+                rows: viewModel.standingsDisplayRows,
+                shareText: viewModel.standingsDisplayShareText,
+                onRefresh: { viewModel.refresh() },
+                onDismiss: { showStandingsDisplay = false }
             )
         }
         .onChange(of: viewModel.tournament?.status) { _, newStatus in
@@ -86,13 +144,27 @@ struct TournamentDetailView: View {
                 onContinue: { viewModel.dismissWeekCompleteSheet() }
             )
         }
-        .alert("Edit last round?", isPresented: $showEditLastRoundConfirmation) {
+        .alert("Edit scored round?", isPresented: $showEditLastRoundConfirmation) {
             Button("Cancel", role: .cancel) {}
-            Button("Edit") {
-                viewModel.editLastRound()
+            Button(viewModel.editRoundConfirmationButtonTitle) {
+                let rounds = viewModel.editableRoundsThisWeek
+                if rounds.count == 1, let only = rounds.first {
+                    viewModel.editRound(snapshotIndex: only.snapshotIndex)
+                } else {
+                    showEditRoundPicker = true
+                }
             }
         } message: {
-            Text("Opens the last completed round so you can fix placements and achievements.")
+            Text(viewModel.editRoundConfirmationMessage)
+        }
+        .alert("Back to scoring?", isPresented: $showReopenScoringConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear Scores", role: .destructive) {
+                viewModel.reopenScoring()
+                showToast("Update table results, then review again")
+            }
+        } message: {
+            Text("Clears saved placements and bonuses for every table this round so you can score again.")
         }
         .overlay(alignment: .top) {
             if let toastMessage {
@@ -103,6 +175,24 @@ struct TournamentDetailView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: toastMessage)
     }
+
+    private var showsAttendanceCoachMarkBanner: Bool {
+        showsAttendanceCoachMark && !attendanceCoachMarkDismissed
+    }
+
+    private var showsGeneratePodsCoachMarkBanner: Bool {
+        showsGeneratePodsCoachMark && !generatePodsCoachMarkDismissed
+    }
+
+    private func dismissAttendanceCoachMark() {
+        attendanceCoachMarkDismissed = true
+        onDismissAttendanceCoachMark?()
+    }
+
+    private func dismissGeneratePodsCoachMark() {
+        generatePodsCoachMarkDismissed = true
+        onDismissGeneratePodsCoachMark?()
+    }
     
     // MARK: - Ongoing Tournament Content
     
@@ -111,6 +201,9 @@ struct TournamentDetailView: View {
         VStack(spacing: 0) {
             progressHeader
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            rulesHintRow
+                .frame(maxWidth: .infinity)
 
             sectionTabPicker
                 .frame(maxWidth: .infinity)
@@ -192,6 +285,16 @@ struct TournamentDetailView: View {
             nextStepHint: viewModel.nextStepHint
         )
     }
+
+    @ViewBuilder
+    private var rulesHintRow: some View {
+        TournamentRulesHintButton(summary: viewModel.tournamentRules.compactSummary()) {
+            showRulesSheet = true
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 4)
+        .background(Color(.secondarySystemBackground))
+    }
     
     @ViewBuilder
     private var attendanceTabContent: some View {
@@ -200,13 +303,20 @@ struct TournamentDetailView: View {
                 AttendanceView(
                     viewModel: vm,
                     showsConfirmedBanner: viewModel.hasPresentPlayers,
-                    showsCoachMark: showsAttendanceCoachMark && !viewModel.hasPresentPlayers,
-                    onDismissCoachMark: onDismissAttendanceCoachMark,
-                onConfirm: {
-                    showToast("Attendance confirmed")
-                    AppAccessibility.announce("Attendance confirmed. Round section is ready for seating.")
-                    onDismissAttendanceCoachMark?()
+                    showsCoachMark: showsAttendanceCoachMarkBanner && !viewModel.hasPresentPlayers,
+                    onDismissCoachMark: dismissAttendanceCoachMark,
+                onConfirm: { wasUpdate, clearedTables in
+                    if clearedTables {
+                        showToast("Attendance updated — seat players again for this round")
+                    } else {
+                        showToast(wasUpdate ? "Attendance updated" : "Attendance confirmed")
+                    }
+                    if !wasUpdate {
+                        AppAccessibility.announce("Attendance confirmed. Round section is ready for seating.")
+                    }
+                    dismissAttendanceCoachMark()
                     viewModel.refresh()
+                    attendanceViewModel?.refresh()
                     viewModel.setTab(.round)
                 }
                 )
@@ -220,11 +330,12 @@ struct TournamentDetailView: View {
     private var roundTabContent: some View {
         RoundFlowView(
             viewModel: viewModel,
-            showsSeatPlayersCoachMark: showsGeneratePodsCoachMark && viewModel.pods.isEmpty,
-            onDismissSeatPlayersCoachMark: onDismissGeneratePodsCoachMark,
+            showsSeatPlayersCoachMark: showsGeneratePodsCoachMarkBanner && viewModel.pods.isEmpty,
+            onDismissSeatPlayersCoachMark: dismissGeneratePodsCoachMark,
             onShowToast: showToast,
             onRequestFinishRound: { showNextRoundConfirmation = true },
-            onRequestEditLastRound: { showEditLastRoundConfirmation = true }
+            onRequestEditLastRound: { showEditLastRoundConfirmation = true },
+            onRequestReopenScoring: { showReopenScoringConfirmation = true }
         )
     }
     
@@ -258,20 +369,34 @@ struct TournamentDetailView: View {
                 )
                 Spacer()
             } else {
-                List {
-                    ForEach(Array(viewModel.standingsForDisplay.enumerated()), id: \.element.player.id) { index, standing in
-                        StandingsRow(
-                            rank: index + 1,
-                            name: viewModel.displayName(for: standing.player),
-                            totalPoints: standing.totalPoints,
-                            placementPoints: standing.placementPoints,
-                            achievementPoints: standing.achievementPoints,
-                            wins: standing.wins ?? 0,
-                            mode: standing.wins != nil ? .tournament : .weekly
-                        )
+                VStack(spacing: 0) {
+                    Button {
+                        showStandingsDisplay = true
+                    } label: {
+                        Label("Show on Table", systemImage: "display")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.bordered)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .accessibilityIdentifier("showStandingsDisplay")
+
+                    List {
+                        ForEach(Array(viewModel.standingsForDisplay.enumerated()), id: \.element.player.id) { index, standing in
+                            StandingsRow(
+                                rank: index + 1,
+                                name: viewModel.displayName(for: standing.player),
+                                totalPoints: standing.totalPoints,
+                                placementPoints: standing.placementPoints,
+                                achievementPoints: standing.achievementPoints,
+                                wins: standing.wins ?? 0,
+                                mode: standing.wins != nil ? .tournament : .weekly
+                            )
+                        }
+                    }
+                    .listStyle(.insetGrouped)
                 }
-                .listStyle(.insetGrouped)
             }
         }
     }
@@ -297,7 +422,6 @@ struct TournamentDetailView: View {
 
     private func showToast(_ message: String) {
         toastMessage = message
-        AppAccessibility.announce(message)
         Task {
             try? await Task.sleep(for: .seconds(2.5))
             if toastMessage == message {
@@ -341,6 +465,10 @@ struct TournamentDetailView: View {
                 Text("\(viewModel.totalWeeks) weeks · \(viewModel.finalStandings.count) players")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                TournamentRulesHintButton(summary: viewModel.tournamentRules.compactSummary()) {
+                    showRulesSheet = true
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
@@ -385,6 +513,47 @@ struct TournamentDetailView: View {
             }
         }
         .adaptiveContentWidth()
+    }
+}
+
+/// Keeps a stable `TournamentDetailViewModel` across parent re-renders so tab selection isn't reset.
+struct TournamentDetailRoute: View {
+    @Environment(\.modelContext) private var modelContext
+
+    let tournamentId: String
+    let showsAttendanceCoachMark: Bool
+    let onDismissAttendanceCoachMark: () -> Void
+    let showsGeneratePodsCoachMark: Bool
+    let onDismissGeneratePodsCoachMark: () -> Void
+
+    @State private var viewModel: TournamentDetailViewModel
+
+    init(
+        context: ModelContext,
+        tournamentId: String,
+        showsAttendanceCoachMark: Bool,
+        onDismissAttendanceCoachMark: @escaping () -> Void,
+        showsGeneratePodsCoachMark: Bool,
+        onDismissGeneratePodsCoachMark: @escaping () -> Void
+    ) {
+        self.tournamentId = tournamentId
+        self.showsAttendanceCoachMark = showsAttendanceCoachMark
+        self.onDismissAttendanceCoachMark = onDismissAttendanceCoachMark
+        self.showsGeneratePodsCoachMark = showsGeneratePodsCoachMark
+        self.onDismissGeneratePodsCoachMark = onDismissGeneratePodsCoachMark
+        _viewModel = State(
+            initialValue: TournamentDetailViewModel(context: context, tournamentId: tournamentId)
+        )
+    }
+
+    var body: some View {
+        TournamentDetailView(
+            viewModel: viewModel,
+            showsAttendanceCoachMark: showsAttendanceCoachMark,
+            onDismissAttendanceCoachMark: onDismissAttendanceCoachMark,
+            showsGeneratePodsCoachMark: showsGeneratePodsCoachMark,
+            onDismissGeneratePodsCoachMark: onDismissGeneratePodsCoachMark
+        )
     }
 }
 

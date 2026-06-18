@@ -14,6 +14,8 @@ final class AttendanceViewModel {
     var achievementsOnThisWeek: Bool = true
     var presentStatus: [String: Bool] = [:] // playerId -> isPresent
     var newPlayerName: String = ""
+    /// Whether the last confirm cleared table seatings (host should reseat).
+    private(set) var lastConfirmClearedTables = false
     
     var presentPlayerIds: [String] {
         presentStatus.filter { $0.value }.map { $0.key }
@@ -110,13 +112,23 @@ final class AttendanceViewModel {
         refresh()
     }
     
-    /// Confirms attendance and proceeds to pods.
+    /// Confirms or updates attendance for the current week.
+    /// Sets `lastConfirmClearedTables` when a mid-week roster change cleared table seatings.
     func confirmAttendance() {
         guard canConfirmAttendance else { return }
-        LeagueEngine.confirmAttendance(
-            context: context,
-            presentIds: presentPlayerIds,
-            achievementsOnThisWeek: achievementsOnThisWeek
-        )
+        lastConfirmClearedTables = false
+        if isAttendanceConfirmed {
+            lastConfirmClearedTables = LeagueEngine.updateAttendance(
+                context: context,
+                presentIds: presentPlayerIds,
+                achievementsOnThisWeek: achievementsOnThisWeek
+            )
+        } else {
+            LeagueEngine.confirmAttendance(
+                context: context,
+                presentIds: presentPlayerIds,
+                achievementsOnThisWeek: achievementsOnThisWeek
+            )
+        }
     }
 }

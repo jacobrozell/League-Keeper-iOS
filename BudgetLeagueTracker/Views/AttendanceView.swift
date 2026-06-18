@@ -9,8 +9,9 @@ struct AttendanceView: View {
     /// One-time coach mark for first-week attendance (tournament detail).
     var showsCoachMark: Bool = false
     var onDismissCoachMark: (() -> Void)? = nil
-    /// When non-nil, called after confirming attendance (e.g. to dismiss a sheet and refresh).
-    var onConfirm: (() -> Void)? = nil
+    /// When non-nil, called after confirming attendance.
+    /// Parameters: already confirmed this week, tables were cleared and need reseating.
+    var onConfirm: ((Bool, Bool) -> Void)? = nil
     
     var body: some View {
         List {
@@ -18,7 +19,7 @@ struct AttendanceView: View {
                 Section {
                     CoachMarkBanner(
                         title: "Start each week here",
-                        message: "Mark who's here, then tap Confirm Attendance to unlock pod scoring.",
+                        message: "Mark who's here, then tap Confirm Attendance to unlock round scoring.",
                         onDismiss: { onDismissCoachMark?() }
                     )
                 }
@@ -27,7 +28,7 @@ struct AttendanceView: View {
             if showsConfirmedBanner, viewModel.isAttendanceConfirmed {
                 Section {
                     Label {
-                        Text("Attendance confirmed for Week \(viewModel.currentWeek). Update toggles and confirm again to change.")
+                        Text("Attendance confirmed for Week \(viewModel.currentWeek). Update toggles and confirm again to change who's here.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } icon: {
@@ -73,6 +74,11 @@ struct AttendanceView: View {
                 }
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
+                    if !viewModel.canConfirmAttendance {
+                        Text("Mark at least one player present to continue.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     if let hint = viewModel.podLayoutHint {
                         Text(hint)
                             .font(.caption)
@@ -99,13 +105,18 @@ struct AttendanceView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
                 Divider()
-                PrimaryActionButton(title: "Confirm Attendance") {
-                    viewModel.confirmAttendance()
-                    AppHaptics.success()
-                    onDismissCoachMark?()
-                    onConfirm?()
-                }
-                .disabled(!viewModel.canConfirmAttendance)
+                PrimaryActionButton(
+                    title: "Confirm Attendance",
+                    action: {
+                        let wasUpdate = viewModel.isAttendanceConfirmed
+                        viewModel.confirmAttendance()
+                        AppHaptics.success()
+                        onDismissCoachMark?()
+                        onConfirm?(wasUpdate, viewModel.lastConfirmClearedTables)
+                    },
+                    isDisabled: !viewModel.canConfirmAttendance,
+                    disabledAccessibilityHint: "Mark at least one player present to continue."
+                )
                 .accessibilityIdentifier("Confirm Attendance")
                 .padding()
             }

@@ -22,6 +22,8 @@ final class TournamentsViewModel {
     var editName: String = ""
     var editWeeks: Int = AppConstants.League.defaultTotalWeeks
     var editRandomPerWeek: Int = AppConstants.League.defaultRandomAchievementsPerWeek
+    var editStandingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating
+    var editRules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
     
     // MARK: - Computed Properties
     
@@ -179,6 +181,8 @@ final class TournamentsViewModel {
         editName = tournament.name
         editWeeks = tournament.totalWeeks
         editRandomPerWeek = tournament.randomAchievementsPerWeek
+        editStandingsBasedSeating = tournament.standingsBasedSeating
+        editRules = tournament.rules
     }
     
     /// Saves the current edit and dismisses the sheet.
@@ -189,7 +193,9 @@ final class TournamentsViewModel {
             id: tournament.id,
             name: editName,
             totalWeeks: editWeeks,
-            randomPerWeek: editRandomPerWeek
+            randomPerWeek: editRandomPerWeek,
+            standingsBasedSeating: editStandingsBasedSeating,
+            rules: editRules
         )
         editingTournament = nil
         refresh()

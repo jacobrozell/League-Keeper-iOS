@@ -46,11 +46,13 @@ struct TournamentLifecycleTests {
                 #expect(tournament.currentRound == round)
                 
                 // Generate pods
+                let previousPlacements = tournament.podHistorySnapshots.last?.placements ?? [:]
                 let pods = LeagueEngine.generatePodsForRound(
                     players: players,
                     presentPlayerIds: players.map { $0.id },
                     currentRound: round,
-                    weeklyPointsByPlayer: tournament.weeklyPointsByPlayer
+                    standingsBasedSeating: tournament.standingsBasedSeating,
+                    previousRoundPlacements: previousPlacements
                 )
                 
                 // Set placements

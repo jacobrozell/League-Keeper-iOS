@@ -61,7 +61,13 @@ final class StatsViewModel {
             .map { player in
                 (player: player, points: weeklyPoints[player.id] ?? WeeklyPlayerPoints())
             }
+            .filter { $0.points.total > 0 }
             .sorted { $0.points.total > $1.points.total }
+    }
+    
+    /// Whether any player has scored this week.
+    var hasScoredThisWeek: Bool {
+        !weeklyStandings.isEmpty
     }
     
     /// Tournament standings showing all players sorted by total points descending.
@@ -74,7 +80,7 @@ final class StatsViewModel {
     }
     
     var hasWeeklyStandings: Bool {
-        isLeagueStarted && !weeklyStandings.isEmpty
+        isLeagueStarted && hasScoredThisWeek
     }
     
     // MARK: - Chart Data: Points Comparison
