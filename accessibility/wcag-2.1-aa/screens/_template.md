@@ -30,6 +30,7 @@
 ## Open work
 
 - [ ] Item
+- [ ] Cross-check [2026-06-18 UX audit](../../audits/2026-06-18-ux-accessibility-audit.md) for screen-specific findings
 
 ## Verification log
 

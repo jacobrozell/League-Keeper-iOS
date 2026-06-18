@@ -15,6 +15,10 @@ Phased work to move `wcag-2.1-aa/SUMMARY.md` from **Not compliant** to **Pass** 
 - [x] UI test: attendance + edit-last-round sheets
 - [x] `accessibilityIdentifier` on tournament detail tab picker
 - [x] `accessibilityIdentifier` on Stats segmented control
+- [x] Attendance defaults absent; UI tests tap Mark all before confirm (2026-06-18)
+- [x] Coach mark VoiceOver announcements (2026-06-18)
+- [x] Achievement descriptions in round scoring (2026-06-18)
+- [x] Row Dynamic Type cap AX2 → AX5 (2026-06-18)
 
 ## Phase 2 — Charts & data visualization
 

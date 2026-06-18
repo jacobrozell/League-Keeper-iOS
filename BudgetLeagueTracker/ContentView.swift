@@ -16,15 +16,10 @@ struct ContentView: View {
     @Query private var leagueStates: [LeagueState]
     @Query private var players: [Player]
     @Query private var tournaments: [Tournament]
-    @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
 
     private let onboardingStore = OnboardingStore()
     private let attendanceCoachMarkStore = AttendanceCoachMarkStore()
     private let generatePodsCoachMarkStore = GeneratePodsCoachMarkStore()
-
-    private var theme: ThemePreference {
-        ThemePreference.resolved(storedRaw: themeRaw)
-    }
 
     private var isAccessibilityUITest: Bool {
         ProcessInfo.processInfo.arguments.contains("UI-Testing-Accessibility")
@@ -88,8 +83,7 @@ struct ContentView: View {
             }
         }
         .tint(Color("AccentColor"))
-        .preferredColorScheme(theme.colorScheme)
-        .brandedScreenBackground()
+        .brandedAdaptiveScreen()
         .modifier(OptionalDynamicTypeSize(isAccessibilityUITest: isAccessibilityUITest))
         .onAppear {
             UITestBootstrap.applyIfNeeded(context: modelContext)
@@ -156,7 +150,10 @@ struct ContentView: View {
                 case .addPlayers:
                     AddPlayersView(viewModel: AddPlayersViewModel(context: modelContext))
                 case .attendance:
-                    AttendanceView(viewModel: AttendanceViewModel(context: modelContext))
+                    AttendanceView(
+                        viewModel: AttendanceViewModel(context: modelContext),
+                        navigationStyle: .standalone
+                    )
                 default:
                     TournamentsView(viewModel: TournamentsViewModel(context: modelContext), navigationPath: $tournamentsNavigationPath)
                 }

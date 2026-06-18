@@ -26,7 +26,14 @@ struct CoachMarkBanner: View {
                 .accessibilityIdentifier("coachMarkDismiss")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). \(message)")
         .accessibilityIdentifier("coachMarkBanner")
+        .onAppear {
+            AppAccessibility.announce("\(title). \(message)")
+        }
     }
 }
 

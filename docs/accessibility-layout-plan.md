@@ -14,7 +14,7 @@ Tracks layout reflow for **large accessibility text sizes** (Settings → Larger
 | Empty states + tab clearance | Done — `adaptiveEmptyStateLayout()`, `tabBarClearance` |
 | Pods sticky bar stacking | Done — `usesStackedRowLayout` |
 | Segmented → menu at large text | **In progress** (this plan) |
-| Row Dynamic Type caps (AX2) | Intentional — [design-system.md](design-system.md) |
+| Row Dynamic Type caps (AX5) | Rows scale to AXXXL — [design-system.md](design-system.md) |
 | Manual AXXXL evidence | Open — `evidence/dynamic-type/` |
 
 Automated UI audits **exclude** `.textClipped`; clipping must be caught here or in manual QA.
@@ -41,8 +41,8 @@ Automated UI audits **exclude** `.textClipped`; clipping must be caught here or 
 | 3 | Stats chart player picker clips | Performance Trends | Menu picker at accessibility sizes |
 | 4 | Progress step labels truncate | Tournament detail header | Vertical step list at accessibility sizes |
 | 5 | Standings `P:` / `A:` / `W:` line shrinks | Standings rows, week-complete sheet | Stack breakdown vertically at accessibility sizes |
-| 6 | Row caps stop at AX2 while system may be AXXXL | List rows | Document; revisit post–1.0 if manual QA shows need |
-| 7 | Chart legends / `StatTile` fixed height | Stats, dashboards | Manual verify; optional post–1.0 |
+| 6 | Row caps stop at AX2 while system may be AXXXL | List rows | **Fixed** — cap raised to AX5 (2026-06-18) |
+| 7 | Chart legends / `StatTile` fixed height | Stats, dashboards | **Partial** — StatTile reflow; manual verify |
 | 8 | Manual sign-off + screenshots | All core flows | [Manual_todo.md](../accessibility/Manual_todo.md) |
 
 ---
@@ -75,8 +75,8 @@ Automated guardrails: `AccessibilityAuditTests.testAXXXLTournamentDetailTextNotC
 
 ### Phase C — Optional follow-ups (post–1.0)
 
-- [ ] Raise or remove AX2 caps on rows if Phase B shows unreadable text at AXXXL
-- [ ] `StatTile` / chart legend reflow
+- [x] Raise AX2 caps on rows to AX5 (2026-06-18)
+- [x] `StatTile` reflow at accessibility sizes (2026-06-18)
 - [x] Dedicated AXXXL UI tests with `.textClipped` (`AccessibilityAuditTests` + `UI-Testing-Accessibility`)
 
 ---

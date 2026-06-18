@@ -12,9 +12,13 @@ struct RoundFlowView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private var usesSidebarLayout: Bool {
-        AdaptiveLayout.usesTwoColumnLayout(horizontalSizeClass: horizontalSizeClass)
+        AdaptiveLayout.usesTwoColumnLayout(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
     }
 
     var body: some View {
@@ -62,6 +66,7 @@ struct RoundFlowView: View {
                 roundPhaseMainContent
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             roundStickyActionsBar
         }
@@ -124,7 +129,7 @@ struct RoundFlowView: View {
                 Section {
                     CoachMarkBanner(
                         title: "Ready to seat players",
-                        message: "When everyone is at the table, tap Seat Players to create tables for Round \(viewModel.currentRound).",
+                        message: "When everyone's here, use Seat Players below to assign tables of four for Round \(viewModel.currentRound).",
                         onDismiss: { onDismissSeatPlayersCoachMark?() }
                     )
                 }
@@ -144,14 +149,7 @@ struct RoundFlowView: View {
                 VStack(spacing: 16) {
                     EmptyStateView(
                         message: "No tables yet",
-                        hint: "Seat players into tables of four for Round \(viewModel.currentRound)."
-                    )
-                    PrimaryActionButton(
-                        title: viewModel.seatPlayersButtonTitle,
-                        action: seatPlayersWithFeedback,
-                        isDisabled: !viewModel.canSeatPlayers,
-                        accessibilityLabel: viewModel.seatPlayersButtonTitle,
-                        accessibilityIdentifier: "Seat Players"
+                        hint: "Use Seat Players below to assign tables of four for Round \(viewModel.currentRound)."
                     )
                 }
                 .padding(.vertical, 8)
@@ -167,24 +165,15 @@ struct RoundFlowView: View {
                 if showsSeatPlayersCoachMark {
                     CoachMarkBanner(
                         title: "Ready to seat players",
-                        message: "When everyone is at the table, tap Seat Players to create tables for Round \(viewModel.currentRound).",
+                        message: "When everyone's here, use Seat Players below to assign tables of four for Round \(viewModel.currentRound).",
                         onDismiss: { onDismissSeatPlayersCoachMark?() }
                     )
                 }
 
                 EmptyStateView(
                     message: "No tables yet",
-                    hint: "Seat players into tables of four for Round \(viewModel.currentRound)."
+                    hint: "Use Seat Players below to assign tables of four for Round \(viewModel.currentRound)."
                 )
-
-                PrimaryActionButton(
-                    title: viewModel.seatPlayersButtonTitle,
-                    action: seatPlayersWithFeedback,
-                    isDisabled: !viewModel.canSeatPlayers,
-                    accessibilityLabel: viewModel.seatPlayersButtonTitle,
-                    accessibilityIdentifier: "Seat Players"
-                )
-                .frame(maxWidth: 360)
             }
             .frame(maxWidth: .infinity)
             .padding(24)
@@ -320,6 +309,12 @@ struct RoundFlowView: View {
         let players = viewModel.playersForTable(at: tableIndex)
 
         List {
+            if viewModel.pods.count > 1 {
+                Section {
+                    HintText(message: "Score one table at a time. Use All tables below or Next Table to switch.")
+                }
+            }
+
             Section {
                 scoringProgressHeader(tableIndex: tableIndex)
             }
@@ -613,6 +608,7 @@ struct RoundFlowView: View {
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(achievement.name), \(achievement.points) points")
+                    .accessibilityHintIf(achievement.achievementDescription)
                 }
             }
         }
@@ -688,6 +684,7 @@ struct RoundFlowView: View {
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(achievement.name), \(achievement.points) points")
+                        .accessibilityHintIf(achievement.achievementDescription)
                     }
                 }
             }
@@ -770,6 +767,7 @@ struct RoundFlowView: View {
                                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                                 .disabled(disabled)
                                 .accessibilityLabel("\(viewModel.displayName(for: player)), \(achievement.name)")
+                                .accessibilityHintIf(achievement.achievementDescription)
                                 .accessibilityValue(
                                     viewModel.isAchievementChecked(playerId: player.id, achievementId: achievement.id)
                                         ? "checked"
@@ -796,26 +794,25 @@ struct RoundFlowView: View {
 
     @ViewBuilder
     private var roundStickyActionsBar: some View {
-        let stacked = AdaptiveLayout.usesStackedPodsActionBar(dynamicType: dynamicTypeSize)
+        let stacked = AdaptiveLayout.usesStackedPodsActionBar(
+            dynamicType: dynamicTypeSize,
+            verticalSizeClass: verticalSizeClass,
+            horizontalSizeClass: horizontalSizeClass
+        )
 
-        VStack(spacing: 0) {
-            Divider()
-            VStack(spacing: 12) {
-                if stacked {
+        StickyBottomActionBar {
+            if stacked {
+                VStack(spacing: 12) {
                     primaryRoundActions(stacked: true)
                     roundMoreMenu(stacked: true)
-                } else {
-                    HStack(spacing: 12) {
-                        primaryRoundActions(stacked: false)
-                        roundMoreMenu(stacked: false)
-                    }
+                }
+            } else {
+                HStack(spacing: 12) {
+                    primaryRoundActions(stacked: false)
+                    roundMoreMenu(stacked: false)
                 }
             }
-            .padding()
-            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
-        .background(.bar)
     }
 
     @ViewBuilder

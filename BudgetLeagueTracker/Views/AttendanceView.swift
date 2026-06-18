@@ -2,8 +2,17 @@ import SwiftUI
 
 /// Attendance view - record who is present and weekly settings.
 struct AttendanceView: View {
+    enum NavigationStyle {
+        /// Embedded in tournament detail — parent navigation title stays on the tournament.
+        case embedded
+        /// Pushed after creating a tournament — shows its own navigation title.
+        case standalone
+    }
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: AttendanceViewModel
+    var navigationStyle: NavigationStyle = .embedded
     /// When true, shows a banner that attendance is already confirmed for this week.
     var showsConfirmedBanner: Bool = false
     /// One-time coach mark for first-week attendance (tournament detail).
@@ -19,7 +28,7 @@ struct AttendanceView: View {
                 Section {
                     CoachMarkBanner(
                         title: "Start each week here",
-                        message: "Mark who's here, then tap Confirm Attendance to unlock round scoring.",
+                        message: "Mark who's playing this week, then tap Confirm Attendance. You'll seat players at tables of four on the next step.",
                         onDismiss: { onDismissCoachMark?() }
                     )
                 }
@@ -48,7 +57,10 @@ struct AttendanceView: View {
             }
             
             Section {
-                if AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: horizontalSizeClass) {
+                if AdaptiveLayout.usesTwoColumnPlayerGrid(
+                    horizontalSizeClass: horizontalSizeClass,
+                    verticalSizeClass: verticalSizeClass
+                ) {
                     LazyVGrid(
                         columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                         spacing: 12
@@ -66,7 +78,7 @@ struct AttendanceView: View {
                 addPlayerRow
             } header: {
                 HStack {
-                    Text("Players")
+                    Text("Who's playing?")
                     Spacer()
                     Text(viewModel.presentCountLabel)
                         .font(.caption)
@@ -100,11 +112,12 @@ struct AttendanceView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .adaptiveListLayout()
         .adaptiveContentWidth()
-        .navigationTitle("Attendance – Week \(viewModel.currentWeek)")
+        .modifier(AttendanceNavigationModifier(style: navigationStyle, week: viewModel.currentWeek))
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 0) {
-                Divider()
+            StickyBottomActionBar {
                 PrimaryActionButton(
                     title: "Confirm Attendance",
                     action: {
@@ -118,9 +131,7 @@ struct AttendanceView: View {
                     disabledAccessibilityHint: "Mark at least one player present to continue."
                 )
                 .accessibilityIdentifier("Confirm Attendance")
-                .padding()
             }
-            .background(.bar)
         }
         .onAppear {
             viewModel.refresh()
@@ -161,10 +172,26 @@ struct AttendanceView: View {
     }
 }
 
+private struct AttendanceNavigationModifier: ViewModifier {
+    let style: AttendanceView.NavigationStyle
+    let week: Int
+
+    func body(content: Content) -> some View {
+        switch style {
+        case .embedded:
+            content
+        case .standalone:
+            content
+                .navigationTitle("Attendance – Week \(week)")
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         AttendanceView(
             viewModel: AttendanceViewModel(context: PreviewContainer.shared.mainContext),
+            navigationStyle: .standalone,
             onConfirm: nil
         )
     }

@@ -102,7 +102,7 @@ enum AppConstants {
         static let basicLandsExcludedFromBudget = true
         static let commanderPriceLimitCents: Int? = nil
         static let targetBracket = 2
-        static let playstyleNotes = "Keep it casual and fun — aim for Bracket 2."
+        static let playstyleNotes = "Keep games friendly and focused. Bracket 2 means one clear strategy per deck — not combo-heavy."
 
         static let entryFeeDollarsRange = 0...100
         static let deckBudgetDollarsRange = 0...500

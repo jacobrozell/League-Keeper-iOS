@@ -46,7 +46,7 @@ struct TournamentCell: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility5)
 
             Spacer(minLength: 8)
 

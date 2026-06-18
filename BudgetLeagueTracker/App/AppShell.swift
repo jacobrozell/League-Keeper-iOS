@@ -3,12 +3,21 @@ import SwiftUI
 /// Root shell: branded splash → main app content.
 struct AppShell: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
     @State private var showSplash = !AppInfo.isUITesting
+
+    private var theme: ThemePreference {
+        ThemePreference.resolved(storedRaw: themeRaw)
+    }
 
     private var screenshotColorScheme: ColorScheme? {
         if ProcessInfo.processInfo.arguments.contains("UI-Testing-DarkTheme") { return .dark }
         if ProcessInfo.processInfo.arguments.contains("UI-Testing-LightTheme") { return .light }
         return nil
+    }
+
+    private var preferredColorScheme: ColorScheme? {
+        screenshotColorScheme ?? theme.colorScheme
     }
 
     var body: some View {
@@ -21,7 +30,7 @@ struct AppShell: View {
                     .zIndex(1)
             }
         }
-        .preferredColorScheme(screenshotColorScheme)
+        .preferredColorScheme(preferredColorScheme)
         .task(id: showSplash) {
             guard showSplash else { return }
             // Brief branded moment so the loader reads as intentional, not a flash.

@@ -18,6 +18,18 @@ enum DeckPricingSource: String, Codable, CaseIterable, Identifiable, Sendable {
             return "Moxfield"
         }
     }
+
+    /// Plain-language label for house rules summary.
+    var summaryLabel: String {
+        switch self {
+        case .lowestOfTCGPlayerOrMoxfield:
+            return "Lowest listed price on TCGPlayer or Moxfield"
+        case .tcgPlayer:
+            return "TCGPlayer listed prices"
+        case .moxfield:
+            return "Moxfield listed prices"
+        }
+    }
 }
 
 /// A titled group of lines in the rules summary.
@@ -77,8 +89,8 @@ struct TournamentRules: Codable, Equatable, Sendable {
     /// Short subtitle for headers and list context.
     func compactSummary() -> String {
         var parts: [String] = []
-        parts.append(entryFeeCents == 0 ? "Free entry" : Self.formatDollars(entryFeeCents))
-        parts.append("\(Self.formatDollars(deckBudgetCents)) budget")
+        parts.append(entryFeeCents == 0 ? "Free Entry" : Self.formatDollars(entryFeeCents))
+        parts.append("\(Self.formatDollars(deckBudgetCents)) Budget")
         if let targetBracket {
             parts.append("Bracket \(targetBracket)")
         }
@@ -96,10 +108,10 @@ struct TournamentRules: Codable, Equatable, Sendable {
         var lines = [formattedEntryFee]
 
         var prizes: [String] = []
-        if signupBoosterPrize { prizes.append("1 booster at sign-up") }
-        if podWinnerBoosterPrize { prizes.append("1 booster per pod winner") }
+        if signupBoosterPrize { prizes.append("1 Booster at Sign-Up") }
+        if podWinnerBoosterPrize { prizes.append("1 Booster per Table Winner") }
         if prizes.isEmpty {
-            lines.append("No prizes configured")
+            lines.append("No Prizes Configured")
         } else {
             lines.append(prizes.joined(separator: " · "))
         }
@@ -108,22 +120,22 @@ struct TournamentRules: Codable, Equatable, Sendable {
     }
 
     private func deckBudgetLines() -> [String] {
-        var lines = ["\(Self.formatDollars(deckBudgetCents)) total for the main deck"]
+        var lines = ["\(Self.formatDollars(deckBudgetCents)) Total for the Main Deck"]
 
         var exclusions: [String] = []
-        if commanderExcludedFromBudget { exclusions.append("commander") }
-        if basicLandsExcludedFromBudget { exclusions.append("basic lands") }
+        if commanderExcludedFromBudget { exclusions.append("Commander") }
+        if basicLandsExcludedFromBudget { exclusions.append("Basic Lands") }
         if !exclusions.isEmpty {
-            lines.append("\(listPhrase(exclusions)) excluded from budget")
+            lines.append("\(listPhrase(exclusions)) Excluded from Budget")
         }
 
-        lines.append("Reference pricing: \(pricingSource.displayName)")
-        lines.append("No single card over \(Self.formatDollars(maxCardPriceCents)) in the 99")
+        lines.append("Card Prices: \(pricingSource.summaryLabel)")
+        lines.append("No Single Card over \(Self.formatDollars(maxCardPriceCents)) in the Main Deck (99 cards, excluding your commander)")
 
         if let commanderPriceLimitCents {
-            lines.append("Commander capped at \(Self.formatDollars(commanderPriceLimitCents))")
+            lines.append("Commander Capped at \(Self.formatDollars(commanderPriceLimitCents))")
         } else {
-            lines.append("No commander price limit")
+            lines.append("No Commander Price Limit")
         }
 
         return lines
@@ -133,7 +145,7 @@ struct TournamentRules: Codable, Equatable, Sendable {
         var lines: [String] = []
 
         if let targetBracket {
-            lines.append("Target Bracket \(targetBracket)")
+            lines.append("Power Level: Bracket \(targetBracket) — focused decks, not combo-heavy")
         }
 
         let notes = playstyleNotes.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -145,7 +157,7 @@ struct TournamentRules: Codable, Equatable, Sendable {
     }
 
     private var formattedEntryFee: String {
-        entryFeeCents == 0 ? "Free entry" : "\(Self.formatDollars(entryFeeCents)) entry fee"
+        entryFeeCents == 0 ? "Free Entry" : "\(Self.formatDollars(entryFeeCents)) Entry Fee"
     }
 
     private func listPhrase(_ items: [String]) -> String {

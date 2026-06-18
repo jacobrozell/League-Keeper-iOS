@@ -26,4 +26,14 @@ extension View {
             self
         }
     }
+
+    /// Toolbar buttons: show icon + title at accessibility text sizes.
+    @ViewBuilder
+    func adaptiveToolbarLabelStyle(isAccessibilitySize: Bool) -> some View {
+        if isAccessibilitySize {
+            labelStyle(.titleAndIcon)
+        } else {
+            labelStyle(.iconOnly)
+        }
+    }
 }

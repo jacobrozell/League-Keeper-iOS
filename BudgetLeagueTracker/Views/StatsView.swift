@@ -4,6 +4,7 @@ import Charts
 /// Stats view - displays weekly standings, tournament standings, player statistics, and charts.
 struct StatsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: StatsViewModel
     
@@ -44,6 +45,11 @@ struct StatsView: View {
     
     @ViewBuilder
     private var statsSectionPicker: some View {
+        let chromePadding = AdaptiveLayout.chromeVerticalPadding(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+
         Group {
             if AdaptiveLayout.usesMenuSectionPicker(
                 dynamicType: dynamicTypeSize,
@@ -64,7 +70,7 @@ struct StatsView: View {
                     .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
                 }
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, chromePadding)
             } else {
                 Picker("Section", selection: $viewModel.activeSegment) {
                     ForEach(viewModel.visibleSegments, id: \.self) { segment in
@@ -75,7 +81,7 @@ struct StatsView: View {
                 .accessibilityIdentifier("statsSectionPicker")
                 .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, chromePadding)
             }
         }
         .onChange(of: viewModel.visibleSegments) { _, newSegments in
@@ -263,7 +269,8 @@ struct StatsView: View {
                 Group {
                     if AdaptiveLayout.usesMenuPickerStyle(
                         dynamicType: dynamicTypeSize,
-                        verticalSizeClass: verticalSizeClass
+                        verticalSizeClass: verticalSizeClass,
+                        horizontalSizeClass: horizontalSizeClass
                     ) {
                         playerPicker
                             .pickerStyle(.menu)

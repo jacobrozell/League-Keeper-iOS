@@ -84,6 +84,10 @@ final class WeeklyRoundFlowTests: XCTestCase {
     
     /// Confirms attendance with all players present
     private func confirmAttendance() {
+        let markAll = app.buttons["attendanceMarkAll"]
+        if markAll.waitForExistence(timeout: 3) {
+            markAll.tap()
+        }
         let confirmButton = app.buttons["Confirm Attendance"]
         guard confirmButton.waitForExistence(timeout: 3) else { return }
         confirmButton.tap()
@@ -147,7 +151,7 @@ final class WeeklyRoundFlowTests: XCTestCase {
             // After round 3, should be on attendance for next week or tournament standings
             if round == 3 {
                 // Could be attendance (next week) or tournament standings (final week)
-                let attendanceExists = app.navigationBars["Attendance"].waitForExistence(timeout: 3)
+                let attendanceExists = app.buttons["Confirm Attendance"].waitForExistence(timeout: 3)
                 let standingsExists = app.staticTexts["Tournament Standings"].waitForExistence(timeout: 3)
                 XCTAssertTrue(attendanceExists || standingsExists)
             }

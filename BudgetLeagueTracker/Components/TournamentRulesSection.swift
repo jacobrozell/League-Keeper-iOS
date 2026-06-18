@@ -65,7 +65,7 @@ private struct DeckPricingSourcePicker: View {
     @Binding var selection: DeckPricingSource
 
     var body: some View {
-        Picker("Reference pricing", selection: $selection) {
+        Picker("Reference Pricing", selection: $selection) {
             ForEach(DeckPricingSource.allCases) { source in
                 Text(source.displayName).tag(source)
             }
@@ -142,7 +142,7 @@ struct TournamentRulesFormSection: View {
     private var entryAndPrizesSection: some View {
         Section {
             DollarStepper(
-                title: "Entry fee",
+                title: "Entry Fee",
                 dollars: $entryFeeDollars,
                 range: AppConstants.TournamentRulesDefaults.entryFeeDollarsRange
             )
@@ -150,8 +150,8 @@ struct TournamentRulesFormSection: View {
                 rules.entryFeeCents = TournamentRules.cents(fromDollars: newValue)
             }
 
-            LabeledToggle(title: "Booster at sign-up", isOn: $rules.signupBoosterPrize)
-            LabeledToggle(title: "Booster per pod winner", isOn: $rules.podWinnerBoosterPrize)
+            LabeledToggle(title: "Booster at Sign-Up", isOn: $rules.signupBoosterPrize)
+            LabeledToggle(title: "Booster per Table Winner", isOn: $rules.podWinnerBoosterPrize)
         } header: {
             Text("Entry & Prizes")
         } footer: {
@@ -163,7 +163,7 @@ struct TournamentRulesFormSection: View {
     private var deckBudgetSection: some View {
         Section {
             DollarStepper(
-                title: "Deck budget",
+                title: "Deck Budget",
                 dollars: $deckBudgetDollars,
                 range: AppConstants.TournamentRulesDefaults.deckBudgetDollarsRange,
                 step: 5
@@ -175,7 +175,7 @@ struct TournamentRulesFormSection: View {
             DeckPricingSourcePicker(selection: $rules.pricingSource)
 
             DollarStepper(
-                title: "Max single-card price",
+                title: "Max Single-Card Price",
                 dollars: $maxCardPriceDollars,
                 range: AppConstants.TournamentRulesDefaults.cardPriceDollarsRange
             )
@@ -184,16 +184,16 @@ struct TournamentRulesFormSection: View {
             }
 
             LabeledToggle(
-                title: "Commander excluded from budget",
+                title: "Commander Excluded from Budget",
                 isOn: $rules.commanderExcludedFromBudget
             )
             LabeledToggle(
-                title: "Basic lands excluded from budget",
+                title: "Basic Lands Excluded from Budget",
                 isOn: $rules.basicLandsExcludedFromBudget
             )
 
             LabeledToggle(
-                title: "Limit commander price",
+                title: "Limit Commander Price",
                 isOn: $limitsCommanderPrice
             )
             .onChange(of: limitsCommanderPrice) { _, limited in
@@ -204,7 +204,7 @@ struct TournamentRulesFormSection: View {
 
             if limitsCommanderPrice {
                 DollarStepper(
-                    title: "Commander price limit",
+                    title: "Commander Price Limit",
                     dollars: $commanderPriceDollars,
                     range: AppConstants.TournamentRulesDefaults.commanderPriceDollarsRange
                 )
@@ -217,21 +217,21 @@ struct TournamentRulesFormSection: View {
         } header: {
             Text("Deck Budget")
         } footer: {
-            Text("Applies to the 99. Players use the reference source when checking their lists.")
+            Text("Applies to the main deck (99 cards, excluding your commander). Players check prices using the source above.")
                 .font(.caption)
         }
     }
 
     private var playstyleSection: some View {
         Section {
-            LabeledToggle(title: "Specify target bracket", isOn: $specifiesBracket)
+            LabeledToggle(title: "Specify Target Bracket", isOn: $specifiesBracket)
                 .onChange(of: specifiesBracket) { _, specified in
                     rules.targetBracket = specified ? targetBracket : nil
                 }
 
             if specifiesBracket {
                 LabeledStepper(
-                    title: "Target bracket",
+                    title: "Target Bracket",
                     value: $targetBracket,
                     range: AppConstants.TournamentRulesDefaults.bracketRange
                 )
@@ -304,9 +304,19 @@ struct TournamentRulesSummaryView: View {
     var body: some View {
         List {
             Section {
+                Text("House rules for this tournament. Players build decks within a budget limit and earn points for table placement and achievements each game night.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(rules.compactSummary())
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                HintText(
+                    message: "Bracket numbers describe deck power level (1 = weakest, 5 = strongest). Card prices come from the listed source when players check their decks."
+                )
             }
 
             ForEach(Array(rules.summarySections().enumerated()), id: \.offset) { _, section in

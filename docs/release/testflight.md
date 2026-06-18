@@ -8,7 +8,7 @@ How to distribute League Keeper betas before App Store release.
 
 - Apple Developer Program membership
 - App record created in [App Store Connect](https://appstoreconnect.apple.com)
-- Bundle ID `com.budgetleague.BudgetLeagueTracker` registered
+- Bundle ID `com.jacobrozell.leaguekeeper` registered
 - Signing certificate + provisioning profile (Automatic signing in Xcode)
 
 ---

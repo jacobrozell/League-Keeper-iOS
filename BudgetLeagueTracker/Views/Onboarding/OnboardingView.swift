@@ -34,29 +34,29 @@ struct OnboardingView: View {
             id: 0,
             symbol: "trophy.fill",
             title: AppInfo.displayName,
-            subtitle: AppInfo.subtitle,
-            body: "Run Magic: The Gathering budget leagues from your iPhone or iPad — tournaments, tables, placement points, and achievements in one place."
+            subtitle: "Your league scorekeeper",
+            body: "Track Magic game nights on your iPhone or iPad — who's playing, table seating, finish order, bonus achievements, and weekly standings."
         ),
         Page(
             id: 1,
             symbol: "lock.iphone",
             title: "Stays on your device",
             subtitle: "No account required",
-            body: "Your players, tournaments, and standings live locally on this iPhone or iPad. Nothing is uploaded or synced to a server."
+            body: "Players, tournaments, and standings stay on this device. Nothing is uploaded or synced to a server."
         ),
         Page(
             id: 2,
             symbol: "calendar.badge.clock",
-            title: "Each week in three steps",
-            subtitle: "Attendance → Round → Standings",
-            body: "Mark who showed up, seat players at tables of four, score finish order and achievements across three rounds, then review weekly standings."
+            title: "Each game night in three steps",
+            subtitle: "Attendance → Seating → Scoring",
+            body: "Mark who showed up, seat players at tables of four, then record finish order and any bonus achievements. Review standings when the night is done."
         ),
         Page(
             id: 3,
             symbol: "sparkles",
-            title: "Ready to keep score",
-            subtitle: "Pick how you’d like to begin",
-            body: "Explore with a sample league, create your first tournament, or jump straight into the app and set things up yourself."
+            title: "You're ready",
+            subtitle: "Start with a sample or your own league",
+            body: "New here? Try the sample league to walk through a week. When you're ready, create a tournament with your own players and rules."
         ),
     ]
 
@@ -177,10 +177,10 @@ struct OnboardingView: View {
 
     private func featureHighlights(twoColumn: Bool) -> some View {
         let rows: [(String, String)] = [
-            ("trophy.fill", "Tournaments — multi-week seasons with week progress"),
-            ("person.crop.rectangle.stack", "Players — roster shared across every tournament"),
+            ("trophy.fill", "Tournaments — multi-week seasons with weekly game nights"),
+            ("person.crop.rectangle.stack", "Players — one roster shared across tournaments"),
             ("chart.bar", "Stats — wins, placement points, and achievements"),
-            ("star.fill", "Achievements — custom bonuses, always-on or rolled weekly"),
+            ("star.fill", "Achievements — custom bonus points each game"),
         ]
 
         return Group {
@@ -287,14 +287,14 @@ struct OnboardingView: View {
                         .accessibilityIdentifier("onboardingContinue")
                 }
             } else {
-                HStack(spacing: 12) {
-                    Button("Load sample league") { onComplete(.loadSample) }
+                VStack(spacing: 12) {
+                    Button("Try sample league") { onComplete(.loadSample) }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.regular)
                         .frame(maxWidth: .infinity)
                         .accessibilityIdentifier("onboardingLoadSample")
 
-                    Button("Create tournament") { onComplete(.createTournament) }
+                    Button("Create my tournament") { onComplete(.createTournament) }
                         .buttonStyle(.bordered)
                         .controlSize(.regular)
                         .frame(maxWidth: .infinity)
@@ -304,7 +304,7 @@ struct OnboardingView: View {
                 HStack(spacing: 12) {
                     pageIndicator
                     Spacer(minLength: 0)
-                    Button("Continue to app") { onComplete(.dismiss) }
+                    Button("Set up later") { onComplete(.dismiss) }
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                         .accessibilityIdentifier("onboardingContinue")
@@ -325,21 +325,22 @@ struct OnboardingView: View {
                 .accessibilityIdentifier("onboardingContinue")
         } else {
             VStack(spacing: 10) {
-                Button("Load sample league") { onComplete(.loadSample) }
+                Button("Try sample league") { onComplete(.loadSample) }
                     .buttonStyle(.borderedProminent)
                     .controlSize(largeText ? .regular : .large)
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("onboardingLoadSample")
 
-                Button("Create tournament") { onComplete(.createTournament) }
+                Button("Create my tournament") { onComplete(.createTournament) }
                     .buttonStyle(.bordered)
                     .controlSize(largeText ? .regular : .large)
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("onboardingCreateTournament")
 
-                Button("Continue to app") { onComplete(.dismiss) }
+                Button("Set up later") { onComplete(.dismiss) }
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
+                    .padding(.top, 4)
                     .accessibilityIdentifier("onboardingContinue")
             }
         }

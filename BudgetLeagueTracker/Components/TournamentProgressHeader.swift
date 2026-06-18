@@ -24,19 +24,36 @@ struct TournamentProgressHeader: View {
     let nextStepHint: String
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.palette) private var palette
+    @State private var showsProgressDetails = false
+
+    private var usesLandscapeChrome: Bool {
+        AdaptiveLayout.usesCompactVerticalChrome(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: usesLandscapeChrome ? 6 : 10) {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(weekLabel)
-                        .font(.subheadline.weight(.semibold))
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(roundLabel)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                accessibilityContextHeader
+                if showsProgressDetails {
+                    accessibilityStepList
+                    roundDots
+                    Button("Hide progress steps") {
+                        showsProgressDetails = false
+                    }
+                    .font(.caption.weight(.semibold))
+                    .accessibilityIdentifier("progressStepsToggle")
+                } else {
+                    Button("Show progress steps") {
+                        showsProgressDetails = true
+                    }
+                    .font(.caption.weight(.semibold))
+                    .accessibilityIdentifier("progressStepsToggle")
                 }
             } else {
                 HStack {
@@ -47,26 +64,46 @@ struct TournamentProgressHeader: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            }
 
-            if dynamicTypeSize.isAccessibilitySize {
-                accessibilityStepList
-            } else {
-                compactStepStrip
-            }
+                if usesLandscapeChrome {
+                    HStack(alignment: .center, spacing: 12) {
+                        compactStepStrip
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        roundDots
+                    }
+                } else {
+                    compactStepStrip
+                }
 
-            roundDots
+                if !usesLandscapeChrome {
+                    roundDots
+                }
+            }
 
             Text(nextStepHint)
-                .font(.caption)
+                .font(usesLandscapeChrome ? .caption2 : .caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(usesLandscapeChrome ? 1 : nil)
                 .accessibilityLabel("Next step: \(nextStepHint)")
         }
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.vertical, usesLandscapeChrome ? 6 : 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
+    }
+
+    @ViewBuilder
+    private var accessibilityContextHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(weekLabel)
+                .font(.subheadline.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+            Text(roundLabel)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     @ViewBuilder

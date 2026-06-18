@@ -24,8 +24,8 @@ struct AttendanceViewModelTests {
             #expect(viewModel.currentWeek == 1)
         }
         
-        @Test("Initializes all players as present by default")
-        func initializesPlayersAsPresent() throws {
+        @Test("Initializes all players as absent by default")
+        func initializesPlayersAsAbsent() throws {
             let context = try TestHelpers.bootstrappedContext()
             let players = TestFixtures.insertStandardPlayers(into: context)
             
@@ -39,7 +39,7 @@ struct AttendanceViewModelTests {
             let viewModel = AttendanceViewModel(context: context)
             
             for player in players {
-                #expect(viewModel.isPresent(player.id) == true)
+                #expect(viewModel.isPresent(player.id) == false)
             }
         }
     }

@@ -39,6 +39,7 @@ struct WeekCompleteSheetView: View {
                         systemImage: "flag.checkered"
                     )
                     .padding()
+                    .frame(maxHeight: .infinity, alignment: .center)
                 } else {
                     List {
                         if let champion = standings.first {
@@ -72,20 +73,24 @@ struct WeekCompleteSheetView: View {
                                     wins: 0,
                                     mode: .weekly
                                 )
+                                .brandedInsetListRow()
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .brandedListChrome()
                 }
-
-                PrimaryActionButton(title: "Continue to Week \(nextWeek)") {
-                    onContinue()
-                    dismiss()
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                StickyBottomActionBar {
+                    PrimaryActionButton(title: "Continue to Week \(nextWeek)") {
+                        onContinue()
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("weekCompleteContinue")
                 }
-                .accessibilityIdentifier("weekCompleteContinue")
-                .padding()
             }
             .adaptiveContentWidth()
+            .background(BrandedGradientBackground())
             .navigationTitle("Week \(week) Complete")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

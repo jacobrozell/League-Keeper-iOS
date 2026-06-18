@@ -16,18 +16,27 @@ struct TableBonusesSection: View {
             Section {
                 ForEach(achievements, id: \.id) { achievement in
                     VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 8) {
-                            Image(systemName: achievement.iconName)
-                                .foregroundStyle(Color("BrandGold"))
-                            Text(achievement.name)
-                                .font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Text("+\(achievement.points)")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                Image(systemName: achievement.iconName)
+                                    .foregroundStyle(Color("BrandGold"))
+                                Text(achievement.name)
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                Text("+\(achievement.points)")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let description = achievement.achievementDescription, !description.isEmpty {
+                                Text(description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(achievement.name), \(achievement.points) points")
+                        .accessibilityHintIf(achievement.achievementDescription)
 
                         ForEach(players, id: \.id) { player in
                             let disabled = isDisabled(player.id, achievement.id)
@@ -42,6 +51,7 @@ struct TableBonusesSection: View {
                                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                                 .disabled(disabled)
                                 .accessibilityLabel("\(displayName(player)), \(achievement.name)")
+                                .accessibilityHintIf(achievement.achievementDescription)
                                 .accessibilityValue(
                                     isChecked(player.id, achievement.id)
                                         ? "checked"

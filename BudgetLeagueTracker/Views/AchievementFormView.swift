@@ -116,6 +116,7 @@ struct AchievementFormView: View {
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.interactively)
+            .adaptiveContentWidth()
             .navigationTitle(viewModel.navigationTitle)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

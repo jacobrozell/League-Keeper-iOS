@@ -44,7 +44,7 @@ struct StandingsDisplayView: View {
                 .padding(24)
                 .adaptiveContentWidth()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(BrandedGradientBackground())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if !rows.isEmpty {

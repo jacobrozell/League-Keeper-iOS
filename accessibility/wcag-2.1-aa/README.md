@@ -41,6 +41,7 @@ Living tracker for League Keeper accessibility work. Target standard: **WCAG 2.1
 | `new-achievement` | `NewAchievementView` | [screens/new-achievement.md](screens/new-achievement.md) |
 | `edit-tournament` | `EditTournamentView` | [screens/edit-tournament.md](screens/edit-tournament.md) |
 | `settings` | `SettingsView` | [screens/settings.md](screens/settings.md) |
+| `onboarding` | `OnboardingView` | [screens/onboarding.md](screens/onboarding.md) |
 
 Shared UI: [screens/_shared-components.md](screens/_shared-components.md).
 

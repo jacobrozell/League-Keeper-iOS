@@ -9,13 +9,15 @@ struct PlacementPicker: View {
     var isDisabled: Bool = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     
     var body: some View {
         Group {
             if AdaptiveLayout.usesMenuPickerStyle(
                 dynamicType: dynamicTypeSize,
-                verticalSizeClass: verticalSizeClass
+                verticalSizeClass: verticalSizeClass,
+                horizontalSizeClass: horizontalSizeClass
             ) {
                 placementPicker
                     .pickerStyle(.menu)

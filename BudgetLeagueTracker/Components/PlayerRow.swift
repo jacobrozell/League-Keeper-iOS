@@ -87,7 +87,7 @@ struct PlayerRow: View {
                 PlayerFormDotsView(placements: recentPlacements)
             }
         }
-        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility5)
 
         Spacer(minLength: 8)
 

@@ -5,7 +5,7 @@
 | Screen ID | `tournaments` |
 | Primary source | `Views/TournamentsView.swift` |
 | Core flow | Yes |
-| Last verified | 2026-06-16 |
+| Last verified | 2026-06-18 |
 | Screen status | `Partial` |
 
 ## Criterion checklist
@@ -18,7 +18,7 @@
 | P-1.3.4 | Partial | Landscape UI test | `TournamentsScreenTests` |
 | P-1.4.1 | Pass | Status badges use text | |
 | P-1.4.3 | Partial | Semantic list colors | `WCAGContrastTests` |
-| P-1.4.4 | Partial | List rows use body fonts | |
+| P-1.4.4 | Partial | `TournamentCell` scales to AXXXL; subtitle dense | audit H-07 |
 | O-2.4.3 | Untested | | |
 | O-2.4.4 | Pass | Create Tournament, Add toolbar | `AccessibilityAuditTests` |
 | O-2.5.3 | Pass | | |
@@ -33,9 +33,12 @@
 - [x] Dark mode regression test
 - [x] VoiceOver: ongoing vs completed section navigation
 - [x] VoiceOver: swipe actions on tournament rows
+- [ ] Simplify ongoing tournament subtitle at large text (audit H-07)
+- [ ] AXXXL screenshot evidence
 
 ## Verification log
 
 | Date | Tester | Result | Notes |
 |------|--------|--------|-------|
 | 2026-06-16 | Agent | Partial | `AccessibilityAuditTests.testTournamentsScreenAccessibility` |
+| 2026-06-18 | Agent | Partial | UX audit — dense list subtitles |

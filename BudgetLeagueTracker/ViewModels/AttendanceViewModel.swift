@@ -68,9 +68,9 @@ final class AttendanceViewModel {
             }
         }
         
-        // No tournament or no saved attendance: default all to present where not yet set
+        // No saved attendance: default absent so hosts consciously mark who's here
         for player in players where presentStatus[player.id] == nil {
-            presentStatus[player.id] = true
+            presentStatus[player.id] = false
         }
     }
     

@@ -1,0 +1,29 @@
+---
+description: Use jacobrozell personal GitHub SSH for this repo
+alwaysApply: true
+---
+
+# Git remote — jacobrozell SSH
+
+This repo is under the **jacobrozell** personal GitHub account. Do not use the default `github.com` SSH host (work key `jrozellOCV`).
+
+## Required remote
+
+```text
+origin  git@github.com-personal:jacobrozell/League-Keeper-iOS.git
+```
+
+SSH alias `github.com-personal` is in `~/.ssh/config` and uses `~/.ssh/id_ed25519_github_jacobrozell`.
+
+## Before push / PR
+
+1. Verify remote: `git remote -v`
+2. If origin is `git@github.com:jacobrozell/...`, fix it:
+   ```bash
+   git remote set-url origin git@github.com-personal:jacobrozell/League-Keeper-iOS.git
+   ```
+3. Test auth if needed: `ssh -T git@github.com-personal` → `Hi jacobrozell!`
+
+## Push failures
+
+If push fails with `Permission denied to jrozellOCV`, the wrong SSH identity is in use — reset `origin` to `github.com-personal` as above.

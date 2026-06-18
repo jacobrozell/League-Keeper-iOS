@@ -115,7 +115,7 @@ final class TournamentCompletionFlowTests: XCTestCase {
         guard createOneWeekTournament() else { return }
         
         // Wait for attendance
-        guard app.navigationBars["Attendance"].waitForExistence(timeout: 5) else { return }
+        guard app.buttons["Confirm Attendance"].waitForExistence(timeout: 5) else { return }
         
         completeOneWeek()
         
@@ -130,7 +130,7 @@ final class TournamentCompletionFlowTests: XCTestCase {
         guard createOneWeekTournament() else { return }
         
         // Wait for attendance
-        guard app.navigationBars["Attendance"].waitForExistence(timeout: 3) else { return }
+        guard app.buttons["Confirm Attendance"].waitForExistence(timeout: 3) else { return }
         
         completeOneWeek()
         
@@ -151,7 +151,7 @@ final class TournamentCompletionFlowTests: XCTestCase {
         guard createOneWeekTournament() else { return }
         
         // Wait for attendance
-        guard app.navigationBars["Attendance"].waitForExistence(timeout: 3) else { return }
+        guard app.buttons["Confirm Attendance"].waitForExistence(timeout: 3) else { return }
         
         completeOneWeek()
         
@@ -171,7 +171,7 @@ final class TournamentCompletionFlowTests: XCTestCase {
     func testViewCompletedTournamentStandings() {
         guard createOneWeekTournament() else { return }
         
-        guard app.navigationBars["Attendance"].waitForExistence(timeout: 3) else { return }
+        guard app.buttons["Confirm Attendance"].waitForExistence(timeout: 3) else { return }
         
         completeOneWeek()
         

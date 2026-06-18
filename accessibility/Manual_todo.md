@@ -31,6 +31,9 @@ Human-only checks that automated tools cannot complete. Tick items when done and
 - [ ] Tournament detail — tabs and pod list scroll without clipping
 - [ ] Stats — charts and tables readable or gracefully scroll
 - [ ] Achievements — rows do not overlap
+- [ ] Onboarding — page 4 CTAs at AXXXL
+
+**Code fixes 2026-06-18:** list rows scale to AXXXL; `StatTile` reflow; segmented → menu pickers.
 
 ## Contrast & appearance
 

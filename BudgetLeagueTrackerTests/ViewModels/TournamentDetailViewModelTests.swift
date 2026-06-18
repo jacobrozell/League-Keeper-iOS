@@ -96,8 +96,8 @@ struct TournamentDetailViewModelTests {
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
 
             #expect(viewModel.tournamentRules == customRules)
-            #expect(viewModel.tournamentRules.compactSummary().contains("Free entry"))
-            #expect(viewModel.tournamentRules.compactSummary().contains("$100 budget"))
+            #expect(viewModel.tournamentRules.compactSummary().contains("Free Entry"))
+            #expect(viewModel.tournamentRules.compactSummary().contains("$100 Budget"))
         }
 
         @Test("tournamentRules falls back to defaults when tournament missing")

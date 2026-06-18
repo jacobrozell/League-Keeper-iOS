@@ -26,11 +26,11 @@ struct TournamentRulesTests {
         let lines = AppConstants.TournamentRulesDefaults.defaultRules.summaryLines()
 
         #expect(lines.contains { $0.contains("$10") })
-        #expect(lines.contains { $0.contains("booster at sign-up") })
-        #expect(lines.contains { $0.contains("booster per pod winner") })
+        #expect(lines.contains { $0.contains("Booster at Sign-Up") })
+        #expect(lines.contains { $0.contains("Booster per Table Winner") })
         #expect(lines.contains { $0.contains("$75") })
-        #expect(lines.contains { $0.contains("No commander price limit") })
-        #expect(lines.contains { $0.contains("Target Bracket 2") })
+        #expect(lines.contains { $0.contains("No Commander Price Limit") })
+        #expect(lines.contains { $0.contains("Power Level: Bracket 2") })
     }
 
     @Test("Compact summary highlights key defaults")
@@ -38,7 +38,7 @@ struct TournamentRulesTests {
         let summary = AppConstants.TournamentRulesDefaults.defaultRules.compactSummary()
 
         #expect(summary.contains("$10"))
-        #expect(summary.contains("$75 budget"))
+        #expect(summary.contains("$75 Budget"))
         #expect(summary.contains("Bracket 2"))
     }
 
@@ -47,7 +47,7 @@ struct TournamentRulesTests {
         var rules = AppConstants.TournamentRulesDefaults.defaultRules
         rules.entryFeeCents = 0
 
-        #expect(rules.summaryLines().contains { $0 == "Free entry" })
+        #expect(rules.summaryLines().contains { $0 == "Free Entry" })
     }
 
     @Test("Empty playstyle omits section from summary")
@@ -67,7 +67,7 @@ struct TournamentRulesTests {
         rules.podWinnerBoosterPrize = false
 
         let lines = rules.summarySections().first { $0.title == "Entry & Prizes" }?.lines ?? []
-        #expect(lines.contains("No prizes configured"))
+        #expect(lines.contains("No Prizes Configured"))
     }
 
     @Test("Dollar formatting handles whole and fractional amounts")

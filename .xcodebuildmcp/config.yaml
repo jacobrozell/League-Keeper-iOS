@@ -1,0 +1,19 @@
+schemaVersion: 1
+activeSessionDefaultsProfile: league-keeper-iphone
+sessionDefaultsProfiles:
+  league-keeper-iphone:
+    projectPath: /Users/jrozell/Desktop/personal/League-Keeper-iOS/League Keeper.xcodeproj
+    scheme: BudgetLeagueTracker
+    configuration: Debug
+    simulatorName: League Keeper iPhone
+    simulatorId: 68292785-6474-4C43-8CA0-AF209F379D3D
+    simulatorPlatform: iOS Simulator
+    bundleId: com.jacobrozell.leaguekeeper
+  league-keeper-ipad:
+    projectPath: /Users/jrozell/Desktop/personal/League-Keeper-iOS/League Keeper.xcodeproj
+    scheme: BudgetLeagueTracker
+    configuration: Debug
+    simulatorName: League Keeper iPad
+    simulatorId: 96A80753-FCA0-402F-8CEA-3D06228190E6
+    simulatorPlatform: iOS Simulator
+    bundleId: com.jacobrozell.leaguekeeper

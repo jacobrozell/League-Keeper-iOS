@@ -1,18 +1,21 @@
 import SwiftUI
+import UIKit
 import Testing
 @testable import BudgetLeagueTracker
 
 @Suite("AdaptiveLayout")
+@MainActor
 struct AdaptiveLayoutTests {
 
-    @Test("uses stacked row layout in landscape compact height")
+    @Test("uses stacked row layout in iPhone landscape compact height")
     func stackedInLandscape() {
-        #expect(
-            AdaptiveLayout.usesStackedRowLayout(
-                dynamicType: .large,
-                verticalSizeClass: .compact
-            )
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let stacks = AdaptiveLayout.usesStackedRowLayout(
+            dynamicType: .large,
+            verticalSizeClass: .compact,
+            horizontalSizeClass: .regular
         )
+        #expect(stacks == !isPad)
     }
 
     @Test("uses stacked row layout for accessibility text sizes")
@@ -39,6 +42,12 @@ struct AdaptiveLayoutTests {
     func readableWidthOnRegular() {
         #expect(AdaptiveLayout.usesReadableContentWidth(horizontalSizeClass: .regular))
         #expect(!AdaptiveLayout.usesReadableContentWidth(horizontalSizeClass: .compact))
+        #expect(
+            AdaptiveLayout.usesReadableContentWidth(
+                horizontalSizeClass: .regular,
+                verticalSizeClass: .regular
+            )
+        )
     }
 
     @Test("two-column layout on regular horizontal size class")
@@ -47,6 +56,22 @@ struct AdaptiveLayoutTests {
         #expect(!AdaptiveLayout.usesTwoColumnLayout(horizontalSizeClass: .compact))
         #expect(AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: .regular))
         #expect(!AdaptiveLayout.usesTwoColumnPlayerGrid(horizontalSizeClass: .compact))
+        #expect(
+            AdaptiveLayout.usesTwoColumnLayout(
+                horizontalSizeClass: .regular,
+                verticalSizeClass: .regular
+            )
+        )
+    }
+
+    @Test("iPhone landscape uses phone layout, not iPad two-column")
+    func iPhoneLandscapeUsesPhoneLayout() {
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let usesWideLayout = AdaptiveLayout.usesTwoColumnLayout(
+            horizontalSizeClass: .regular,
+            verticalSizeClass: .compact
+        )
+        #expect(usesWideLayout == isPad)
     }
 
     @Test("uses menu section picker for accessibility text sizes")
@@ -75,10 +100,48 @@ struct AdaptiveLayoutTests {
         )
     }
 
-    @Test("stacks pods action bar for accessibility text sizes")
+    @Test("stacks pods action bar for accessibility text sizes and iPhone landscape")
     func stackedPodsActionBarForAccessibility() {
         #expect(AdaptiveLayout.usesStackedPodsActionBar(dynamicType: .accessibility1))
         #expect(!AdaptiveLayout.usesStackedPodsActionBar(dynamicType: .large))
+
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let stacksInLandscape = AdaptiveLayout.usesStackedPodsActionBar(
+            dynamicType: .large,
+            verticalSizeClass: .compact,
+            horizontalSizeClass: .regular
+        )
+        #expect(stacksInLandscape == !isPad)
+    }
+
+    @Test("iPad landscape uses compact vertical chrome")
+    func iPadLandscapeCompactChrome() {
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let usesChrome = AdaptiveLayout.usesCompactVerticalChrome(
+            horizontalSizeClass: .regular,
+            verticalSizeClass: .compact
+        )
+        #expect(usesChrome == isPad)
+
+        if isPad {
+            #expect(
+                AdaptiveLayout.chromeVerticalPadding(
+                    horizontalSizeClass: .regular,
+                    verticalSizeClass: .compact
+                ) == 4
+            )
+        }
+    }
+
+    @Test("iPad landscape keeps segmented menu pickers at default text")
+    func iPadLandscapeSegmentedPickers() {
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let usesMenu = AdaptiveLayout.usesMenuPickerStyle(
+            dynamicType: .large,
+            verticalSizeClass: .compact,
+            horizontalSizeClass: .regular
+        )
+        #expect(usesMenu == !isPad)
     }
 
     @Test("does not use menu picker in portrait at default text size")
@@ -86,7 +149,8 @@ struct AdaptiveLayoutTests {
         #expect(
             !AdaptiveLayout.usesMenuPickerStyle(
                 dynamicType: .large,
-                verticalSizeClass: .regular
+                verticalSizeClass: .regular,
+                horizontalSizeClass: .compact
             )
         )
     }

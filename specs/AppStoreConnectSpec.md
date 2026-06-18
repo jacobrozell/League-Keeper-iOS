@@ -5,10 +5,12 @@
 | Field | Value |
 |-------|-------|
 | App name | League Keeper |
-| Subtitle | Budget MTG league tracker |
-| Bundle ID | `com.budgetleague.BudgetLeagueTracker` |
+| Subtitle | Track pods, standings & achievements |
+| Bundle ID | `com.jacobrozell.leaguekeeper` |
+| Apple ID | `6780986301` |
 | Category | Games |
-| SKU | (set in ASC) |
+| SKU | `leaguekeeper` |
+| Team ID | `7JT2JB89AV` |
 
 Copy source: [docs/app-store-listing.md](../docs/app-store-listing.md)
 

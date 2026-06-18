@@ -19,7 +19,7 @@ Open tasks for League Keeper 1.0. Move items to [1.0-ship-checklist.md](1.0-ship
 - [ ] Enable GitHub Pages on repo
 - [x] Add App Icon 1024 PNG to asset catalog (`Scripts/generate-launch-assets.py`)
 - [ ] Capture marketing screenshots — see [marketing-screenshots-plan.md](marketing-screenshots-plan.md)
-- [ ] Create App Store Connect app record
+- [x] Create App Store Connect app record (Apple ID `6780986301` in `project.yml`)
 
 ---
 

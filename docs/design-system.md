@@ -58,7 +58,7 @@ Contrast rationale: [accessibility/wcag-2.1-aa/evidence/contrast/](../accessibil
 ## Typography
 
 - Use SwiftUI semantic fonts: `.body`, `.headline`, `.caption`.
-- Dynamic Type: key rows cap at `.accessibility2` where layout would break — verify at AXXXL (`accessibility/Manual_todo.md`).
+- Dynamic Type: key rows cap at `.accessibility5` — verify at AXXXL (`accessibility/Manual_todo.md`).
 
 ---
 

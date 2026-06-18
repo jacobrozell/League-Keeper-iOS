@@ -30,6 +30,8 @@ struct SplashView: View {
             }
             .padding(.horizontal, 32)
             .padding(.vertical, 48)
+            .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
+            .frame(maxWidth: .infinity)
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("splashScreen")

@@ -8,6 +8,7 @@ import SwiftData
 struct TournamentDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Bindable var viewModel: TournamentDetailViewModel
     var showsAttendanceCoachMark: Bool = false
@@ -38,31 +39,7 @@ struct TournamentDetailView: View {
         .navigationBarTitleDisplayMode(
             viewModel.isOngoing && viewModel.hasPresentPlayers ? .inline : .large
         )
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 16) {
-                    if !viewModel.standingsDisplayRows.isEmpty {
-                        Button {
-                            showStandingsDisplay = true
-                        } label: {
-                            Label("Table Display", systemImage: "display")
-                        }
-                        .labelStyle(.iconOnly)
-                        .accessibilityLabel("Table display mode")
-                        .accessibilityIdentifier("Standings Display")
-                    }
-
-                    Button {
-                        showRulesSheet = true
-                    } label: {
-                        Label("House Rules", systemImage: "book.closed")
-                    }
-                    .labelStyle(.iconOnly)
-                    .accessibilityLabel("House Rules")
-                    .accessibilityIdentifier("Tournament Rules")
-                }
-            }
-        }
+        .toolbar { tournamentToolbar }
         .sheet(isPresented: $showRulesSheet) {
             NavigationStack {
                 TournamentRulesSummaryView(rules: viewModel.tournamentRules)
@@ -115,10 +92,7 @@ struct TournamentDetailView: View {
             )
         }
         .onChange(of: viewModel.tournament?.status) { _, newStatus in
-            if newStatus == .completed {
-                AppHaptics.success()
-                showFinalStandingsSheet = true
-            }
+            handleTournamentStatusChange(newStatus)
         }
         .sheet(isPresented: $showFinalStandingsSheet, onDismiss: {}) {
             TournamentStandingsView(viewModel: TournamentStandingsViewModel(context: modelContext))
@@ -184,6 +158,40 @@ struct TournamentDetailView: View {
         showsGeneratePodsCoachMark && !generatePodsCoachMarkDismissed
     }
 
+    @ToolbarContentBuilder
+    private var tournamentToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            HStack(spacing: 16) {
+                if !viewModel.standingsDisplayRows.isEmpty {
+                    Button {
+                        showStandingsDisplay = true
+                    } label: {
+                        Label("Table Display", systemImage: "display")
+                    }
+                    .adaptiveToolbarLabelStyle(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
+                    .accessibilityLabel("Table display mode")
+                    .accessibilityIdentifier("Standings Display")
+                }
+
+                Button {
+                    showRulesSheet = true
+                } label: {
+                    Label("House Rules", systemImage: "book.closed")
+                }
+                .adaptiveToolbarLabelStyle(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
+                .accessibilityLabel("House Rules")
+                .accessibilityIdentifier("Tournament Rules")
+            }
+        }
+    }
+
+    private func handleTournamentStatusChange(_ newStatus: TournamentStatus?) {
+        if newStatus == .completed {
+            AppHaptics.success()
+            showFinalStandingsSheet = true
+        }
+    }
+
     private func dismissAttendanceCoachMark() {
         attendanceCoachMarkDismissed = true
         onDismissAttendanceCoachMark?()
@@ -202,9 +210,6 @@ struct TournamentDetailView: View {
             progressHeader
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            rulesHintRow
-                .frame(maxWidth: .infinity)
-
             sectionTabPicker
                 .frame(maxWidth: .infinity)
 
@@ -212,21 +217,25 @@ struct TournamentDetailView: View {
                 switch viewModel.activeTab {
                 case .attendance:
                     attendanceTabContent
-                        .adaptiveContentWidth()
                 case .round:
                     roundTabContent
                 case .standings:
                     standingsTabContent
-                        .adaptiveContentWidth()
                 }
             }
             .id(viewModel.activeTab)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .adaptiveContentWidth()
     }
 
     @ViewBuilder
     private var sectionTabPicker: some View {
+        let chromePadding = AdaptiveLayout.chromeVerticalPadding(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+
         Group {
             if AdaptiveLayout.usesMenuSectionPicker(
                 dynamicType: dynamicTypeSize,
@@ -247,7 +256,7 @@ struct TournamentDetailView: View {
                     .accessibilitySelectedSection("Section", value: viewModel.activeTab.rawValue)
                 }
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, chromePadding)
                 .frame(maxWidth: .infinity)
                 .background(Color(.secondarySystemBackground))
             } else {
@@ -260,7 +269,7 @@ struct TournamentDetailView: View {
                 .accessibilityIdentifier("tournamentDetailSectionPicker")
                 .accessibilitySelectedSection("Section", value: viewModel.activeTab.rawValue)
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, chromePadding)
                 .frame(maxWidth: .infinity)
                 .background(Color(.secondarySystemBackground))
             }
@@ -286,16 +295,6 @@ struct TournamentDetailView: View {
         )
     }
 
-    @ViewBuilder
-    private var rulesHintRow: some View {
-        TournamentRulesHintButton(summary: viewModel.tournamentRules.compactSummary()) {
-            showRulesSheet = true
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 4)
-        .background(Color(.secondarySystemBackground))
-    }
-    
     @ViewBuilder
     private var attendanceTabContent: some View {
         Group {
@@ -465,10 +464,6 @@ struct TournamentDetailView: View {
                 Text("\(viewModel.totalWeeks) weeks · \(viewModel.finalStandings.count) players")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-
-                TournamentRulesHintButton(summary: viewModel.tournamentRules.compactSummary()) {
-                    showRulesSheet = true
-                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()

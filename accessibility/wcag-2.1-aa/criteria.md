@@ -16,7 +16,7 @@ League Keeper extensions (**LKX-***) are app-specific checks beyond WCAG.
 | P-1.3.4 | 1.3.4 Orientation | AA | Yes | Portrait and landscape complete core tasks | Partial | UI tests cover landscape on Tournaments |
 | P-1.4.1 | 1.4.1 Use of Color | A | Yes | State not conveyed by color alone | Partial | Placement badges use text + color |
 | P-1.4.3 | 1.4.3 Contrast (Minimum) | AA | Yes | 4.5:1 normal text, 3:1 large text | Partial | `AppConstants.AccessibleColors` uses semantic UIKit colors |
-| P-1.4.4 | 1.4.4 Resize Text | AA | Yes | Dynamic Type through accessibility sizes | Partial | `.dynamicTypeSize` caps on rows; verify AXXXL |
+| P-1.4.4 | 1.4.4 Resize Text | AA | Yes | Dynamic Type through accessibility sizes | Partial | Row caps at AX5; manual AXXXL verify |
 | P-1.4.10 | 1.4.10 Reflow | AA | Yes | No horizontal scroll at 320pt width equivalent | Untested | Stats charts + tournament detail |
 | P-1.4.11 | 1.4.11 Non-text Contrast | AA | Yes | Control boundaries ≥ 3:1 | Untested | Steppers, segmented controls |
 | LKX-CONTRAST-MODES | — | — | Yes | Light and dark both pass P-1.4.3 on primary surfaces | Partial | System semantic colors adapt automatically |

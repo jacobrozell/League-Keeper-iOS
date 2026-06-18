@@ -7,23 +7,26 @@ struct StatTile: View {
     var accent: Bool = false
 
     @Environment(\.palette) private var palette
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var largeText: Bool { dynamicTypeSize.isAccessibilitySize }
 
     var body: some View {
         VStack(spacing: 4) {
             Text("\(value)")
                 .font(.system(.title2, design: .serif).weight(.semibold))
                 .foregroundStyle(accent ? Color(hex: palette.gold) : .primary)
-                .minimumScaleFactor(0.8)
-                .lineLimit(1)
+                .minimumScaleFactor(largeText ? 1.0 : 0.8)
+                .lineLimit(largeText ? 2 : 1)
             Text(label)
-                .font(.caption2)
+                .font(largeText ? .caption : .caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
-                .minimumScaleFactor(0.85)
+                .minimumScaleFactor(largeText ? 1.0 : 0.85)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: largeText ? 88 : 72)
         .padding(.horizontal, 6)
         .padding(.vertical, 10)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
@@ -117,6 +120,30 @@ struct BrandedGradientBackground: View {
     }
 }
 
+/// Pinned bottom chrome for primary actions (attendance confirm, round scoring).
+struct StickyBottomActionBar<Content: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        let chromePadding = AdaptiveLayout.chromeVerticalPadding(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+
+        VStack(spacing: 0) {
+            Divider()
+            content()
+                .padding(.horizontal)
+                .padding(.vertical, chromePadding)
+        }
+        .frame(maxWidth: .infinity)
+        .background(.bar)
+        .shadow(color: .black.opacity(0.04), radius: 4, y: -2)
+    }
+}
+
 /// Row fill for inset grouped lists on branded backgrounds.
 struct BrandedListRowBackground: View {
     @Environment(\.palette) private var palette
@@ -164,14 +191,18 @@ private struct BrandedScreenBackground: ViewModifier {
 /// Full-width branded background with a readable content column on iPad.
 private struct BrandedAdaptiveScreen: ViewModifier {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     func body(content: Content) -> some View {
         ZStack {
             BrandedGradientBackground()
-            if AdaptiveLayout.usesReadableContentWidth(horizontalSizeClass: horizontalSizeClass) {
+            if AdaptiveLayout.usesReadableContentWidth(
+                horizontalSizeClass: horizontalSizeClass,
+                verticalSizeClass: verticalSizeClass
+            ) {
                 content
-                    .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: AdaptiveLayout.contentMaxWidth, maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 content
             }
@@ -184,6 +215,7 @@ private struct BrandedListChrome: ViewModifier {
         content
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
+            .adaptiveListLayout()
     }
 }
 

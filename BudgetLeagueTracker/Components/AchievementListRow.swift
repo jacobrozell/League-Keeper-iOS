@@ -89,6 +89,8 @@ struct AchievementListRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(achievement.name), \(achievement.points) points")
+        .accessibilityHintIf(achievement.achievementDescription)
         .accessibilityIdentifier("achievement-row-\(achievement.name)")
     }
 }

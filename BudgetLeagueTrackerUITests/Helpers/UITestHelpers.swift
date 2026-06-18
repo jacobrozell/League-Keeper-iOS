@@ -105,6 +105,10 @@ extension XCUIApplication {
     
     /// Confirms attendance with all players present
     func confirmAttendance() {
+        let markAll = buttons["attendanceMarkAll"]
+        if markAll.waitForExistence(timeout: 3) {
+            markAll.tap()
+        }
         let confirmButton = buttons["Confirm Attendance"]
         if confirmButton.waitForExistence(timeout: 5) {
             confirmButton.tap()

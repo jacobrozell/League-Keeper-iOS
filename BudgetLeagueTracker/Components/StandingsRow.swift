@@ -36,7 +36,7 @@ struct StandingsRow: View {
             pointsColumn
         }
         .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
-        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility5)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
     }

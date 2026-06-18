@@ -34,7 +34,7 @@ struct EmptyStateView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .dynamicTypeSize(...DynamicTypeSize.accessibility3)
+        .dynamicTypeSize(...DynamicTypeSize.accessibility5)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilitySummary)
     }

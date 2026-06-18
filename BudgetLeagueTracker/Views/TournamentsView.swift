@@ -195,7 +195,7 @@ struct TournamentsView: View {
             
             EmptyStateView(
                 message: "No tournaments yet",
-                hint: "Tap the + button to create your first tournament.",
+                hint: "Create a tournament to track weekly game nights, seating, and scores.",
                 systemImage: "trophy"
             )
             
