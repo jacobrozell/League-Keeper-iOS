@@ -147,6 +147,7 @@ struct PodsViewModelTests {
             
             let viewModel = PodsViewModel(context: context)
             viewModel.generatePods()
+            scoreAllPods(in: viewModel)
             
             // Simulate a completed round
             LeagueEngine.nextRound(context: context)
@@ -204,6 +205,7 @@ struct PodsViewModelTests {
             #expect(viewModel.canEdit == false)
             
             viewModel.generatePods()
+            scoreAllPods(in: viewModel)
             LeagueEngine.nextRound(context: context)
             viewModel.refresh()
             
@@ -235,6 +237,14 @@ struct PodsViewModelTests {
             // Should be sorted by total descending: 12, 11, 6, 3
             #expect(standings[0].points.total == 12)
             #expect(standings[1].points.total == 11)
+        }
+    }
+}
+
+private func scoreAllPods(in viewModel: PodsViewModel) {
+    for pod in viewModel.pods {
+        for (index, player) in pod.enumerated() {
+            viewModel.setPlacement(for: player.id, place: index + 1)
         }
     }
 }

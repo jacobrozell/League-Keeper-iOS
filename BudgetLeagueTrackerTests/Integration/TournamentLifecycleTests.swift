@@ -54,14 +54,17 @@ struct TournamentLifecycleTests {
                     standingsBasedSeating: tournament.standingsBasedSeating,
                     previousRoundPlacements: previousPlacements
                 )
+                LeagueEngine.recordRoundPods(context: context, pods: pods.map { $0.map(\.id) })
                 
-                // Set placements
-                for (index, player) in pods[0].enumerated() {
-                    LeagueEngine.updatePlacement(
-                        context: context,
-                        playerId: player.id,
-                        placement: index + 1
-                    )
+                // Set placements for every table
+                for pod in pods {
+                    for (index, player) in pod.enumerated() {
+                        LeagueEngine.updatePlacement(
+                            context: context,
+                            playerId: player.id,
+                            placement: index + 1
+                        )
+                    }
                 }
                 
                 // Advance to next round

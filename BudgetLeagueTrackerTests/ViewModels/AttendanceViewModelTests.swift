@@ -63,13 +63,13 @@ struct AttendanceViewModelTests {
             let viewModel = AttendanceViewModel(context: context)
             let playerId = players[0].id
             
-            #expect(viewModel.isPresent(playerId) == true)
-            
-            viewModel.togglePresence(for: playerId)
             #expect(viewModel.isPresent(playerId) == false)
             
             viewModel.togglePresence(for: playerId)
             #expect(viewModel.isPresent(playerId) == true)
+            
+            viewModel.togglePresence(for: playerId)
+            #expect(viewModel.isPresent(playerId) == false)
         }
     }
     
@@ -174,13 +174,12 @@ struct AttendanceViewModelTests {
             
             let viewModel = AttendanceViewModel(context: context)
             
-            // Mark some as absent
-            viewModel.presentStatus[players[0].id] = false
-            viewModel.presentStatus[players[1].id] = false
+            viewModel.presentStatus[players[0].id] = true
+            viewModel.presentStatus[players[1].id] = true
             
             #expect(viewModel.presentPlayerIds.count == 2)
-            #expect(!viewModel.presentPlayerIds.contains(players[0].id))
-            #expect(!viewModel.presentPlayerIds.contains(players[1].id))
+            #expect(viewModel.presentPlayerIds.contains(players[0].id))
+            #expect(viewModel.presentPlayerIds.contains(players[1].id))
         }
         
         @Test("canConfirmAttendance requires at least one present player")
@@ -196,6 +195,10 @@ struct AttendanceViewModelTests {
             try context.save()
             
             let viewModel = AttendanceViewModel(context: context)
+            
+            #expect(viewModel.canConfirmAttendance == false)
+            
+            viewModel.presentStatus[players[0].id] = true
             
             #expect(viewModel.canConfirmAttendance == true)
             

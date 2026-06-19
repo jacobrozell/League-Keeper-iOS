@@ -119,6 +119,11 @@ struct StatsViewModelTests {
         @Test("hasWeeklyStandings returns true when league started and standings exist")
         func hasWeeklyStandings() throws {
             let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let playerId = tournament.presentPlayerIds[0]
+            tournament.weeklyPointsByPlayer[playerId] = WeeklyPlayerPoints(placementPoints: 4, achievementPoints: 0)
+            try context.save()
+
             let viewModel = StatsViewModel(context: context)
             
             #expect(viewModel.hasWeeklyStandings == true)
@@ -149,6 +154,11 @@ struct StatsViewModelTests {
         @Test("visibleSegments includes weekly when has weekly standings")
         func visibleSegmentsIncludesWeeklyWhenPresent() throws {
             let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let playerId = tournament.presentPlayerIds[0]
+            tournament.weeklyPointsByPlayer[playerId] = WeeklyPlayerPoints(placementPoints: 4, achievementPoints: 0)
+            try context.save()
+
             let viewModel = StatsViewModel(context: context)
             
             #expect(viewModel.visibleSegments.contains(.weekly))

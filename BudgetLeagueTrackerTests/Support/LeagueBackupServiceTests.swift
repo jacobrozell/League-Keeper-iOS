@@ -54,6 +54,8 @@ struct LeagueBackupServiceTests {
         let backup = try LeagueBackupService.makeBackupFile(context: context)
         #expect(backup.tournaments.count == 1)
         #expect(backup.tournaments.first?.name == "Backup League")
+    }
+
     @Test("Import template is valid and imports cleanly")
     func importTemplate() throws {
         let data = try LeagueBackupService.templateData()

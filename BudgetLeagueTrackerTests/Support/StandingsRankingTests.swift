@@ -2,6 +2,7 @@ import Testing
 @testable import BudgetLeagueTracker
 
 @Suite("StandingsRanking")
+@MainActor
 struct StandingsRankingTests {
     @Test("Higher points rank above lower points")
     func pointsOrder() {
