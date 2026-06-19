@@ -128,21 +128,6 @@ struct ScreenSnapshotTests {
         }
     }
     
-    // MARK: - DashboardView Snapshots
-    
-    @Suite("DashboardView")
-    @MainActor
-    struct DashboardViewSnapshots {
-        @Test("Default state")
-        func defaultState() throws {
-            let context = try TestHelpers.bootstrappedContext()
-            let viewModel = DashboardViewModel(context: context)
-            let view = DashboardView(viewModel: viewModel)
-                .frame(width: 390, height: 844)
-            assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
-        }
-    }
-    
     // MARK: - PlayersView Snapshots
     
     @Suite("PlayersView")
@@ -201,46 +186,6 @@ struct ScreenSnapshotTests {
         }
     }
     
-    // MARK: - AddPlayersView Snapshots
-    
-    @Suite("AddPlayersView")
-    @MainActor
-    struct AddPlayersViewSnapshots {
-        @Test("Empty state")
-        func emptyState() throws {
-            let context = try TestHelpers.bootstrappedContext()
-            let viewModel = AddPlayersViewModel(context: context)
-            let view = AddPlayersView(viewModel: viewModel).frame(width: 390, height: 844)
-            assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
-        }
-        
-        @Test("With players")
-        func withPlayers() throws {
-            let context = try TestHelpers.bootstrappedContext()
-            for name in ["Alice", "Bob", "Charlie", "Diana"] {
-                context.insert(TestFixtures.player(name: name))
-            }
-            try context.save()
-            let viewModel = AddPlayersViewModel(context: context)
-            let view = AddPlayersView(viewModel: viewModel).frame(width: 390, height: 844)
-            assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
-        }
-    }
-    
-    // MARK: - PodsView Snapshots
-    
-    @Suite("PodsView")
-    @MainActor
-    struct PodsViewSnapshots {
-        @Test("With pods context")
-        func withPodsContext() throws {
-            let context = try TestHelpers.contextWithTournament()
-            let viewModel = PodsViewModel(context: context)
-            let view = PodsView(viewModel: viewModel).frame(width: 390, height: 844)
-            assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
-        }
-    }
-    
     // MARK: - TournamentDetailView Snapshots
     
     @Suite("TournamentDetailView")
@@ -266,20 +211,6 @@ struct ScreenSnapshotTests {
             let context = try TestHelpers.contextWithTournament()
             let viewModel = AttendanceViewModel(context: context)
             let view = AttendanceView(viewModel: viewModel).frame(width: 390, height: 844)
-            assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
-        }
-    }
-    
-    // MARK: - ConfirmNewTournamentView Snapshots
-    
-    @Suite("ConfirmNewTournamentView")
-    @MainActor
-    struct ConfirmNewTournamentViewSnapshots {
-        @Test("Default")
-        func `default`() throws {
-            let context = try TestHelpers.bootstrappedContext()
-            let viewModel = ConfirmNewTournamentViewModel(context: context)
-            let view = ConfirmNewTournamentView(viewModel: viewModel).frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
     }

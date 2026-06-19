@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the Achievements view.
 /// Manages achievement list display, statistics, and navigation to add/edit achievements.
+@MainActor
 @Observable
 final class AchievementsViewModel {
     private let context: ModelContext

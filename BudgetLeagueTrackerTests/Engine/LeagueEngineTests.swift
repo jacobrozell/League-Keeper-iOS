@@ -432,7 +432,7 @@ struct LeagueEngineTests {
             )
             
             let state = try TestHelpers.fetchLeagueState(from: context)
-            #expect(state?.screen == .pods)
+            #expect(state?.screen == .tournaments)
         }
     }
 
@@ -1228,7 +1228,7 @@ struct LeagueEngineTests {
             LeagueEngine.exitWeeklyStandings(context: context)
             
             let updated = try TestHelpers.fetchLeagueState(from: context)
-            #expect(updated?.screen == .pods)
+            #expect(updated?.screen == .tournaments)
         }
     }
     
@@ -1437,7 +1437,7 @@ struct LeagueEngineTests {
             let context = try TestHelpers.bootstrappedContext()
             let state = try TestHelpers.fetchLeagueState(from: context)!
             state.activeTournamentId = "non-existent-tournament"
-            state.currentScreen = Screen.pods.rawValue
+            state.currentScreen = "pods"
             try context.save()
             
             LeagueEngine.validateAndSanitizeState(context: context)
@@ -1455,7 +1455,7 @@ struct LeagueEngineTests {
             
             let state = try TestHelpers.fetchLeagueState(from: context)!
             state.activeTournamentId = tournament.id
-            state.currentScreen = Screen.pods.rawValue
+            state.currentScreen = "pods"
             try context.save()
             
             LeagueEngine.validateAndSanitizeState(context: context)
@@ -1469,7 +1469,7 @@ struct LeagueEngineTests {
         func mapsLegacyDashboard() throws {
             let context = try TestHelpers.bootstrappedContext()
             let state = try TestHelpers.fetchLeagueState(from: context)!
-            state.currentScreen = Screen.dashboard.rawValue
+            state.currentScreen = "dashboard"
             try context.save()
             
             LeagueEngine.validateAndSanitizeState(context: context)
@@ -1482,7 +1482,7 @@ struct LeagueEngineTests {
         func mapsLegacyConfirmNewTournament() throws {
             let context = try TestHelpers.bootstrappedContext()
             let state = try TestHelpers.fetchLeagueState(from: context)!
-            state.currentScreen = Screen.confirmNewTournament.rawValue
+            state.currentScreen = "confirmNewTournament"
             try context.save()
             
             LeagueEngine.validateAndSanitizeState(context: context)
@@ -1496,7 +1496,7 @@ struct LeagueEngineTests {
             let context = try TestHelpers.bootstrappedContext()
             let state = try TestHelpers.fetchLeagueState(from: context)!
             state.activeTournamentId = nil
-            state.currentScreen = Screen.pods.rawValue  // Invalid without tournament
+            state.currentScreen = "pods"  // Invalid without tournament
             try context.save()
             
             LeagueEngine.validateAndSanitizeState(context: context)

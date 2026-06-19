@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for editing the last completed round.
 /// Loads data from the last PodSnapshot and allows modification of placements and achievements.
+@MainActor
 @Observable
 final class EditLastRoundViewModel {
     private let context: ModelContext

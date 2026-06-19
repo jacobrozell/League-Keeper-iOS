@@ -11,6 +11,7 @@ enum StatsSegment: String, CaseIterable {
 
 /// ViewModel for the Stats view.
 /// Provides read-only access to player stats, weekly standings, tournament standings, and chart data.
+@MainActor
 @Observable
 final class StatsViewModel {
     private let context: ModelContext

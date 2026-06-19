@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 
 /// ViewModel for creating or editing an achievement.
+@MainActor
 @Observable
 final class AchievementFormViewModel {
     private let context: ModelContext

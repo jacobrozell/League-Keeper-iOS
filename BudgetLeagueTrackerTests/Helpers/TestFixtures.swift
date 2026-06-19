@@ -247,7 +247,7 @@ enum TestFixtures {
     static func leagueStateWithActiveTournament(tournamentId: String) -> LeagueState {
         let state = LeagueState()
         state.activeTournamentId = tournamentId
-        state.currentScreen = Screen.pods.rawValue
+        state.currentScreen = Screen.tournaments.rawValue
         return state
     }
     
@@ -342,7 +342,7 @@ extension TestFixtures {
         
         let state = LeagueState()
         state.activeTournamentId = tournament.id
-        state.currentScreen = Screen.pods.rawValue
+        state.currentScreen = Screen.tournaments.rawValue
         context.insert(state)
         
         try context.save()

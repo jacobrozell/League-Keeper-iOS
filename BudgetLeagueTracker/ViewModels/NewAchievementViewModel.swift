@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the New Achievement view.
 /// Handles achievement creation with name, points, and always-on setting.
+@MainActor
 @Observable
 final class NewAchievementViewModel {
     let context: ModelContext

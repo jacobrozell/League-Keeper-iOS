@@ -238,7 +238,7 @@ enum LeagueEngine {
         tournament.roundScoringStarted = false
         
         if let state = fetchLeagueState(context: context) {
-            state.screen = .pods
+            state.screen = .tournaments
         }
         
         return PersistenceSave.save(context: context, event: .round)
@@ -939,8 +939,8 @@ enum LeagueEngine {
     /// - Parameter context: The SwiftData model context
     static func exitWeeklyStandings(context: ModelContext) {
         guard let state = fetchLeagueState(context: context) else { return }
-        state.screen = .pods
-        try? context.save()
+        state.screen = .tournaments
+        _ = PersistenceSave.save(context: context, event: .tournament)
     }
     
     /// Closes tournament standings and returns to tournaments list.
@@ -1129,20 +1129,17 @@ enum LeagueEngine {
             }
         } else {
             // No active tournament - only allow pre-tournament screens
-            let validScreens: [Screen] = [.tournaments, .dashboard, .newTournament, .confirmNewTournament]
+            let validScreens: [Screen] = [.tournaments, .newTournament]
             if !validScreens.contains(state.screen) {
                 state.screen = .tournaments
                 needsSave = true
             }
         }
-        
-        // Map legacy screen values
-        if state.screen == .dashboard {
-            state.screen = .tournaments
-            needsSave = true
-        }
-        if state.screen == .confirmNewTournament {
-            state.screen = .newTournament
+
+        // Normalize legacy persisted screen values
+        let normalized = Screen.migrated(from: state.currentScreen)
+        if normalized.rawValue != state.currentScreen {
+            state.screen = normalized
             needsSave = true
         }
         

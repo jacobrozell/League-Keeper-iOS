@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the Tournament Standings view.
 /// Shows players ranked by points earned in this tournament only.
+@MainActor
 @Observable
 final class TournamentStandingsViewModel {
     private let context: ModelContext

@@ -26,6 +26,7 @@ enum RoundPhase: Equatable {
 /// ViewModel for the Tournament Detail view.
 /// Manages tournament landing page including pods, standings, and navigation.
 /// Absorbs functionality from PodsViewModel for ongoing tournaments.
+@MainActor
 @Observable
 final class TournamentDetailViewModel {
     private let context: ModelContext

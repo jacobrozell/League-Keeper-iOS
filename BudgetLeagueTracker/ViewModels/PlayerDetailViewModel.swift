@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the Player Detail view.
 /// Provides comprehensive player statistics and handles player deletion.
+@MainActor
 @Observable
 final class PlayerDetailViewModel {
     private let context: ModelContext

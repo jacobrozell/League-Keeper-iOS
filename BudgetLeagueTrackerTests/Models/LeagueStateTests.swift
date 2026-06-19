@@ -24,11 +24,12 @@ struct LeagueStateTests {
         func customInitialization() {
             let state = LeagueState(
                 activeTournamentId: "tournament-123",
-                currentScreen: Screen.pods.rawValue
+                currentScreen: "pods"
             )
             
             #expect(state.activeTournamentId == "tournament-123")
-            #expect(state.currentScreen == Screen.pods.rawValue)
+            #expect(state.currentScreen == "pods")
+            #expect(state.screen == .tournaments)
         }
     }
     
@@ -44,7 +45,7 @@ struct LeagueStateTests {
             #expect(state.screen == .tournaments)
             
             state.currentScreen = "pods"
-            #expect(state.screen == .pods)
+            #expect(state.screen == .tournaments)
             
             state.currentScreen = "attendance"
             #expect(state.screen == .attendance)
@@ -56,15 +57,6 @@ struct LeagueStateTests {
         @Test("Screen setter updates currentScreen string")
         func screenSetter() {
             let state = LeagueState()
-            
-            state.screen = .pods
-            #expect(state.currentScreen == "pods")
-            
-            state.screen = .attendance
-            #expect(state.currentScreen == "attendance")
-            
-            state.screen = .tournamentStandings
-            #expect(state.currentScreen == "tournamentStandings")
             
             state.screen = .tournamentDetail
             #expect(state.currentScreen == "tournamentDetail")
@@ -121,7 +113,7 @@ struct LeagueStateTests {
             let context = try TestHelpers.cleanContext()
             let state = LeagueState(
                 activeTournamentId: "test-tournament",
-                currentScreen: Screen.pods.rawValue
+                currentScreen: "pods"
             )
             
             context.insert(state)
@@ -129,7 +121,7 @@ struct LeagueStateTests {
             
             let fetched = try TestHelpers.fetchAll(LeagueState.self, from: context).first!
             #expect(fetched.activeTournamentId == "test-tournament")
-            #expect(fetched.screen == .pods)
+            #expect(fetched.screen == .tournaments)
         }
         
         @Test("LeagueState updates persist")

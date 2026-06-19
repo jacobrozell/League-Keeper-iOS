@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the Attendance view.
 /// Manages player attendance and weekly settings.
+@MainActor
 @Observable
 final class AttendanceViewModel {
     private let context: ModelContext

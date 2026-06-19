@@ -34,6 +34,7 @@ enum AddPlayerResult {
 
 /// ViewModel for the Players view.
 /// Manages player list display, search, sort, and adding new players.
+@MainActor
 @Observable
 final class PlayersViewModel {
     private let context: ModelContext

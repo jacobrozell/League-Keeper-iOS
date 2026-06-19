@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the New Tournament view.
 /// Handles tournament creation with name, settings, and player selection.
+@MainActor
 @Observable
 final class NewTournamentViewModel {
     private let context: ModelContext

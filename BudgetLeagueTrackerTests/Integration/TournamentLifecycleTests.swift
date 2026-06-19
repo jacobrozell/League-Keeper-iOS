@@ -37,7 +37,7 @@ struct TournamentLifecycleTests {
             )
             
             state = try TestHelpers.fetchLeagueState(from: context)!
-            #expect(state.screen == .pods)
+            #expect(state.screen == .tournaments)
             
             // Run 3 rounds
             for round in 1...3 {

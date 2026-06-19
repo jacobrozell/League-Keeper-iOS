@@ -1,16 +1,14 @@
 import Testing
 @testable import BudgetLeagueTracker
 
-/// Unit tests for NavigationState (tab/routing logic extracted from ContentView).
 @Suite("NavigationState Tests")
 struct NavigationStateTests {
 
-    @Test("currentScreen returns first state screen")
-    func currentScreenFromState() {
-        let state = LeagueState()
-        state.screen = .pods
+    @Test("currentScreen migrates legacy pods to tournaments")
+    func currentScreenMigratesLegacyPods() {
+        let state = LeagueState(currentScreen: "pods")
         let result = NavigationState.currentScreen(from: [state])
-        #expect(result == .pods)
+        #expect(result == .tournaments)
     }
 
     @Test("currentScreen returns tournaments when empty")
@@ -39,10 +37,9 @@ struct NavigationStateTests {
         #expect(NavigationState.shouldHideTabBar(from: [state]) == false)
     }
 
-    @Test("shouldHideTabBar false for pods")
-    func shouldHideTabBarPods() {
-        let state = LeagueState()
-        state.screen = .pods
+    @Test("shouldHideTabBar false for migrated legacy pods screen")
+    func shouldHideTabBarLegacyPods() {
+        let state = LeagueState(currentScreen: "pods")
         #expect(NavigationState.shouldHideTabBar(from: [state]) == false)
     }
 }

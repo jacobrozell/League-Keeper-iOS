@@ -28,7 +28,7 @@ final class LeagueState {
     /// Returns the current screen as a Screen enum value
     var screen: Screen {
         get {
-            Screen(rawValue: currentScreen) ?? .tournaments
+            Screen.migrated(from: currentScreen)
         }
         set {
             currentScreen = newValue.rawValue

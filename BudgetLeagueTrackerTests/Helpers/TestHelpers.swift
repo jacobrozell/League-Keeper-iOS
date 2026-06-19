@@ -112,7 +112,7 @@ enum TestHelpers {
         let descriptor = FetchDescriptor<LeagueState>()
         if let state = try context.fetch(descriptor).first {
             state.activeTournamentId = tournament.id
-            state.currentScreen = Screen.pods.rawValue
+            state.currentScreen = Screen.tournaments.rawValue
         }
         
         try context.save()

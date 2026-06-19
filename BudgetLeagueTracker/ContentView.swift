@@ -30,6 +30,8 @@ struct ContentView: View {
     @State private var onboardingSampleError: String?
     @State private var selectedTab: AppTab = .tournaments
     @State private var tournamentsNavigationPath: [Tournament] = []
+    @State private var tabViewModels: TabViewModels?
+    @State private var attendanceViewModel: AttendanceViewModel?
     /// ViewModel for New Tournament screen; persisted so adding a player doesn't recreate it and lose form state.
     @State private var newTournamentViewModel: NewTournamentViewModel?
     
@@ -87,6 +89,12 @@ struct ContentView: View {
         .modifier(OptionalDynamicTypeSize(isAccessibilityUITest: isAccessibilityUITest))
         .onAppear {
             UITestBootstrap.applyIfNeeded(context: modelContext)
+            if tabViewModels == nil {
+                tabViewModels = TabViewModels(context: modelContext)
+            }
+            if attendanceViewModel == nil {
+                attendanceViewModel = AttendanceViewModel(context: modelContext)
+            }
             UITestBootstrap.openPendingTournamentDetailIfNeeded(
                 context: modelContext,
                 navigationPath: &tournamentsNavigationPath
@@ -110,7 +118,7 @@ struct ContentView: View {
         }
         .onChange(of: currentScreen) { _, newScreen in
             switch newScreen {
-            case .newTournament, .confirmNewTournament:
+            case .newTournament:
                 if newTournamentViewModel == nil {
                     newTournamentViewModel = NewTournamentViewModel(context: modelContext)
                 }
@@ -133,29 +141,44 @@ struct ContentView: View {
     private var tournamentsStack: some View {
         NavigationStack(path: $tournamentsNavigationPath) {
             Group {
-                switch currentScreen {
-                case .tournaments, .dashboard, .tournamentStandings:
-                    TournamentsView(viewModel: TournamentsViewModel(context: modelContext), navigationPath: $tournamentsNavigationPath)
-                case .newTournament, .confirmNewTournament:
-                    if let vm = newTournamentViewModel {
-                        NewTournamentView(viewModel: vm)
-                    } else {
-                        ProgressView()
-                            .onAppear {
-                                if newTournamentViewModel == nil {
-                                    newTournamentViewModel = NewTournamentViewModel(context: modelContext)
+                if let tabViewModels {
+                    switch currentScreen {
+                    case .tournaments, .tournamentStandings:
+                        TournamentsView(
+                            viewModel: tabViewModels.tournaments,
+                            navigationPath: $tournamentsNavigationPath
+                        )
+                    case .newTournament:
+                        if let vm = newTournamentViewModel {
+                            NewTournamentView(viewModel: vm)
+                        } else {
+                            ProgressView()
+                                .onAppear {
+                                    if newTournamentViewModel == nil {
+                                        newTournamentViewModel = NewTournamentViewModel(context: modelContext)
+                                    }
                                 }
-                            }
+                        }
+                    case .attendance:
+                        if let attendanceViewModel {
+                            AttendanceView(
+                                viewModel: attendanceViewModel,
+                                navigationStyle: .standalone,
+                                onConfirm: { _, _ in
+                                    completeStandaloneAttendance()
+                                }
+                            )
+                        } else {
+                            ProgressView()
+                        }
+                    default:
+                        TournamentsView(
+                            viewModel: tabViewModels.tournaments,
+                            navigationPath: $tournamentsNavigationPath
+                        )
                     }
-                case .addPlayers:
-                    AddPlayersView(viewModel: AddPlayersViewModel(context: modelContext))
-                case .attendance:
-                    AttendanceView(
-                        viewModel: AttendanceViewModel(context: modelContext),
-                        navigationStyle: .standalone
-                    )
-                default:
-                    TournamentsView(viewModel: TournamentsViewModel(context: modelContext), navigationPath: $tournamentsNavigationPath)
+                } else {
+                    ProgressView()
                 }
             }
             .navigationDestination(for: Tournament.self) { tournament in
@@ -175,10 +198,14 @@ struct ContentView: View {
     @ViewBuilder
     private var playersStack: some View {
         NavigationStack {
-            PlayersView(viewModel: PlayersViewModel(context: modelContext))
-                .navigationDestination(for: Player.self) { player in
-                    PlayerDetailView(viewModel: PlayerDetailViewModel(context: modelContext, player: player))
-                }
+            if let tabViewModels {
+                PlayersView(viewModel: tabViewModels.players)
+                    .navigationDestination(for: Player.self) { player in
+                        PlayerDetailView(viewModel: PlayerDetailViewModel(context: modelContext, player: player))
+                    }
+            } else {
+                ProgressView()
+            }
         }
         .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
     }
@@ -186,10 +213,14 @@ struct ContentView: View {
     @ViewBuilder
     private var statsStack: some View {
         NavigationStack {
-            StatsView(viewModel: StatsViewModel(context: modelContext))
-                .navigationDestination(for: Player.self) { player in
-                    PlayerDetailView(viewModel: PlayerDetailViewModel(context: modelContext, player: player))
-                }
+            if let tabViewModels {
+                StatsView(viewModel: tabViewModels.stats)
+                    .navigationDestination(for: Player.self) { player in
+                        PlayerDetailView(viewModel: PlayerDetailViewModel(context: modelContext, player: player))
+                    }
+            } else {
+                ProgressView()
+            }
         }
         .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
     }
@@ -197,7 +228,11 @@ struct ContentView: View {
     @ViewBuilder
     private var achievementsStack: some View {
         NavigationStack {
-            AchievementsView(viewModel: AchievementsViewModel(context: modelContext))
+            if let tabViewModels {
+                AchievementsView(viewModel: tabViewModels.achievements)
+            } else {
+                ProgressView()
+            }
         }
         .toolbar(shouldHideTabBar ? .hidden : .visible, for: .tabBar)
     }
@@ -248,6 +283,14 @@ struct ContentView: View {
         guard let tournament = try? modelContext.fetch(descriptor).first else { return }
         tournamentsNavigationPath = [tournament]
     }
+
+    private func completeStandaloneAttendance() {
+        LeagueEngine.setScreen(context: modelContext, screen: .tournaments)
+        attendanceViewModel?.refresh()
+        if let tournamentId = LeagueEngine.fetchLeagueState(context: modelContext)?.activeTournamentId {
+            openTournamentDetail(tournamentId: tournamentId)
+        }
+    }
 }
 
 // MARK: - NavigationState (testable routing logic)
@@ -262,7 +305,7 @@ enum NavigationState {
     /// Whether the tab bar should be hidden for the current screen.
     static func shouldHideTabBar(from leagueStates: [LeagueState]) -> Bool {
         switch currentScreen(from: leagueStates) {
-        case .newTournament, .confirmNewTournament, .addPlayers, .attendance:
+        case .newTournament, .attendance:
             return true
         default:
             return false

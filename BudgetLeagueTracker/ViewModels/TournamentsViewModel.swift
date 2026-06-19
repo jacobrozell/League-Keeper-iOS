@@ -3,6 +3,7 @@ import SwiftData
 
 /// ViewModel for the Tournaments view.
 /// Manages tournament list display and navigation.
+@MainActor
 @Observable
 final class TournamentsViewModel {
     private let context: ModelContext
