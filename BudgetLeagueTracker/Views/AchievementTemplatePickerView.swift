@@ -32,10 +32,7 @@ struct AchievementTemplatePickerView: View {
                                     Text(template.name)
                                         .font(.body)
                                         .foregroundStyle(.primary)
-                                    Text(template.achievementDescription)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(2)
+                                    AchievementDescriptionText(description: template.achievementDescription, style: .compact)
                                 }
 
                                 Spacer()

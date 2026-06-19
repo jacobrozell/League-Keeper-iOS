@@ -304,7 +304,7 @@ enum LeagueEngine {
         )
 
         if attendanceChanged, hadTables {
-            clearTransientRoundState(on: tournament)
+            ScoringEngine.clearTransientRoundState(on: tournament)
             let saved = PersistenceSave.save(context: context, event: .round)
             return AttendanceUpdateResult(clearedTables: true, saved: saved)
         }
@@ -422,145 +422,9 @@ enum LeagueEngine {
     }
     
     /// Finalizes the current round's placements and achievements.
-    /// Applies all stored placements to player stats and weekly points.
-    /// Also creates GameResult records for historical tracking.
-    /// - Parameter context: The SwiftData model context
     @discardableResult
     static func finalizeRound(context: ModelContext) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-
-        let placements = tournament.roundPlacements
-        let achievementCheckKeys = tournament.roundAchievementChecks
-
-        guard !placements.isEmpty else { return true }
-
-        let playerDescriptor = FetchDescriptor<Player>()
-        guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }
-        
-        let achievementDescriptor = FetchDescriptor<Achievement>()
-        let allAchievements = (try? context.fetch(achievementDescriptor)) ?? []
-        let achievementLookup = Dictionary(uniqueKeysWithValues: allAchievements.map { ($0.id, $0) })
-        
-        var playerDeltas: [String: PlayerDelta] = [:]
-        var weeklyDeltas: [String: WeeklyPlayerPoints] = [:]
-        var checkRecords: [AchievementCheck] = []
-
-        // One pod ID per table so head-to-head only pairs players who shared a pod.
-        let roundPodGroups = tournament.currentRoundPodsPlayerIds
-        let podIdByPlayer = podIds(forPlacements: placements, podGroups: roundPodGroups)
-
-        // Process each player with a placement
-        for (playerId, place) in placements {
-            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
-            
-            // Calculate achievement points for this player
-            var achievementPts = 0
-            var earnedAchievementIds: [String] = []
-            
-            if tournament.achievementsOnThisWeek {
-                for key in achievementCheckKeys where key.hasPrefix("\(playerId):") {
-                    let achievementId = String(key.dropFirst(playerId.count + 1))
-                    if let achievement = achievementLookup[achievementId] {
-                        achievementPts += achievement.points
-                        earnedAchievementIds.append(achievementId)
-                        checkRecords.append(AchievementCheck(
-                            playerId: playerId,
-                            achievementId: achievementId,
-                            points: achievement.points
-                        ))
-                    }
-                }
-            }
-            
-            let isWin = place == 1
-            
-            // Create deltas for undo
-            playerDeltas[playerId] = PlayerDelta(
-                placementPoints: placementPts,
-                achievementPoints: achievementPts,
-                wins: isWin ? 1 : 0,
-                gamesPlayed: 1
-            )
-            weeklyDeltas[playerId] = WeeklyPlayerPoints(
-                placementPoints: placementPts,
-                achievementPoints: achievementPts
-            )
-            
-            // Create GameResult record for historical tracking
-            let gameResult = GameResult(
-                tournamentId: tournament.id,
-                week: tournament.currentWeek,
-                round: tournament.currentRound,
-                playerId: playerId,
-                placement: place,
-                placementPoints: placementPts,
-                achievementPoints: achievementPts,
-                achievementIds: earnedAchievementIds,
-                podId: podIdByPlayer[playerId] ?? UUID().uuidString
-            )
-            context.insert(gameResult)
-        }
-        
-        // Update players' cumulative stats
-        for player in allPlayers {
-            if let delta = playerDeltas[player.id] {
-                player.placementPoints += delta.placementPoints
-                player.achievementPoints += delta.achievementPoints
-                player.wins += delta.wins
-                player.gamesPlayed += delta.gamesPlayed
-            }
-        }
-        
-        // Update weekly points
-        var weeklyPoints = tournament.weeklyPointsByPlayer
-        for (playerId, delta) in weeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints += delta.placementPoints
-            current.achievementPoints += delta.achievementPoints
-            weeklyPoints[playerId] = current
-        }
-        tournament.weeklyPointsByPlayer = weeklyPoints
-        
-        // Push snapshot for undo
-        var snapshots = tournament.podHistorySnapshots
-        snapshots.append(PodSnapshot(
-            week: tournament.currentWeek,
-            round: tournament.currentRound,
-            playerIds: Array(placements.keys),
-            placements: placements,
-            achievementChecks: checkRecords,
-            playerDeltas: playerDeltas,
-            weeklyDeltas: weeklyDeltas
-        ))
-        tournament.podHistorySnapshots = snapshots
-        
-        // Clear round data
-        clearTransientRoundState(on: tournament)
-
-        return PersistenceSave.save(context: context, event: .round)
-    }
-
-    /// Maps each placed player to a pod identifier.
-    /// Players in the same recorded pod group share an ID; uncovered players share one fallback ID.
-    private static func podIds(
-        forPlacements placements: [String: Int],
-        podGroups: [[String]]
-    ) -> [String: String] {
-        var podIdByPlayer: [String: String] = [:]
-        for group in podGroups {
-            let groupPodId = UUID().uuidString
-            for playerId in group {
-                podIdByPlayer[playerId] = groupPodId
-            }
-        }
-        let uncovered = placements.keys.filter { podIdByPlayer[$0] == nil }
-        if !uncovered.isEmpty {
-            let fallbackPodId = UUID().uuidString
-            for playerId in uncovered {
-                podIdByPlayer[playerId] = fallbackPodId
-            }
-        }
-        return podIdByPlayer
+        ScoringEngine.finalizeRound(context: context)
     }
 
     /// Records pod groupings for the current round (used by tests and legacy pod flows).
@@ -576,81 +440,23 @@ enum LeagueEngine {
     static func clearRoundData(context: ModelContext) -> Bool {
         guard let tournament = fetchActiveTournament(context: context) else { return false }
 
-        clearTransientRoundState(on: tournament)
+        ScoringEngine.clearTransientRoundState(on: tournament)
 
         return PersistenceSave.save(context: context, event: .round)
     }
 
     /// Resets in-progress round scoring state without touching pod history.
     static func clearTransientRoundState(on tournament: Tournament) {
-        tournament.roundPlacements = [:]
-        tournament.roundAchievementChecks = []
-        tournament.currentRoundPodsPlayerIds = []
-        tournament.confirmedTableIndices = []
-        tournament.tableScoringOrders = []
-        tournament.roundScoringStarted = false
+        ScoringEngine.clearTransientRoundState(on: tournament)
     }
-    
+
     /// Undoes the last saved pod.
-    /// - Parameter context: The SwiftData model context
     @discardableResult
     static func undoLastPod(context: ModelContext) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-
-        var snapshots = tournament.podHistorySnapshots
-        guard let lastSnapshot = snapshots.popLast() else { return true }
-        
-        // Reverse player cumulative stats
-        let playerDescriptor = FetchDescriptor<Player>()
-        if let allPlayers = try? context.fetch(playerDescriptor) {
-            for player in allPlayers {
-                if let delta = lastSnapshot.playerDeltas[player.id] {
-                    player.placementPoints -= delta.placementPoints
-                    player.achievementPoints -= delta.achievementPoints
-                    player.wins -= delta.wins
-                    player.gamesPlayed -= delta.gamesPlayed
-                }
-            }
-        }
-        
-        // Reverse weekly points
-        var weeklyPoints = tournament.weeklyPointsByPlayer
-        for (playerId, delta) in lastSnapshot.weeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints -= delta.placementPoints
-            current.achievementPoints -= delta.achievementPoints
-            weeklyPoints[playerId] = current
-        }
-        tournament.weeklyPointsByPlayer = weeklyPoints
-        
-        tournament.podHistorySnapshots = snapshots
-        
-        // Delete the corresponding GameResults
-        let gameResultDescriptor = FetchDescriptor<GameResult>()
-        if let allResults = try? context.fetch(gameResultDescriptor) {
-            for playerId in lastSnapshot.playerIds {
-                let matchingResults = allResults.filter {
-                    $0.tournamentId == tournament.id &&
-                    $0.week == lastSnapshot.week &&
-                    $0.round == lastSnapshot.round &&
-                    $0.playerId == playerId
-                }
-                for result in matchingResults {
-                    context.delete(result)
-                }
-            }
-        }
-
-        return PersistenceSave.save(context: context, event: .round)
+        ScoringEngine.undoLastPod(context: context)
     }
 
     /// Applies edited round data, replacing a snapshot with updated values.
-    /// Reverses old deltas, calculates new deltas, and updates GameResults.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - snapshotIndex: Index in pod history to edit; `nil` edits the most recent snapshot.
-    ///   - newPlacements: Updated placements (playerId -> place 1-4)
-    ///   - newAchievementChecks: Updated achievement checks ("playerId:achievementId")
     @discardableResult
     static func applyEditedRound(
         context: ModelContext,
@@ -658,163 +464,12 @@ enum LeagueEngine {
         newPlacements: [String: Int],
         newAchievementChecks: Set<String>
     ) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-
-        var snapshots = tournament.podHistorySnapshots
-        let index: Int
-        if let snapshotIndex {
-            guard snapshots.indices.contains(snapshotIndex) else { return false }
-            index = snapshotIndex
-        } else {
-            guard let lastIndex = snapshots.indices.last else { return false }
-            index = lastIndex
-        }
-
-        let lastSnapshot = snapshots.remove(at: index)
-        let editWeek = lastSnapshot.week
-        let editRound = lastSnapshot.round
-
-        let playerDescriptor = FetchDescriptor<Player>()
-        guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }
-        
-        let achievementDescriptor = FetchDescriptor<Achievement>()
-        let allAchievements = (try? context.fetch(achievementDescriptor)) ?? []
-        let achievementLookup = Dictionary(uniqueKeysWithValues: allAchievements.map { ($0.id, $0) })
-        
-        // Step 1: Reverse old deltas from player stats
-        for player in allPlayers {
-            if let delta = lastSnapshot.playerDeltas[player.id] {
-                player.placementPoints -= delta.placementPoints
-                player.achievementPoints -= delta.achievementPoints
-                player.wins -= delta.wins
-                player.gamesPlayed -= delta.gamesPlayed
-            }
-        }
-        
-        // Step 2: Reverse old weekly points
-        var weeklyPoints = tournament.weeklyPointsByPlayer
-        for (playerId, delta) in lastSnapshot.weeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints -= delta.placementPoints
-            current.achievementPoints -= delta.achievementPoints
-            weeklyPoints[playerId] = current
-        }
-        
-        // Step 3: Calculate new deltas from edited values
-        var newPlayerDeltas: [String: PlayerDelta] = [:]
-        var newWeeklyDeltas: [String: WeeklyPlayerPoints] = [:]
-        var newCheckRecords: [AchievementCheck] = []
-        
-        for (playerId, place) in newPlacements {
-            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
-            
-            // Calculate achievement points for this player
-            var achievementPts = 0
-            var earnedAchievementIds: [String] = []
-            
-            if tournament.achievementsOnThisWeek {
-                for key in newAchievementChecks where key.hasPrefix("\(playerId):") {
-                    let achievementId = String(key.dropFirst(playerId.count + 1))
-                    if let achievement = achievementLookup[achievementId] {
-                        achievementPts += achievement.points
-                        earnedAchievementIds.append(achievementId)
-                        newCheckRecords.append(AchievementCheck(
-                            playerId: playerId,
-                            achievementId: achievementId,
-                            points: achievement.points
-                        ))
-                    }
-                }
-            }
-            
-            let isWin = place == 1
-            
-            newPlayerDeltas[playerId] = PlayerDelta(
-                placementPoints: placementPts,
-                achievementPoints: achievementPts,
-                wins: isWin ? 1 : 0,
-                gamesPlayed: 1
-            )
-            newWeeklyDeltas[playerId] = WeeklyPlayerPoints(
-                placementPoints: placementPts,
-                achievementPoints: achievementPts
-            )
-        }
-        
-        // Step 4: Apply new deltas to player stats
-        for player in allPlayers {
-            if let delta = newPlayerDeltas[player.id] {
-                player.placementPoints += delta.placementPoints
-                player.achievementPoints += delta.achievementPoints
-                player.wins += delta.wins
-                player.gamesPlayed += delta.gamesPlayed
-            }
-        }
-        
-        // Step 5: Apply new weekly points
-        for (playerId, delta) in newWeeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints += delta.placementPoints
-            current.achievementPoints += delta.achievementPoints
-            weeklyPoints[playerId] = current
-        }
-        tournament.weeklyPointsByPlayer = weeklyPoints
-        
-        // Step 6: Delete old GameResults and create new ones, preserving each player's pod ID.
-        var existingPodIdByPlayer: [String: String] = [:]
-        let gameResultDescriptor = FetchDescriptor<GameResult>()
-        if let allResults = try? context.fetch(gameResultDescriptor) {
-            for playerId in lastSnapshot.playerIds {
-                let matchingResults = allResults.filter {
-                    $0.tournamentId == tournament.id &&
-                    $0.week == editWeek &&
-                    $0.round == editRound &&
-                    $0.playerId == playerId
-                }
-                if let podId = matchingResults.first?.podId {
-                    existingPodIdByPlayer[playerId] = podId
-                }
-                for result in matchingResults {
-                    context.delete(result)
-                }
-            }
-        }
-
-        let fallbackPodId = UUID().uuidString
-        for (playerId, place) in newPlacements {
-            let delta = newPlayerDeltas[playerId]!
-            let earnedAchievementIds = newCheckRecords
-                .filter { $0.playerId == playerId }
-                .map { $0.achievementId }
-            
-            let gameResult = GameResult(
-                tournamentId: tournament.id,
-                week: editWeek,
-                round: editRound,
-                playerId: playerId,
-                placement: place,
-                placementPoints: delta.placementPoints,
-                achievementPoints: delta.achievementPoints,
-                achievementIds: earnedAchievementIds,
-                podId: existingPodIdByPlayer[playerId] ?? fallbackPodId
-            )
-            context.insert(gameResult)
-        }
-        
-        // Step 7: Replace snapshot in history with updated one
-        let newSnapshot = PodSnapshot(
-            week: editWeek,
-            round: editRound,
-            playerIds: Array(newPlacements.keys),
-            placements: newPlacements,
-            achievementChecks: newCheckRecords,
-            playerDeltas: newPlayerDeltas,
-            weeklyDeltas: newWeeklyDeltas
+        ScoringEngine.applyEditedRound(
+            context: context,
+            snapshotIndex: snapshotIndex,
+            newPlacements: newPlacements,
+            newAchievementChecks: newAchievementChecks
         )
-        snapshots.insert(newSnapshot, at: index)
-        tournament.podHistorySnapshots = snapshots
-
-        return PersistenceSave.save(context: context, event: .round)
     }
 
     // MARK: - Round/Week Progression

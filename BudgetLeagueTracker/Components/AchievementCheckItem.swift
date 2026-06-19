@@ -48,10 +48,7 @@ struct AchievementCheckItem: View {
                     }
 
                     if let achievementDescription, !achievementDescription.isEmpty {
-                        Text(achievementDescription)
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(2)
+                        AchievementDescriptionText(description: achievementDescription, style: .compact)
                     } else if let disabledReason, isDisabled {
                         Text(disabledReason)
                             .font(.caption2)
