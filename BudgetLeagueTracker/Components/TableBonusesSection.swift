@@ -27,12 +27,7 @@ struct TableBonusesSection: View {
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
                             }
-                            if let description = achievement.achievementDescription, !description.isEmpty {
-                                Text(description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                            AchievementDescriptionText(description: achievement.achievementDescription)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(achievement.name), \(achievement.points) points")

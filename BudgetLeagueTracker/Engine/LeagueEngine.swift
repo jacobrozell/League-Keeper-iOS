@@ -359,67 +359,16 @@ enum LeagueEngine {
         previousRoundPlacements: [String: Int] = [:],
         forceRandom: Bool = false
     ) -> [[Player]] {
-        let presentPlayers = players.filter { presentPlayerIds.contains($0.id) }
-        guard !presentPlayers.isEmpty else { return [] }
-
-        let podSize = AppConstants.League.podSize
-        let useRandomSeating = forceRandom
-            || currentRound == 1
-            || !standingsBasedSeating
-            || previousRoundPlacements.isEmpty
-
-        if useRandomSeating {
-            return chunkIntoPods(presentPlayers.shuffled(), podSize: podSize)
-        }
-
-        return podsGroupedByPreviousPlacement(
-            presentPlayers: presentPlayers,
-            previousPlacements: previousRoundPlacements,
-            podSize: podSize
+        PodEngine.generatePodsForRound(
+            players: players,
+            presentPlayerIds: presentPlayerIds,
+            currentRound: currentRound,
+            standingsBasedSeating: standingsBasedSeating,
+            previousRoundPlacements: previousRoundPlacements,
+            forceRandom: forceRandom
         )
     }
 
-    /// Groups present players by finish place in the previous round (table 1 = all 1sts, etc.).
-    private static func podsGroupedByPreviousPlacement(
-        presentPlayers: [Player],
-        previousPlacements: [String: Int],
-        podSize: Int
-    ) -> [[Player]] {
-        var groups: [Int: [Player]] = [:]
-        for player in presentPlayers {
-            let place = previousPlacements[player.id] ?? podSize
-            let clampedPlace = min(max(place, 1), podSize)
-            groups[clampedPlace, default: []].append(player)
-        }
-
-        var pods: [[Player]] = []
-        for place in 1...podSize {
-            guard var group = groups[place], !group.isEmpty else { continue }
-            group.shuffle()
-            pods.append(group)
-        }
-        return pods
-    }
-
-    private static func chunkIntoPods(_ sortedPlayers: [Player], podSize: Int) -> [[Player]] {
-        var pods: [[Player]] = []
-        var currentPod: [Player] = []
-
-        for player in sortedPlayers {
-            currentPod.append(player)
-            if currentPod.count == podSize {
-                pods.append(currentPod)
-                currentPod = []
-            }
-        }
-
-        if !currentPod.isEmpty {
-            pods.append(currentPod)
-        }
-
-        return pods
-    }
-    
     // MARK: - Auto-Save (Individual Placements/Achievements)
     
     /// Updates a single player's placement for the current round (auto-save).
@@ -429,13 +378,7 @@ enum LeagueEngine {
     ///   - placement: The placement (1-4)
     @discardableResult
     static func updatePlacement(context: ModelContext, playerId: String, placement: Int) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-
-        var placements = tournament.roundPlacements
-        placements[playerId] = placement
-        tournament.roundPlacements = placements
-
-        return PersistenceSave.save(context: context, event: .round)
+        ScoringEngine.updatePlacement(context: context, playerId: playerId, placement: placement)
     }
 
     /// Updates a single achievement check for the current round (auto-save).
@@ -448,27 +391,13 @@ enum LeagueEngine {
         checked: Bool,
         podPlayerIds: [String]? = nil
     ) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-
-        let key = "\(playerId):\(achievementId)"
-        var checks = tournament.roundAchievementChecks
-
-        if checked {
-            if let achievement = fetchAchievement(context: context, id: achievementId),
-               achievement.exclusivity == .onePerPod,
-               let podPlayerIds {
-                for otherPlayerId in podPlayerIds where otherPlayerId != playerId {
-                    checks.remove("\(otherPlayerId):\(achievementId)")
-                }
-            }
-            checks.insert(key)
-        } else {
-            checks.remove(key)
-        }
-
-        tournament.roundAchievementChecks = checks
-
-        return PersistenceSave.save(context: context, event: .round)
+        ScoringEngine.updateAchievementCheck(
+            context: context,
+            playerId: playerId,
+            achievementId: achievementId,
+            checked: checked,
+            podPlayerIds: podPlayerIds
+        )
     }
 
     /// Returns whether a player already earned an achievement earlier in the current week.
