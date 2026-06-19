@@ -797,6 +797,16 @@ struct LeagueEngineTests {
     @MainActor
     struct FinalizeRoundTests {
         
+        @Test("Returns false when placements are empty")
+        func returnsFalseForEmptyPlacements() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            tournament.roundPlacements = [:]
+            try context.save()
+            
+            #expect(LeagueEngine.finalizeRound(context: context) == false)
+        }
+        
         @Test("Calculates correct placement points", arguments: [
             (placement: 1, expectedPoints: 4),
             (placement: 2, expectedPoints: 3),

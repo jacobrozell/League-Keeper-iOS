@@ -297,6 +297,25 @@ struct TournamentDetailViewModelTests {
     @MainActor
     struct ManualSeatingTests {
 
+        @Test("Surfaces warning when stored seatings reference missing players")
+        func tableLoadIssueWhenPlayerMissing() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let players = TestFixtures.players("A", "B", "C", "D", "E", "F", "G")
+            players.forEach { context.insert($0) }
+            tournament.presentPlayerIds = players.map(\.id)
+            tournament.currentRoundPodsPlayerIds = [
+                players.prefix(4).map(\.id),
+                ["missing-player"] + players.suffix(3).map(\.id)
+            ]
+            try context.save()
+
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+
+            #expect(viewModel.tableLoadIssueMessage != nil)
+            #expect(viewModel.pods.count == 1)
+        }
+
         @Test("Moves player between tables before scoring")
         func movesPlayerBetweenTables() throws {
             let context = try TestHelpers.contextWithTournament()
