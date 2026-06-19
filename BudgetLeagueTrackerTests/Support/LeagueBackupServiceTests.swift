@@ -90,4 +90,36 @@ struct LeagueBackupServiceTests {
         #expect(preview?.confirmationMessage.contains("starter template") == true)
         #expect(preview?.successMessage.contains("Tournaments") == true)
     }
+
+    @Test("Context rollback preserves data after unsaved import mutations")
+    func importRollbackPreservesExistingData() throws {
+        let context = try TestHelpers.bootstrappedContext()
+        let player = TestFixtures.player(name: "Rollback Pat")
+        context.insert(player)
+        try context.save()
+
+        let importData = try LeagueBackupService.exportData(context: context)
+        let playersBefore = try TestHelpers.fetchAll(Player.self, from: context)
+        #expect(playersBefore.contains { $0.name == "Rollback Pat" })
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let backup = try decoder.decode(LeagueBackupFile.self, from: importData)
+
+        // Simulate mid-import failure before save — same pattern as importBackup rollback.
+        for result in (try? context.fetch(FetchDescriptor<GameResult>())) ?? [] {
+            context.delete(result)
+        }
+        for tournament in (try? context.fetch(FetchDescriptor<Tournament>())) ?? [] {
+            context.delete(tournament)
+        }
+        for p in (try? context.fetch(FetchDescriptor<Player>())) ?? [] {
+            context.delete(p)
+        }
+        context.rollback()
+
+        let playersAfter = try TestHelpers.fetchAll(Player.self, from: context)
+        #expect(playersAfter.contains { $0.name == "Rollback Pat" })
+        _ = backup // decoded successfully; rollback test does not need to re-import
+    }
 }

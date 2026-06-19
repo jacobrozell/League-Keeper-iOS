@@ -48,6 +48,9 @@ final class TournamentDetailViewModel {
     
     private var allPlayers: [Player] = []
     private var podHistoryCount: Int = 0
+
+    /// Non-nil when the most recent save failed; views show a toast and clear this.
+    private(set) var persistenceErrorMessage: String?
     
     // MARK: - Navigation State
     
@@ -515,6 +518,19 @@ final class TournamentDetailViewModel {
     }
     
     // MARK: - Actions: Refresh
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
+    }
+
+    @discardableResult
+    private func saveRoundChanges() -> Bool {
+        guard PersistenceSave.save(context: context, event: .round) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
+        return true
+    }
     
     /// Refreshes state from SwiftData.
     func refresh() {
@@ -563,7 +579,7 @@ final class TournamentDetailViewModel {
         if orders.count != pods.count {
             orders = pods.map { $0.map(\.id) }
             tournament.tableScoringOrders = orders
-            try? context.save()
+            _ = saveRoundChanges()
         }
     }
 
@@ -641,7 +657,7 @@ final class TournamentDetailViewModel {
         tournament.roundScoringStarted = false
         currentScoringTableIndex = 0
 
-        try? context.save()
+        guard saveRoundChanges() else { return }
         refresh()
     }
 
@@ -655,7 +671,7 @@ final class TournamentDetailViewModel {
         guard let tournament = tournament, !pods.isEmpty else { return }
         tournament.roundScoringStarted = true
         syncScoringTableIndex()
-        try? context.save()
+        _ = saveRoundChanges()
     }
 
     func isTableConfirmed(_ index: Int) -> Bool {
@@ -688,7 +704,7 @@ final class TournamentDetailViewModel {
         order.insert(playerId, at: destination)
         orders[tableIndex] = order
         tournament.tableScoringOrders = orders
-        try? context.save()
+        guard saveRoundChanges() else { return }
         refresh()
     }
 
@@ -723,7 +739,7 @@ final class TournamentDetailViewModel {
         confirmed.insert(index)
         tournament.confirmedTableIndices = confirmed
 
-        try? context.save()
+        guard saveRoundChanges() else { return }
         refresh()
 
         if let next = pods.indices.first(where: { !confirmedTableIndices.contains($0) }) {
@@ -820,7 +836,7 @@ final class TournamentDetailViewModel {
 
         tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
         tournament.tableScoringOrders = pods.map { $0.map(\.id) }
-        try? context.save()
+        guard saveRoundChanges() else { return }
         refresh()
     }
 
@@ -841,7 +857,7 @@ final class TournamentDetailViewModel {
         editSnapshotIndex = nil
         if let tournament {
             LeagueEngine.clearTransientRoundState(on: tournament)
-            try? context.save()
+            guard saveRoundChanges() else { return }
         }
         pods = []
         currentScoringTableIndex = 0
@@ -854,7 +870,10 @@ final class TournamentDetailViewModel {
         let isEndOfWeek = currentRound >= AppConstants.League.roundsPerWeek
         let wasFinalWeek = tournament?.isFinalWeek ?? false
 
-        LeagueEngine.nextRound(context: context)
+        guard LeagueEngine.nextRound(context: context) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
         pods = []
         currentScoringTableIndex = 0
         refresh()
@@ -880,7 +899,7 @@ final class TournamentDetailViewModel {
         tournament.roundAchievementChecks = []
         tournament.roundScoringStarted = true
         currentScoringTableIndex = 0
-        try? context.save()
+        guard saveRoundChanges() else { return }
         refresh()
     }
     
@@ -890,7 +909,7 @@ final class TournamentDetailViewModel {
     func setAsActiveTournament() {
         guard let state = LeagueEngine.fetchLeagueState(context: context) else { return }
         state.activeTournamentId = tournamentId
-        try? context.save()
+        _ = PersistenceSave.save(context: context, event: .tournament)
     }
     
     /// Switches to the Attendance tab to edit who's present this week.

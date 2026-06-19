@@ -148,6 +148,12 @@ struct TournamentDetailView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: toastMessage)
+        .onChange(of: viewModel.persistenceErrorMessage) { _, message in
+            if let message {
+                showToast(message)
+                viewModel.clearPersistenceError()
+            }
+        }
     }
 
     private var showsAttendanceCoachMarkBanner: Bool {
@@ -317,6 +323,9 @@ struct TournamentDetailView: View {
                     viewModel.refresh()
                     attendanceViewModel?.refresh()
                     viewModel.setTab(.round)
+                },
+                onSaveFailed: {
+                    showToast(PersistenceError.saveFailed.toastMessage)
                 }
                 )
             } else {

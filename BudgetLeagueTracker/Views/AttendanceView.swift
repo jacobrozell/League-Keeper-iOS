@@ -21,6 +21,7 @@ struct AttendanceView: View {
     /// When non-nil, called after confirming attendance.
     /// Parameters: already confirmed this week, tables were cleared and need reseating.
     var onConfirm: ((Bool, Bool) -> Void)? = nil
+    var onSaveFailed: (() -> Void)? = nil
     
     var body: some View {
         List {
@@ -122,7 +123,10 @@ struct AttendanceView: View {
                     title: "Confirm Attendance",
                     action: {
                         let wasUpdate = viewModel.isAttendanceConfirmed
-                        viewModel.confirmAttendance()
+                        guard viewModel.confirmAttendance() else {
+                            onSaveFailed?()
+                            return
+                        }
                         AppHaptics.success()
                         onDismissCoachMark?()
                         onConfirm?(wasUpdate, viewModel.lastConfirmClearedTables)

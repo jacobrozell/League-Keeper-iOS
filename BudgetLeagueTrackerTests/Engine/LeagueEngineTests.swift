@@ -502,7 +502,8 @@ struct LeagueEngineTests {
             )
 
             let updated = try TestHelpers.fetchActiveTournament(from: context)
-            #expect(cleared == true)
+            #expect(cleared.clearedTables == true)
+            #expect(cleared.saved == true)
             #expect(updated?.currentRoundPodsPlayerIds.isEmpty == true)
             #expect(updated?.currentRound == 1)
         }

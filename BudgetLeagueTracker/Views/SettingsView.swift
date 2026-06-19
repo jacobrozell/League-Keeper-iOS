@@ -13,7 +13,7 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var templateURL: URL?
     @State private var showImportPicker = false
-    @State private var showImportConfirmation = false
+    @State private var showImportSheet = false
     @State private var pendingImportData: Data?
     @State private var pendingImportPreview: LeagueBackupImportPreview?
     @State private var backupError: String?
@@ -164,20 +164,8 @@ struct SettingsView: View {
         ) { result in
             handleImportSelection(result)
         }
-        .alert("Replace all league data?", isPresented: $showImportConfirmation) {
-            Button("Cancel", role: .cancel) {
-                pendingImportData = nil
-                pendingImportPreview = nil
-            }
-            Button("Import", role: .destructive) {
-                confirmImport()
-            }
-        } message: {
-            if let pendingImportPreview {
-                Text(pendingImportPreview.confirmationMessage)
-            } else {
-                Text("This replaces players, tournaments, achievements, and scores on this device.")
-            }
+        .sheet(isPresented: $showImportSheet) {
+            importConfirmationSheet
         }
         .alert("Backup", isPresented: Binding(
             get: { backupError != nil },
@@ -258,6 +246,71 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
+    private var importConfirmationSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                if let pendingImportPreview {
+                    Text(pendingImportPreview.confirmationMessage)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("This replaces all leagues on this device.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(spacing: 12) {
+                    if let exportURL {
+                        ShareLink(
+                            item: exportURL,
+                            subject: Text("\(AppInfo.displayName) backup"),
+                            message: Text("League Keeper backup file")
+                        ) {
+                            Label("Export backup first", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else {
+                        Button {
+                            prepareExport()
+                        } label: {
+                            Label("Export backup first", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+
+                    Button("Import and replace", role: .destructive) {
+                        showImportSheet = false
+                        confirmImport()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
+                    .accessibilityIdentifier("settings_confirmImport")
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(24)
+            .adaptiveContentWidth()
+            .navigationTitle("Replace all league data?")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        pendingImportData = nil
+                        pendingImportPreview = nil
+                        showImportSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
     private func prepareExport() {
         do {
             exportURL = try LeagueBackupService.exportURL(context: modelContext)
@@ -289,7 +342,7 @@ struct SettingsView: View {
                 let data = try Data(contentsOf: url)
                 pendingImportData = data
                 pendingImportPreview = LeagueBackupService.previewImport(data)
-                showImportConfirmation = true
+                showImportSheet = true
             } catch {
                 backupError = error.localizedDescription
             }

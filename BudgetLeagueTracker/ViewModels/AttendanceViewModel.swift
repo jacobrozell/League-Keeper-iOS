@@ -16,6 +16,8 @@ final class AttendanceViewModel {
     var newPlayerName: String = ""
     /// Whether the last confirm cleared table seatings (host should reseat).
     private(set) var lastConfirmClearedTables = false
+    /// Set when a save fails during confirm/update.
+    private(set) var lastSaveFailed = false
     
     var presentPlayerIds: [String] {
         presentStatus.filter { $0.value }.map { $0.key }
@@ -114,21 +116,28 @@ final class AttendanceViewModel {
     
     /// Confirms or updates attendance for the current week.
     /// Sets `lastConfirmClearedTables` when a mid-week roster change cleared table seatings.
-    func confirmAttendance() {
-        guard canConfirmAttendance else { return }
+    /// Returns `false` when persistence failed.
+    @discardableResult
+    func confirmAttendance() -> Bool {
+        guard canConfirmAttendance else { return false }
         lastConfirmClearedTables = false
+        lastSaveFailed = false
         if isAttendanceConfirmed {
-            lastConfirmClearedTables = LeagueEngine.updateAttendance(
+            let result = LeagueEngine.updateAttendance(
                 context: context,
                 presentIds: presentPlayerIds,
                 achievementsOnThisWeek: achievementsOnThisWeek
             )
-        } else {
-            LeagueEngine.confirmAttendance(
-                context: context,
-                presentIds: presentPlayerIds,
-                achievementsOnThisWeek: achievementsOnThisWeek
-            )
+            lastConfirmClearedTables = result.clearedTables
+            lastSaveFailed = !result.saved
+            return result.saved
         }
+        let saved = LeagueEngine.confirmAttendance(
+            context: context,
+            presentIds: presentPlayerIds,
+            achievementsOnThisWeek: achievementsOnThisWeek
+        )
+        lastSaveFailed = !saved
+        return saved
     }
 }

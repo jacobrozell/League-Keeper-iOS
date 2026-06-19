@@ -5,6 +5,12 @@ import SwiftData
 /// Contains pure or nearly pure functions for scoring and state transitions.
 /// ViewModels call these functions with SwiftData context and apply results.
 enum LeagueEngine {
+
+    /// Outcome of a mid-week attendance update.
+    struct AttendanceUpdateResult: Equatable {
+        let clearedTables: Bool
+        let saved: Bool
+    }
     
     // MARK: - Tournament Lifecycle
     
@@ -196,12 +202,13 @@ enum LeagueEngine {
     
     /// Confirms attendance for the current week (first save for the week).
     /// Resets round state and weekly scoring — use `updateAttendance` when attendance was already confirmed.
+    @discardableResult
     static func confirmAttendance(
         context: ModelContext,
         presentIds: [String],
         achievementsOnThisWeek: Bool
-    ) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
+    ) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
         
         tournament.presentPlayerIds = presentIds
         tournament.achievementsOnThisWeek = achievementsOnThisWeek
@@ -234,27 +241,28 @@ enum LeagueEngine {
             state.screen = .pods
         }
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .round)
     }
 
     /// Updates who's present without resetting round progress or weekly scores.
     /// Clears in-progress table seatings when the present roster changes.
-    /// - Returns: `true` when table seatings were cleared and the host should reseat players.
     @discardableResult
     static func updateAttendance(
         context: ModelContext,
         presentIds: [String],
         achievementsOnThisWeek: Bool
-    ) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
+    ) -> AttendanceUpdateResult {
+        guard let tournament = fetchActiveTournament(context: context) else {
+            return AttendanceUpdateResult(clearedTables: false, saved: false)
+        }
 
         guard !tournament.presentPlayerIds.isEmpty else {
-            confirmAttendance(
+            let saved = confirmAttendance(
                 context: context,
                 presentIds: presentIds,
                 achievementsOnThisWeek: achievementsOnThisWeek
             )
-            return false
+            return AttendanceUpdateResult(clearedTables: false, saved: saved)
         }
 
         let previousPresent = Set(tournament.presentPlayerIds)
@@ -273,12 +281,12 @@ enum LeagueEngine {
 
         if attendanceChanged, hadTables {
             clearTransientRoundState(on: tournament)
-            try? context.save()
-            return true
+            let saved = PersistenceSave.save(context: context, event: .round)
+            return AttendanceUpdateResult(clearedTables: true, saved: saved)
         }
 
-        try? context.save()
-        return false
+        let saved = PersistenceSave.save(context: context, event: .round)
+        return AttendanceUpdateResult(clearedTables: false, saved: saved)
     }
     
     /// Adds a new player during attendance (joins league and is marked present).
@@ -303,8 +311,8 @@ enum LeagueEngine {
         
         // Increment tournamentsPlayed since they're joining mid-tournament
         player.tournamentsPlayed += 1
-        
-        try? context.save()
+
+        _ = PersistenceSave.save(context: context, event: .round)
         return player
     }
     
@@ -395,26 +403,28 @@ enum LeagueEngine {
     ///   - context: The SwiftData model context
     ///   - playerId: The player's ID
     ///   - placement: The placement (1-4)
-    static func updatePlacement(context: ModelContext, playerId: String, placement: Int) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+    @discardableResult
+    static func updatePlacement(context: ModelContext, playerId: String, placement: Int) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
         var placements = tournament.roundPlacements
         placements[playerId] = placement
         tournament.roundPlacements = placements
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
-    
+
     /// Updates a single achievement check for the current round (auto-save).
     /// Enforces one-per-pod exclusivity when checking on.
+    @discardableResult
     static func updateAchievementCheck(
         context: ModelContext,
         playerId: String,
         achievementId: String,
         checked: Bool,
         podPlayerIds: [String]? = nil
-    ) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
+    ) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
 
         let key = "\(playerId):\(achievementId)"
         var checks = tournament.roundAchievementChecks
@@ -434,7 +444,7 @@ enum LeagueEngine {
 
         tournament.roundAchievementChecks = checks
 
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .round)
     }
 
     /// Returns whether a player already earned an achievement earlier in the current week.
@@ -462,18 +472,17 @@ enum LeagueEngine {
     /// Applies all stored placements to player stats and weekly points.
     /// Also creates GameResult records for historical tracking.
     /// - Parameter context: The SwiftData model context
-    static func finalizeRound(context: ModelContext) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+    @discardableResult
+    static func finalizeRound(context: ModelContext) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
         let placements = tournament.roundPlacements
         let achievementCheckKeys = tournament.roundAchievementChecks
-        
-        // Skip if no placements recorded
-        guard !placements.isEmpty else { return }
-        
-        // Fetch all players and achievements
+
+        guard !placements.isEmpty else { return true }
+
         let playerDescriptor = FetchDescriptor<Player>()
-        guard let allPlayers = try? context.fetch(playerDescriptor) else { return }
+        guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }
         
         let achievementDescriptor = FetchDescriptor<Achievement>()
         let allAchievements = (try? context.fetch(achievementDescriptor)) ?? []
@@ -574,8 +583,8 @@ enum LeagueEngine {
         
         // Clear round data
         clearTransientRoundState(on: tournament)
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
 
     /// Maps each placed player to a pod identifier.
@@ -602,20 +611,21 @@ enum LeagueEngine {
     }
 
     /// Records pod groupings for the current round (used by tests and legacy pod flows).
-    static func recordRoundPods(context: ModelContext, pods: [[String]]) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
+    @discardableResult
+    static func recordRoundPods(context: ModelContext, pods: [[String]]) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
         tournament.currentRoundPodsPlayerIds = pods
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .round)
     }
-    
+
     /// Clears the current round's placements and achievements without applying them.
-    /// - Parameter context: The SwiftData model context
-    static func clearRoundData(context: ModelContext) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+    @discardableResult
+    static func clearRoundData(context: ModelContext) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
         clearTransientRoundState(on: tournament)
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
 
     /// Resets in-progress round scoring state without touching pod history.
@@ -630,11 +640,12 @@ enum LeagueEngine {
     
     /// Undoes the last saved pod.
     /// - Parameter context: The SwiftData model context
-    static func undoLastPod(context: ModelContext) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+    @discardableResult
+    static func undoLastPod(context: ModelContext) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
         var snapshots = tournament.podHistorySnapshots
-        guard let lastSnapshot = snapshots.popLast() else { return }
+        guard let lastSnapshot = snapshots.popLast() else { return true }
         
         // Reverse player cumulative stats
         let playerDescriptor = FetchDescriptor<Player>()
@@ -676,10 +687,10 @@ enum LeagueEngine {
                 }
             }
         }
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
-    
+
     /// Applies edited round data, replacing a snapshot with updated values.
     /// Reverses old deltas, calculates new deltas, and updates GameResults.
     /// - Parameters:
@@ -687,31 +698,31 @@ enum LeagueEngine {
     ///   - snapshotIndex: Index in pod history to edit; `nil` edits the most recent snapshot.
     ///   - newPlacements: Updated placements (playerId -> place 1-4)
     ///   - newAchievementChecks: Updated achievement checks ("playerId:achievementId")
+    @discardableResult
     static func applyEditedRound(
         context: ModelContext,
         snapshotIndex: Int? = nil,
         newPlacements: [String: Int],
         newAchievementChecks: Set<String>
-    ) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        
+    ) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+
         var snapshots = tournament.podHistorySnapshots
         let index: Int
         if let snapshotIndex {
-            guard snapshots.indices.contains(snapshotIndex) else { return }
+            guard snapshots.indices.contains(snapshotIndex) else { return false }
             index = snapshotIndex
         } else {
-            guard let lastIndex = snapshots.indices.last else { return }
+            guard let lastIndex = snapshots.indices.last else { return false }
             index = lastIndex
         }
 
         let lastSnapshot = snapshots.remove(at: index)
         let editWeek = lastSnapshot.week
         let editRound = lastSnapshot.round
-        
-        // Fetch all players and achievements
+
         let playerDescriptor = FetchDescriptor<Player>()
-        guard let allPlayers = try? context.fetch(playerDescriptor) else { return }
+        guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }
         
         let achievementDescriptor = FetchDescriptor<Achievement>()
         let allAchievements = (try? context.fetch(achievementDescriptor)) ?? []
@@ -849,21 +860,20 @@ enum LeagueEngine {
         )
         snapshots.insert(newSnapshot, at: index)
         tournament.podHistorySnapshots = snapshots
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
-    
+
     // MARK: - Round/Week Progression
-    
+
     /// Advances to the next round or next week (no modal).
     /// Finalizes current round's placements before advancing.
-    /// - Parameter context: The SwiftData model context
-    static func nextRound(context: ModelContext) {
-        // Finalize current round's placements first
-        finalizeRound(context: context)
-        
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        guard let state = fetchLeagueState(context: context) else { return }
+    @discardableResult
+    static func nextRound(context: ModelContext) -> Bool {
+        guard finalizeRound(context: context) else { return false }
+
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+        guard let state = fetchLeagueState(context: context) else { return false }
         
         if tournament.currentRound < AppConstants.League.roundsPerWeek {
             // Advance to next round
@@ -892,12 +902,11 @@ enum LeagueEngine {
                 state.screen = .attendance
             }
         }
-        
-        try? context.save()
+
+        return PersistenceSave.save(context: context, event: .round)
     }
-    
+
     /// Closes weekly standings and advances to next week or tournament standings.
-    /// - Parameter context: The SwiftData model context
     static func closeWeeklyStandings(context: ModelContext) {
         guard let tournament = fetchActiveTournament(context: context) else { return }
         guard let state = fetchLeagueState(context: context) else { return }
@@ -1138,7 +1147,7 @@ enum LeagueEngine {
         }
         
         if needsSave {
-            try? context.save()
+            _ = PersistenceSave.save(context: context, event: .tournament)
         }
     }
     

@@ -140,7 +140,7 @@ struct LeagueBackupImportPreview: Equatable {
         if let activeTournamentName {
             lines.append("Active league: \(activeTournamentName)")
         }
-        lines.append("Import replaces everything currently on this device.")
+        lines.append("This replaces all leagues on this device.")
         return lines.joined(separator: "\n")
     }
 
@@ -272,7 +272,12 @@ enum LeagueBackupService {
 
     try deleteAll(context: context)
     try insertAll(backup: backup, context: context)
-    try context.save()
+    do {
+      try context.save()
+    } catch {
+      context.rollback()
+      throw LeagueBackupError.importFailed(error.localizedDescription)
+    }
     LeagueEngine.validateAndSanitizeState(context: context)
   }
 
