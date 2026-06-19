@@ -26,12 +26,26 @@ struct DataHealthCheckerTests {
         #expect(issues[0].repairHint.contains("Export a backup"))
     }
 
+    @Test("Corrupt table seatings JSON is surfaced")
+    func corruptTableSeatings() throws {
+        let context = try TestHelpers.contextWithTournament()
+        let tournament = try #require(LeagueEngine.fetchActiveTournament(context: context))
+        tournament.currentRoundPodsPlayerIdsData = Data("[broken".utf8)
+        try context.save()
+
+        let issues = DataHealthChecker.scan(context: context)
+        #expect(issues.count == 1)
+        #expect(issues[0].message.contains("table seatings"))
+        #expect(issues[0].repairHint.contains("Seat players again"))
+    }
+
     @Test("Empty JSON blobs are ignored")
     func emptyJSONIgnored() throws {
         let context = try TestHelpers.contextWithTournament()
         let tournament = try #require(LeagueEngine.fetchActiveTournament(context: context))
         tournament.weeklyPointsJSON = Data()
         tournament.podHistoryData = nil
+        tournament.roundPlacementsData = Data()
 
         let issues = DataHealthChecker.scan(context: context)
         #expect(issues.isEmpty)

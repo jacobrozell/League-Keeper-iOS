@@ -5,6 +5,7 @@ import Charts
 struct AchievementsView: View {
     @Bindable var viewModel: AchievementsViewModel
     @Environment(\.palette) private var palette
+    @State private var toastMessage: String?
     
     var body: some View {
         Group {
@@ -42,6 +43,28 @@ struct AchievementsView: View {
         }
         .onAppear {
             viewModel.refresh()
+        }
+        .onChange(of: viewModel.persistenceErrorMessage) { _, message in
+            if let message {
+                showToast(message)
+                viewModel.clearPersistenceError()
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastBanner(message: toastMessage)
+                    .padding(.top, 8)
+            }
+        }
+    }
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if toastMessage == message {
+                toastMessage = nil
+            }
         }
     }
     

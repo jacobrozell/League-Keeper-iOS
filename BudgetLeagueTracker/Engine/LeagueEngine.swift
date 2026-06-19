@@ -15,12 +15,8 @@ enum LeagueEngine {
     // MARK: - Tournament Lifecycle
     
     /// Creates a new tournament with the given settings.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - name: Tournament name
-    ///   - totalWeeks: Number of weeks
-    ///   - randomPerWeek: Random achievements per week
-    ///   - playerIds: IDs of players participating in this tournament
+    /// - Returns: `false` if league state is missing or the save failed.
+    @discardableResult
     static func createTournament(
         context: ModelContext,
         name: String,
@@ -30,7 +26,7 @@ enum LeagueEngine {
         presentAttendance: Bool = true,
         standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
         rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
-    ) {
+    ) -> Bool {
         let clampedWeeks = min(max(totalWeeks, AppConstants.League.weeksRange.lowerBound),
                                AppConstants.League.weeksRange.upperBound)
         let clampedRandom = min(max(randomPerWeek, AppConstants.League.randomAchievementsPerWeekRange.lowerBound),
@@ -54,7 +50,7 @@ enum LeagueEngine {
         ).map { $0.id }
         
         // Update league state
-        guard let state = fetchLeagueState(context: context) else { return }
+        guard let state = fetchLeagueState(context: context) else { return false }
         state.activeTournamentId = tournament.id
         state.screen = presentAttendance ? .attendance : .tournaments
         
@@ -66,13 +62,13 @@ enum LeagueEngine {
             }
         }
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
     
     /// Archives the current tournament (marks as completed).
-    /// - Parameter context: The SwiftData model context
-    static func archiveTournament(context: ModelContext) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
+    @discardableResult
+    static func archiveTournament(context: ModelContext) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
         
         tournament.status = .completed
         tournament.endDate = Date()
@@ -83,7 +79,7 @@ enum LeagueEngine {
             state.screen = .tournaments
         }
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
     
     /// Updates an existing tournament's name and settings.
@@ -111,6 +107,7 @@ enum LeagueEngine {
         return TournamentEditWarnings(messages: messages)
     }
 
+    @discardableResult
     static func updateTournament(
         context: ModelContext,
         id: String,
@@ -119,8 +116,8 @@ enum LeagueEngine {
         randomPerWeek: Int,
         standingsBasedSeating: Bool,
         rules: TournamentRules
-    ) {
-        guard let tournament = fetchTournament(context: context, id: id) else { return }
+    ) -> Bool {
+        guard let tournament = fetchTournament(context: context, id: id) else { return false }
         
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         tournament.name = trimmedName.isEmpty ? tournament.name : trimmedName
@@ -131,11 +128,12 @@ enum LeagueEngine {
         tournament.standingsBasedSeating = standingsBasedSeating
         tournament.rules = rules
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
     
     /// Deletes a tournament and all its GameResults.
-    static func deleteTournament(context: ModelContext, id: String) {
+    @discardableResult
+    static func deleteTournament(context: ModelContext, id: String) -> Bool {
         let results = StatsEngine.fetchResultsForTournament(id, context: context)
         for result in results {
             context.delete(result)
@@ -150,10 +148,8 @@ enum LeagueEngine {
             state.screen = .tournaments
         }
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
-    
-    // MARK: - Player Management
     
     /// Adds a new player with the given name.
     /// - Parameters:
@@ -167,21 +163,23 @@ enum LeagueEngine {
 
         let player = Player(name: trimmedName, nameNote: PlayerDisambiguation.sanitizedNote(nameNote))
         context.insert(player)
-        try? context.save()
+        guard PersistenceSave.save(context: context, event: .tournament) else {
+            context.delete(player)
+            return nil
+        }
         return player
     }
     
     /// Removes a player by ID.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - id: The player's ID
-    static func removePlayer(context: ModelContext, id: String) {
+    @discardableResult
+    static func removePlayer(context: ModelContext, id: String) -> Bool {
         let descriptor = FetchDescriptor<Player>()
         if let players = try? context.fetch(descriptor),
            let player = players.first(where: { $0.id == id }) {
             context.delete(player)
-            try? context.save()
+            return PersistenceSave.save(context: context, event: .tournament)
         }
+        return false
     }
 
     /// Updates a player's display name and optional distinguishing note.
@@ -206,7 +204,9 @@ enum LeagueEngine {
 
         player.name = trimmed
         player.nameNote = PlayerDisambiguation.sanitizedNote(nameNote)
-        try? context.save()
+        guard PersistenceSave.save(context: context, event: .tournament) else {
+            return PersistenceError.saveFailed.toastMessage
+        }
         return nil
     }
 
@@ -336,7 +336,17 @@ enum LeagueEngine {
         // Increment tournamentsPlayed since they're joining mid-tournament
         player.tournamentsPlayed += 1
 
-        _ = PersistenceSave.save(context: context, event: .round)
+        guard PersistenceSave.save(context: context, event: .round) else {
+            var presentIds = tournament.presentPlayerIds
+            presentIds.removeAll { $0 == player.id }
+            tournament.presentPlayerIds = presentIds
+            var weeklyPoints = tournament.weeklyPointsByPlayer
+            weeklyPoints.removeValue(forKey: player.id)
+            tournament.weeklyPointsByPlayer = weeklyPoints
+            player.tournamentsPlayed -= 1
+            context.delete(player)
+            return nil
+        }
         return player
     }
     
@@ -515,9 +525,10 @@ enum LeagueEngine {
     }
 
     /// Closes weekly standings and advances to next week or tournament standings.
-    static func closeWeeklyStandings(context: ModelContext) {
-        guard let tournament = fetchActiveTournament(context: context) else { return }
-        guard let state = fetchLeagueState(context: context) else { return }
+    @discardableResult
+    static func closeWeeklyStandings(context: ModelContext) -> Bool {
+        guard let tournament = fetchActiveTournament(context: context) else { return false }
+        guard let state = fetchLeagueState(context: context) else { return false }
         
         if tournament.isFinalWeek {
             tournament.status = .completed
@@ -540,7 +551,7 @@ enum LeagueEngine {
             state.screen = .attendance
         }
         
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .round)
     }
     
     /// Exits weekly standings back to pods without advancing.
@@ -552,12 +563,12 @@ enum LeagueEngine {
     }
     
     /// Closes tournament standings and returns to tournaments list.
-    /// - Parameter context: The SwiftData model context
-    static func closeTournamentStandings(context: ModelContext) {
-        guard let state = fetchLeagueState(context: context) else { return }
+    @discardableResult
+    static func closeTournamentStandings(context: ModelContext) -> Bool {
+        guard let state = fetchLeagueState(context: context) else { return false }
         state.activeTournamentId = nil
         state.screen = .tournaments
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
     
     // MARK: - Achievement Management
@@ -617,7 +628,10 @@ enum LeagueEngine {
             exclusivity: exclusivity
         )
         context.insert(achievement)
-        try? context.save()
+        guard PersistenceSave.save(context: context, event: .tournament) else {
+            context.delete(achievement)
+            return nil
+        }
         return achievement
     }
 
@@ -657,8 +671,7 @@ enum LeagueEngine {
         achievement.iconName = AppConstants.Achievement.sanitizedIconName(iconName)
         achievement.exclusivity = exclusivity
 
-        try? context.save()
-        return true
+        return PersistenceSave.save(context: context, event: .tournament)
     }
 
     /// Fetches a single achievement by ID.
@@ -669,42 +682,37 @@ enum LeagueEngine {
     }
     
     /// Removes an achievement by ID.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - id: The achievement's ID
-    static func removeAchievement(context: ModelContext, id: String) {
+    @discardableResult
+    static func removeAchievement(context: ModelContext, id: String) -> Bool {
         let descriptor = FetchDescriptor<Achievement>()
         if let achievements = try? context.fetch(descriptor),
            let achievement = achievements.first(where: { $0.id == id }) {
             context.delete(achievement)
-            try? context.save()
+            return PersistenceSave.save(context: context, event: .tournament)
         }
+        return false
     }
     
     /// Updates an achievement's alwaysOn status.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - id: The achievement's ID
-    ///   - alwaysOn: New alwaysOn value
-    static func setAchievementAlwaysOn(context: ModelContext, id: String, alwaysOn: Bool) {
+    @discardableResult
+    static func setAchievementAlwaysOn(context: ModelContext, id: String, alwaysOn: Bool) -> Bool {
         let descriptor = FetchDescriptor<Achievement>()
         if let achievements = try? context.fetch(descriptor),
            let achievement = achievements.first(where: { $0.id == id }) {
             achievement.alwaysOn = alwaysOn
-            try? context.save()
+            return PersistenceSave.save(context: context, event: .tournament)
         }
+        return false
     }
     
     // MARK: - Navigation
     
     /// Sets the current screen.
-    /// - Parameters:
-    ///   - context: The SwiftData model context
-    ///   - screen: The screen to navigate to
-    static func setScreen(context: ModelContext, screen: Screen) {
-        guard let state = fetchLeagueState(context: context) else { return }
+    @discardableResult
+    static func setScreen(context: ModelContext, screen: Screen) -> Bool {
+        guard let state = fetchLeagueState(context: context) else { return false }
         state.screen = screen
-        try? context.save()
+        return PersistenceSave.save(context: context, event: .tournament)
     }
     
     // MARK: - State Validation

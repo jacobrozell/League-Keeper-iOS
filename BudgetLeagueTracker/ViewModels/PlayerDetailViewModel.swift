@@ -314,6 +314,5 @@ final class PlayerDetailViewModel {
 
     func deletePlayer() -> Bool {
         LeagueEngine.removePlayer(context: context, id: player.id)
-        return true
     }
 }

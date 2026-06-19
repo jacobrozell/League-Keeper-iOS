@@ -55,14 +55,10 @@ struct RoundScoringView: View {
                         onMoveDown: { viewModel.movePlayerDown(inTable: tableIndex, at: index) }
                     )
                 }
-                .onMove { source, destination in
-                    guard let from = source.first else { return }
-                    viewModel.movePlayerInTable(at: tableIndex, from: from, to: destination)
-                }
             } header: {
                 Text("Finish order")
             } footer: {
-                Text("Best finish at the top — drag or use the arrows.")
+                Text("Best finish at the top — use the arrows to reorder.")
                     .font(.caption)
             }
 
@@ -75,7 +71,6 @@ struct RoundScoringView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .environment(\.editMode, .constant(.active))
     }
 
     @ViewBuilder
@@ -93,7 +88,7 @@ struct RoundScoringView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Finish order")
                         .font(.headline)
-                    Text("Best finish at the top — drag or use the arrows.")
+                    Text("Best finish at the top — use the arrows to reorder.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 

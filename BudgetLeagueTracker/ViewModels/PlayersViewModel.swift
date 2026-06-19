@@ -144,7 +144,7 @@ final class PlayersViewModel {
             name: trimmed,
             nameNote: note.isEmpty ? nil : note
         ) else {
-            return .validationError("Could not add player.")
+            return .validationError(PersistenceError.saveFailed.toastMessage)
         }
         newPlayerName = ""
         newPlayerNote = ""

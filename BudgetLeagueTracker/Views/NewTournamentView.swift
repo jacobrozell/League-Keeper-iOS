@@ -7,6 +7,7 @@ struct NewTournamentView: View {
     var isSheetMode: Bool = false
     var onCreated: (() -> Void)? = nil
     var onCancel: (() -> Void)? = nil
+    @State private var toastMessage: String?
     
     var body: some View {
         List {
@@ -76,8 +77,7 @@ struct NewTournamentView: View {
             // Create Button
             Section {
                 PrimaryActionButton(title: "Create Tournament") {
-                    viewModel.createTournament()
-                    if isSheetMode {
+                    if viewModel.createTournament(), isSheetMode {
                         onCreated?()
                     }
                 }
@@ -121,6 +121,28 @@ struct NewTournamentView: View {
         }
         .onAppear {
             viewModel.refresh()
+        }
+        .onChange(of: viewModel.persistenceErrorMessage) { _, message in
+            if let message {
+                showToast(message)
+                viewModel.clearPersistenceError()
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastBanner(message: toastMessage)
+                    .padding(.top, 8)
+            }
+        }
+    }
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if toastMessage == message {
+                toastMessage = nil
+            }
         }
     }
     

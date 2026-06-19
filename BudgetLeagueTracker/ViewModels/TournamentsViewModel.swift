@@ -27,6 +27,7 @@ final class TournamentsViewModel {
     var editRules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
     var showEditSaveConfirmation = false
     var pendingEditWarningMessages: [String] = []
+    private(set) var persistenceErrorMessage: String?
     
     // MARK: - Computed Properties
     
@@ -166,11 +167,19 @@ final class TournamentsViewModel {
     }
     
     /// Sets a tournament as the active tournament (for context when navigating).
-    /// Navigation is now handled by SwiftUI NavigationLink to TournamentDetailView.
-    func setActiveTournament(_ tournament: Tournament) {
-        guard let state = LeagueEngine.fetchLeagueState(context: context) else { return }
+    @discardableResult
+    func setActiveTournament(_ tournament: Tournament) -> Bool {
+        guard let state = LeagueEngine.fetchLeagueState(context: context) else { return false }
         state.activeTournamentId = tournament.id
-        try? context.save()
+        guard PersistenceSave.save(context: context, event: .tournament) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
+        return true
+    }
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
     }
     
     /// Opens the edit sheet for the given tournament.
@@ -200,9 +209,10 @@ final class TournamentsViewModel {
         }
     }
 
-    func saveEdit() {
-        guard let tournament = editingTournament else { return }
-        LeagueEngine.updateTournament(
+    @discardableResult
+    func saveEdit() -> Bool {
+        guard let tournament = editingTournament else { return false }
+        guard LeagueEngine.updateTournament(
             context: context,
             id: tournament.id,
             name: editName,
@@ -210,11 +220,15 @@ final class TournamentsViewModel {
             randomPerWeek: editRandomPerWeek,
             standingsBasedSeating: editStandingsBasedSeating,
             rules: editRules
-        )
+        ) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
         showEditSaveConfirmation = false
         pendingEditWarningMessages = []
         editingTournament = nil
         refresh()
+        return true
     }
     
     /// Requests delete confirmation for the given tournament.
@@ -225,7 +239,10 @@ final class TournamentsViewModel {
     /// Confirms and performs the delete, then clears the pending tournament.
     func confirmDelete() {
         guard let tournament = tournamentToDelete else { return }
-        LeagueEngine.deleteTournament(context: context, id: tournament.id)
+        guard LeagueEngine.deleteTournament(context: context, id: tournament.id) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
         tournamentToDelete = nil
         refresh()
     }

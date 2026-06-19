@@ -20,6 +20,8 @@ final class AchievementsViewModel {
     /// When non-nil, presents the achievement form sheet.
     var presentedFormMode: AchievementFormMode?
 
+    private(set) var persistenceErrorMessage: String?
+
     /// Cached achievement stats: [achievementId: (total, byPlayer)]
     private var cachedStats: [String: (total: Int, byPlayer: [String: Int])] = [:]
 
@@ -232,17 +234,27 @@ final class AchievementsViewModel {
 
     /// Removes an achievement.
     func removeAchievement(_ achievement: Achievement) {
-        LeagueEngine.removeAchievement(context: context, id: achievement.id)
+        guard LeagueEngine.removeAchievement(context: context, id: achievement.id) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
         refresh()
     }
 
     /// Toggles the alwaysOn status of an achievement.
     func toggleAlwaysOn(_ achievement: Achievement) {
-        LeagueEngine.setAchievementAlwaysOn(
+        guard LeagueEngine.setAchievementAlwaysOn(
             context: context,
             id: achievement.id,
             alwaysOn: !achievement.alwaysOn
-        )
+        ) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
         refresh()
+    }
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
     }
 }

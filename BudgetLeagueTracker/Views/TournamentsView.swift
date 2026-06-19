@@ -6,6 +6,7 @@ struct TournamentsView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var viewModel: TournamentsViewModel
     @Binding var navigationPath: [Tournament]
+    @State private var toastMessage: String?
     
     var body: some View {
         Group {
@@ -67,6 +68,30 @@ struct TournamentsView: View {
         }
         .onAppear {
             viewModel.refresh()
+        }
+        .onChange(of: viewModel.persistenceErrorMessage) { _, message in
+            if let message {
+                showToast(message)
+                viewModel.clearPersistenceError()
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastBanner(message: toastMessage)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: toastMessage != nil)
+    }
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if toastMessage == message {
+                toastMessage = nil
+            }
         }
     }
     

@@ -39,6 +39,8 @@ final class NewTournamentViewModel {
     
     /// When true, Create stays on tournaments list (dismiss sheet) instead of navigating to attendance.
     var isSheetMode: Bool = false
+
+    private(set) var persistenceErrorMessage: String?
     
     // MARK: - Computed Properties
     
@@ -123,12 +125,13 @@ final class NewTournamentViewModel {
     }
     
     /// Creates the tournament. When isSheetMode is false, navigates to attendance; when true, stays on list (caller dismisses sheet).
-    func createTournament() {
-        guard canCreateTournament else { return }
+    @discardableResult
+    func createTournament() -> Bool {
+        guard canCreateTournament else { return false }
         
         let trimmedName = tournamentName.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        LeagueEngine.createTournament(
+        guard LeagueEngine.createTournament(
             context: context,
             name: trimmedName,
             totalWeeks: totalWeeks,
@@ -137,7 +140,15 @@ final class NewTournamentViewModel {
             presentAttendance: !isSheetMode,
             standingsBasedSeating: standingsBasedSeating,
             rules: rules
-        )
+        ) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
+        return true
+    }
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
     }
     
     /// Cancels and returns to tournaments list.

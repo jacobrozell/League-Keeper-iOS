@@ -126,6 +126,16 @@ struct AchievementFormView: View {
                     .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                 }
             }
+            .alert("Couldn't Save", isPresented: Binding(
+                get: { viewModel.persistenceErrorMessage != nil },
+                set: { if !$0 { viewModel.clearPersistenceError() } }
+            )) {
+                Button("OK", role: .cancel) {
+                    viewModel.clearPersistenceError()
+                }
+            } message: {
+                Text(viewModel.persistenceErrorMessage ?? PersistenceError.saveFailed.toastMessage)
+            }
         }
     }
 }

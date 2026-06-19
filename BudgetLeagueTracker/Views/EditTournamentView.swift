@@ -75,7 +75,6 @@ struct EditTournamentView: View {
             Button("Cancel", role: .cancel) {}
             Button("Save", role: .destructive) {
                 viewModel.saveEdit()
-                dismiss()
             }
         } message: {
             Text(viewModel.pendingEditWarningMessages.joined(separator: "\n\n"))

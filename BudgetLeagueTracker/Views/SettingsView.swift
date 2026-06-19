@@ -7,6 +7,7 @@ struct SettingsView: View {
     var onViewOnboarding: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("themePreference") private var themeRaw = ThemePreference.system.rawValue
     @Environment(\.palette) private var palette
 
@@ -182,6 +183,11 @@ struct SettingsView: View {
                 prepareExport()
             }
             refreshDataHealth()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                refreshDataHealth()
+            }
         }
         .sheet(isPresented: $showDataHealthDetail) {
             dataHealthSheet

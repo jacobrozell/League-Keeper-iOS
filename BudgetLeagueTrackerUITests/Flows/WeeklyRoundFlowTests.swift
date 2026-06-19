@@ -115,26 +115,6 @@ final class WeeklyRoundFlowTests: XCTestCase {
     private func ensurePodsForCurrentRound() {
         app.ensurePodsForCurrentRound()
     }
-
-    /// Scores every visible placement picker so the round can advance.
-    private func scoreAllPlacementsIfPossible() {
-        let podHeader = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Pod'")).firstMatch
-        if podHeader.waitForExistence(timeout: 2) {
-            podHeader.tap()
-        }
-
-        let labels = ["1st", "2nd", "3rd", "4th"]
-        let pickers = app.segmentedControls
-        guard pickers.firstMatch.waitForExistence(timeout: 3) else { return }
-
-        for index in 0..<pickers.count {
-            let picker = pickers.element(boundBy: index)
-            let label = labels[min(index, labels.count - 1)]
-            if picker.buttons[label].exists {
-                picker.buttons[label].tap()
-            }
-        }
-    }
     
     // MARK: - Round Flow Tests
     

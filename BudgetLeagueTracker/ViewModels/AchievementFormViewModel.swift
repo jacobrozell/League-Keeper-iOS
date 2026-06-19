@@ -20,6 +20,7 @@ final class AchievementFormViewModel {
 
     var onSave: (() -> Void)?
     var onCancel: (() -> Void)?
+    private(set) var persistenceErrorMessage: String?
 
     var navigationTitle: String {
         switch mode {
@@ -81,9 +82,10 @@ final class AchievementFormViewModel {
         let trimmedDescription = achievementDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         let descriptionOrNil = trimmedDescription.isEmpty ? nil : trimmedDescription
 
+        let saved: Bool
         switch mode {
         case .add, .duplicate:
-            _ = LeagueEngine.addAchievement(
+            saved = LeagueEngine.addAchievement(
                 context: context,
                 name: name,
                 points: points,
@@ -92,9 +94,9 @@ final class AchievementFormViewModel {
                 category: category,
                 iconName: iconName,
                 exclusivity: exclusivity
-            )
+            ) != nil
         case .edit(let achievementId):
-            _ = LeagueEngine.updateAchievement(
+            saved = LeagueEngine.updateAchievement(
                 context: context,
                 id: achievementId,
                 name: name,
@@ -107,7 +109,16 @@ final class AchievementFormViewModel {
             )
         }
 
+        guard saved else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
+
         onSave?()
+    }
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
     }
 
     func cancel() {
