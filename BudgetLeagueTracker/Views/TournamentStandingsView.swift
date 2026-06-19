@@ -5,6 +5,7 @@ import SwiftUI
 struct TournamentStandingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: TournamentStandingsViewModel
+    @State private var toastMessage: String?
 
     private var shareText: String {
         let rows = viewModel.standings.enumerated().map { index, standing in
@@ -48,7 +49,7 @@ struct TournamentStandingsView: View {
                 ModalActionBar(
                     primaryTitle: "Close",
                     primaryAction: {
-                        viewModel.close()
+                        guard viewModel.close() else { return }
                         dismiss()
                     }
                 )
@@ -70,6 +71,20 @@ struct TournamentStandingsView: View {
                     }
                 }
             }
+            .overlay(alignment: .top) {
+                if let toastMessage {
+                    ToastBanner(message: toastMessage)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: toastMessage != nil)
+            .onChange(of: viewModel.persistenceErrorMessage) { _, message in
+                if let message {
+                    showToast(message)
+                    viewModel.clearPersistenceError()
+                }
+            }
             .onAppear {
                 viewModel.refresh()
                 if viewModel.isFinal {
@@ -80,6 +95,16 @@ struct TournamentStandingsView: View {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if toastMessage == message {
+                toastMessage = nil
             }
         }
     }

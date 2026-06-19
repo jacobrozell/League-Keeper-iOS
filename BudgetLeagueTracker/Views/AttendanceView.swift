@@ -160,10 +160,16 @@ struct AttendanceView: View {
                 .accessibilityIdentifier("attendanceAddPlayerField")
                 .onSubmit {
                     viewModel.addWeeklyPlayer()
+                    if viewModel.lastSaveFailed {
+                        onSaveFailed?()
+                    }
                 }
             
             Button("Add") {
                 viewModel.addWeeklyPlayer()
+                if viewModel.lastSaveFailed {
+                    onSaveFailed?()
+                }
             }
             .accessibilityLabel("Add player")
             .accessibilityIdentifier("attendanceAddPlayerButton")

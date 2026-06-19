@@ -52,7 +52,7 @@ enum ScoringEngine {
         let placements = tournament.roundPlacements
         let achievementCheckKeys = tournament.roundAchievementChecks
 
-        guard !placements.isEmpty else { return true }
+        guard !placements.isEmpty else { return false }
 
         let playerDescriptor = FetchDescriptor<Player>()
         guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }

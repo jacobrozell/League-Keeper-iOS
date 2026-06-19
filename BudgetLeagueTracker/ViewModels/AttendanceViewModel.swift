@@ -108,11 +108,14 @@ final class AttendanceViewModel {
     /// Adds a new player during attendance (joins league and is marked present).
     func addWeeklyPlayer() {
         guard !newPlayerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        lastSaveFailed = false
         if let player = LeagueEngine.addWeeklyPlayer(context: context, name: newPlayerName) {
             presentStatus[player.id] = true
+            newPlayerName = ""
+            refresh()
+        } else {
+            lastSaveFailed = true
         }
-        newPlayerName = ""
-        refresh()
     }
     
     /// Confirms or updates attendance for the current week.

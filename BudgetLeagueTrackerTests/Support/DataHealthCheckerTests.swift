@@ -50,4 +50,18 @@ struct DataHealthCheckerTests {
         let issues = DataHealthChecker.scan(context: context)
         #expect(issues.isEmpty)
     }
+
+    @Test("Corrupt game result achievement JSON is surfaced")
+    func corruptGameResultAchievements() throws {
+        let context = try TestHelpers.contextWithTournament()
+        let tournament = try #require(LeagueEngine.fetchActiveTournament(context: context))
+        let playerId = try #require(tournament.presentPlayerIds.first)
+        let result = TestFixtures.gameResult(tournamentId: tournament.id, playerId: playerId, placement: 1)
+        result.achievementIdsData = Data("{bad".utf8)
+        context.insert(result)
+        try context.save()
+
+        let issues = DataHealthChecker.scan(context: context)
+        #expect(issues.contains { $0.message.contains("achievement IDs") })
+    }
 }

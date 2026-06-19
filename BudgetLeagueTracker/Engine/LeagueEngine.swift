@@ -170,16 +170,87 @@ enum LeagueEngine {
         return player
     }
     
-    /// Removes a player by ID.
+    /// Removes a player by ID and purges their game results and tournament references.
     @discardableResult
     static func removePlayer(context: ModelContext, id: String) -> Bool {
         let descriptor = FetchDescriptor<Player>()
-        if let players = try? context.fetch(descriptor),
-           let player = players.first(where: { $0.id == id }) {
-            context.delete(player)
-            return PersistenceSave.save(context: context, event: .tournament)
+        guard let players = try? context.fetch(descriptor),
+              let player = players.first(where: { $0.id == id }) else {
+            return false
         }
-        return false
+
+        for result in StatsEngine.fetchResultsForPlayer(id, context: context) {
+            context.delete(result)
+        }
+
+        let tournamentDescriptor = FetchDescriptor<Tournament>()
+        if let tournaments = try? context.fetch(tournamentDescriptor) {
+            for tournament in tournaments {
+                purgePlayerReferences(playerId: id, from: tournament)
+            }
+        }
+
+        context.delete(player)
+        return PersistenceSave.save(context: context, event: .tournament)
+    }
+
+    /// Strips a removed player from tournament JSON state and history snapshots.
+    private static func purgePlayerReferences(playerId: String, from tournament: Tournament) {
+        tournament.presentPlayerIds = tournament.presentPlayerIds.filter { $0 != playerId }
+
+        var weeklyPoints = tournament.weeklyPointsByPlayer
+        weeklyPoints.removeValue(forKey: playerId)
+        tournament.weeklyPointsByPlayer = weeklyPoints
+
+        var placements = tournament.roundPlacements
+        placements.removeValue(forKey: playerId)
+        tournament.roundPlacements = placements
+
+        tournament.roundAchievementChecks = tournament.roundAchievementChecks.filter {
+            !$0.hasPrefix("\(playerId):")
+        }
+
+        tournament.currentRoundPodsPlayerIds = tournament.currentRoundPodsPlayerIds
+            .map { $0.filter { $0 != playerId } }
+            .filter { !$0.isEmpty }
+
+        tournament.tableScoringOrders = tournament.tableScoringOrders
+            .map { $0.filter { $0 != playerId } }
+            .filter { !$0.isEmpty }
+
+        tournament.attendanceHistory = tournament.attendanceHistory.map { snapshot in
+            var updated = snapshot
+            updated.presentPlayerIds = snapshot.presentPlayerIds.filter { $0 != playerId }
+            return updated
+        }
+
+        tournament.podHistorySnapshots = tournament.podHistorySnapshots.compactMap { snapshot in
+            guard snapshot.playerIds.contains(playerId) else { return snapshot }
+
+            let remainingPlayerIds = snapshot.playerIds.filter { $0 != playerId }
+            guard !remainingPlayerIds.isEmpty else { return nil }
+
+            var placements = snapshot.placements
+            placements.removeValue(forKey: playerId)
+
+            var playerDeltas = snapshot.playerDeltas
+            playerDeltas.removeValue(forKey: playerId)
+
+            var weeklyDeltas = snapshot.weeklyDeltas
+            weeklyDeltas.removeValue(forKey: playerId)
+
+            let achievementChecks = snapshot.achievementChecks.filter { $0.playerId != playerId }
+
+            return PodSnapshot(
+                week: snapshot.week,
+                round: snapshot.round,
+                playerIds: remainingPlayerIds,
+                placements: placements,
+                achievementChecks: achievementChecks,
+                playerDeltas: playerDeltas,
+                weeklyDeltas: weeklyDeltas
+            )
+        }
     }
 
     /// Updates a player's display name and optional distinguishing note.

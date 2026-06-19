@@ -5,6 +5,7 @@ import Charts
 struct PlayerDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: PlayerDetailViewModel
+    @State private var deleteFailed = false
 
     var body: some View {
         ScrollView {
@@ -67,10 +68,17 @@ struct PlayerDetailView: View {
             Button("Delete", role: .destructive) {
                 if viewModel.deletePlayer() {
                     dismiss()
+                } else {
+                    deleteFailed = true
                 }
             }
         } message: {
             Text("Are you sure you want to delete \(viewModel.displayName)? This action cannot be undone and will remove all their stats.")
+        }
+        .alert("Couldn't Save", isPresented: $deleteFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(PersistenceError.saveFailed.toastMessage)
         }
         .onAppear {
             viewModel.refresh()

@@ -11,7 +11,9 @@ enum DataHealthChecker {
 
     static func scan(context: ModelContext) -> [Issue] {
         let tournaments = (try? context.fetch(FetchDescriptor<Tournament>())) ?? []
+        let gameResults = (try? context.fetch(FetchDescriptor<GameResult>())) ?? []
         return tournaments.flatMap { issues(for: $0) }
+            + gameResults.compactMap { issue(for: $0) }
     }
 
     private static func issues(for tournament: Tournament) -> [Issue] {
@@ -32,6 +34,35 @@ enum DataHealthChecker {
         return found
     }
 
+    private static func issue(for result: GameResult) -> Issue? {
+        guard failsDecode(result.achievementIdsData, as: [String].self, field: "achievement IDs", entityId: result.id) else {
+            return nil
+        }
+        return Issue(
+            id: "gameResult-\(result.id)-achievement IDs",
+            message: "Round \(result.round), week \(result.week): could not read achievement IDs.",
+            repairHint: "Export a backup, then edit or re-score the affected round if standings look wrong."
+        )
+    }
+
+    private static func failsDecode<T: Decodable>(_ data: Data?, as type: T.Type, field: String, tournament: Tournament) -> Bool {
+        failsDecode(data, as: type, field: field, entityId: tournament.id)
+    }
+
+    private static func failsDecode<T: Decodable>(_ data: Data?, as type: T.Type, field: String, entityId: String) -> Bool {
+        guard let data, !data.isEmpty else { return false }
+        if (try? JSONDecoder().decode(type, from: data)) != nil {
+            return false
+        }
+        AppLog.shared.error(
+            .persistence,
+            eventName: "tournament_json_decode_failed",
+            message: "Corrupt persisted JSON field",
+            metadata: ["field": field, "entityId": entityId]
+        )
+        return true
+    }
+
     private static func check<T: Decodable>(
         _ data: Data?,
         as type: T.Type,
@@ -43,20 +74,6 @@ enum DataHealthChecker {
         if failsDecode(data, as: type, field: field, tournament: tournament) {
             found.append(issue(tournament, field: field, hint: hint))
         }
-    }
-
-    private static func failsDecode<T: Decodable>(_ data: Data?, as type: T.Type, field: String, tournament: Tournament) -> Bool {
-        guard let data, !data.isEmpty else { return false }
-        if (try? JSONDecoder().decode(type, from: data)) != nil {
-            return false
-        }
-        AppLog.shared.error(
-            .persistence,
-            eventName: "tournament_json_decode_failed",
-            message: "Corrupt tournament JSON field",
-            metadata: ["field": field, "tournamentId": tournament.id]
-        )
-        return true
     }
 
     private static func issue(_ tournament: Tournament, field: String, hint: String) -> Issue {

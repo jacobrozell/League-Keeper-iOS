@@ -76,6 +76,12 @@ struct RoundFlowView: View {
     @ViewBuilder
     private var roundPhaseMainContent: some View {
         VStack(spacing: 0) {
+            if let issue = viewModel.tableLoadIssueMessage {
+                HintText(message: issue)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+
             switch viewModel.roundPhase {
             case .seating, .seatingsReady:
                 RoundSeatingView(

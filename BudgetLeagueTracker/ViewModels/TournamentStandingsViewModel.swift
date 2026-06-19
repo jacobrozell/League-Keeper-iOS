@@ -13,6 +13,7 @@ final class TournamentStandingsViewModel {
     var standings: [(player: Player, totalPoints: Int, placementPoints: Int, achievementPoints: Int, wins: Int)] = []
     var isFinal: Bool = false
     var tournamentName: String = ""
+    private(set) var persistenceErrorMessage: String?
 
     private var roster: [Player] = []
     private var tournamentId: String?
@@ -68,8 +69,17 @@ final class TournamentStandingsViewModel {
     }
     
     /// Closes tournament standings and returns to tournaments list.
-    func close() {
-        LeagueEngine.closeTournamentStandings(context: context)
+    @discardableResult
+    func close() -> Bool {
+        guard LeagueEngine.closeTournamentStandings(context: context) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
+        return true
+    }
+
+    func clearPersistenceError() {
+        persistenceErrorMessage = nil
     }
 
     func displayName(for player: Player) -> String {

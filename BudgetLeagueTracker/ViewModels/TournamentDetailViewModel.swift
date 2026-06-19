@@ -52,6 +52,9 @@ final class TournamentDetailViewModel {
 
     /// Non-nil when the most recent save failed; views show a toast and clear this.
     private(set) var persistenceErrorMessage: String?
+
+    /// Set when persisted table seatings could not be fully restored from player IDs.
+    private(set) var tableLoadIssueMessage: String?
     
     // MARK: - Navigation State
     
@@ -584,13 +587,22 @@ final class TournamentDetailViewModel {
         let storedPodIds = tournament.currentRoundPodsPlayerIds
         guard !storedPodIds.isEmpty else {
             pods = []
+            tableLoadIssueMessage = nil
             return
         }
 
-        pods = storedPodIds.compactMap { podIds in
+        let resolved: [[Player]] = storedPodIds.compactMap { podIds in
             let podPlayers = podIds.compactMap { id in allPlayers.first(where: { $0.id == id }) }
             return podPlayers.count == podIds.count ? podPlayers : nil
         }
+
+        if resolved.count < storedPodIds.count {
+            tableLoadIssueMessage = "Some table seatings could not be loaded. Seat players again for this round."
+        } else {
+            tableLoadIssueMessage = nil
+        }
+
+        pods = resolved
 
         ensureTableScoringOrders(for: tournament)
         syncScoringTableIndex()
@@ -677,6 +689,7 @@ final class TournamentDetailViewModel {
         guard let tournament = tournament else { return }
 
         setAsActiveTournament()
+        tableLoadIssueMessage = nil
         LeagueEngine.clearRoundData(context: context)
 
         let previousPlacements = tournament.podHistorySnapshots.last?.placements ?? [:]
@@ -769,9 +782,11 @@ final class TournamentDetailViewModel {
               index < pods.count else { return }
 
         let playerIds = tournament.tableScoringOrders[safe: index] ?? pods[index].map(\.id)
+        var placements = tournament.roundPlacements
         for (placeIndex, playerId) in playerIds.enumerated() {
-            LeagueEngine.updatePlacement(context: context, playerId: playerId, placement: placeIndex + 1)
+            placements[playerId] = placeIndex + 1
         }
+        tournament.roundPlacements = placements
 
         var confirmed = tournament.confirmedTableIndices
         confirmed.insert(index)
@@ -824,13 +839,18 @@ final class TournamentDetailViewModel {
     func toggleAchievementCheck(playerId: String, achievementId: String) {
         let currentlyChecked = isAchievementChecked(playerId: playerId, achievementId: achievementId)
         let podPlayerIds = pods.first(where: { pod in pod.contains(where: { $0.id == playerId }) })?.map(\.id)
-        LeagueEngine.updateAchievementCheck(
+        guard LeagueEngine.updateAchievementCheck(
             context: context,
             playerId: playerId,
             achievementId: achievementId,
             checked: !currentlyChecked,
             podPlayerIds: podPlayerIds
-        )
+        ) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            refresh()
+            return
+        }
+        refresh()
     }
 
     /// Whether the achievement toggle should be disabled for a player.
@@ -947,7 +967,10 @@ final class TournamentDetailViewModel {
     func setAsActiveTournament() {
         guard let state = LeagueEngine.fetchLeagueState(context: context) else { return }
         state.activeTournamentId = tournamentId
-        _ = PersistenceSave.save(context: context, event: .tournament)
+        guard PersistenceSave.save(context: context, event: .tournament) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return
+        }
     }
     
     /// Switches to the Attendance tab to edit who's present this week.

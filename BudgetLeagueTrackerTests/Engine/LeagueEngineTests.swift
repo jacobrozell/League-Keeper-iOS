@@ -277,17 +277,23 @@ struct LeagueEngineTests {
     @MainActor
     struct RemovePlayerTests {
         
-        @Test("Deletes existing player")
+        @Test("Deletes existing player and game results")
         func deletesExistingPlayer() throws {
             let context = try TestHelpers.bootstrappedContext()
             let player = TestFixtures.player(name: "To Delete")
             context.insert(player)
+            let tournament = TestFixtures.tournament(name: "Test")
+            context.insert(tournament)
+            let result = TestFixtures.gameResult(tournamentId: tournament.id, playerId: player.id, placement: 1)
+            context.insert(result)
             try context.save()
             
-            LeagueEngine.removePlayer(context: context, id: player.id)
+            #expect(LeagueEngine.removePlayer(context: context, id: player.id))
             
             let players = try TestHelpers.fetchAll(Player.self, from: context)
+            let results = try TestHelpers.fetchAll(GameResult.self, from: context)
             #expect(!players.contains { $0.id == player.id })
+            #expect(results.allSatisfy { $0.playerId != player.id })
         }
         
         @Test("No-op for non-existent ID")
