@@ -24,7 +24,7 @@ enum RoundPhase: Equatable {
 }
 
 /// ViewModel for the Tournament Detail view.
-/// Manages tournament landing page including pods, standings, and navigation.
+/// Manages tournament landing page including tables, standings, and navigation.
 /// Absorbs functionality from PodsViewModel for ongoing tournaments.
 @MainActor
 @Observable
@@ -35,7 +35,7 @@ final class TournamentDetailViewModel {
     // MARK: - Published State
     
     var tournament: Tournament?
-    var pods: [[Player]] = []
+    var tables: [[Player]] = []
     var activeAchievements: [Achievement] = []
     
     /// Active tab for ongoing tournaments (Attendance | Round | Standings).
@@ -110,13 +110,8 @@ final class TournamentDetailViewModel {
     }
 
     /// Whether tables have been seated for the current round.
-    var hasPodsForCurrentRound: Bool {
-        !pods.isEmpty
-    }
-
-    /// Alias for table-oriented UI copy.
     var hasTablesForCurrentRound: Bool {
-        hasPodsForCurrentRound
+        !tables.isEmpty
     }
 
     var confirmedTableIndices: Set<Int> {
@@ -124,7 +119,7 @@ final class TournamentDetailViewModel {
     }
 
     var allTablesConfirmed: Bool {
-        hasPodsForCurrentRound && confirmedTableIndices.count == pods.count
+        hasTablesForCurrentRound && confirmedTableIndices.count == tables.count
     }
 
     var scoredTablesCount: Int {
@@ -138,7 +133,7 @@ final class TournamentDetailViewModel {
     /// Current phase of the guided round flow.
     var roundPhase: RoundPhase {
         guard hasPresentPlayers else { return .seating }
-        guard hasPodsForCurrentRound else { return .seating }
+        guard hasTablesForCurrentRound else { return .seating }
         if allTablesConfirmed { return .review }
         if roundScoringStarted { return .scoring }
         return .seatingsReady
@@ -147,7 +142,7 @@ final class TournamentDetailViewModel {
     /// Current step in the weekly host workflow.
     var hostStep: TournamentHostStep {
         if !hasPresentPlayers { return .attendance }
-        if !hasPodsForCurrentRound { return .seatPlayers }
+        if !hasTablesForCurrentRound { return .seatPlayers }
         return .scoreRound
     }
 
@@ -163,7 +158,7 @@ final class TournamentDetailViewModel {
             case .seatingsReady:
                 return "Review tables, then start scoring"
             case .scoring:
-                return "Score Table \(currentScoringTableIndex + 1) of \(pods.count)"
+                return "Score Table \(currentScoringTableIndex + 1) of \(tables.count)"
             case .review:
                 if currentRound < AppConstants.League.roundsPerWeek {
                     return "Review results, then finish Round \(currentRound)"
@@ -183,11 +178,11 @@ final class TournamentDetailViewModel {
         let attendanceState: TournamentProgressStepState = hasPresentPlayers ? .complete : .current
         let seatState: TournamentProgressStepState = {
             if !hasPresentPlayers { return .upcoming }
-            if hasPodsForCurrentRound { return .complete }
+            if hasTablesForCurrentRound { return .complete }
             return .current
         }()
         let scoreState: TournamentProgressStepState = {
-            if !hasPodsForCurrentRound { return .upcoming }
+            if !hasTablesForCurrentRound { return .upcoming }
             if allTablesConfirmed { return .complete }
             return .current
         }()
@@ -204,18 +199,8 @@ final class TournamentDetailViewModel {
         "Seat Players"
     }
 
-    /// Legacy alias for tests and tooling.
-    var generatePodsButtonTitle: String {
-        seatPlayersButtonTitle
-    }
-
     var tableLayoutHint: String? {
         PodLayoutHint.message(presentCount: presentPlayerIds.count)
-    }
-
-    /// Legacy alias.
-    var podLayoutHint: String? {
-        tableLayoutHint
     }
 
     /// Whether any present player has scored points this week.
@@ -245,11 +230,6 @@ final class TournamentDetailViewModel {
 
     var canSeatPlayers: Bool {
         hasPresentPlayers
-    }
-
-    /// Legacy alias.
-    var canGeneratePods: Bool {
-        canSeatPlayers
     }
     
     var canEdit: Bool {
@@ -575,7 +555,7 @@ final class TournamentDetailViewModel {
         if let tournament = tournament {
             podHistoryCount = tournament.podHistorySnapshots.count
             syncActiveTab(for: tournament)
-            reloadPodsFromTournament(tournament)
+            reloadTablesFromTournament(tournament)
 
             // Filter to active achievements
             activeAchievements = allAchievements.filter { tournament.activeAchievementIds.contains($0.id) }
@@ -583,10 +563,10 @@ final class TournamentDetailViewModel {
     }
 
     /// Restores in-memory tables from persisted tournament state.
-    private func reloadPodsFromTournament(_ tournament: Tournament) {
+    private func reloadTablesFromTournament(_ tournament: Tournament) {
         let storedPodIds = tournament.currentRoundPodsPlayerIds
         guard !storedPodIds.isEmpty else {
-            pods = []
+            tables = []
             tableLoadIssueMessage = nil
             return
         }
@@ -602,33 +582,33 @@ final class TournamentDetailViewModel {
             tableLoadIssueMessage = nil
         }
 
-        pods = resolved
+        tables = resolved
 
         ensureTableScoringOrders(for: tournament)
         syncScoringTableIndex()
     }
 
     private func ensureTableScoringOrders(for tournament: Tournament) {
-        guard !pods.isEmpty else { return }
+        guard !tables.isEmpty else { return }
 
         var orders = tournament.tableScoringOrders
-        if orders.count != pods.count {
-            orders = pods.map { $0.map(\.id) }
+        if orders.count != tables.count {
+            orders = tables.map { $0.map(\.id) }
             tournament.tableScoringOrders = orders
             _ = saveRoundChanges()
         }
     }
 
     private func syncScoringTableIndex() {
-        guard !pods.isEmpty else {
+        guard !tables.isEmpty else {
             currentScoringTableIndex = 0
             return
         }
 
-        if let next = pods.indices.first(where: { !confirmedTableIndices.contains($0) }) {
+        if let next = tables.indices.first(where: { !confirmedTableIndices.contains($0) }) {
             currentScoringTableIndex = next
         } else {
-            currentScoringTableIndex = max(0, pods.count - 1)
+            currentScoringTableIndex = max(0, tables.count - 1)
         }
     }
 
@@ -676,7 +656,7 @@ final class TournamentDetailViewModel {
             persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
             return false
         }
-        pods = []
+        tables = []
         currentScoringTableIndex = 0
         refresh()
         return true
@@ -694,7 +674,7 @@ final class TournamentDetailViewModel {
 
         let previousPlacements = tournament.podHistorySnapshots.last?.placements ?? [:]
 
-        pods = LeagueEngine.generatePodsForRound(
+        tables = LeagueEngine.generatePodsForRound(
             players: allPlayers,
             presentPlayerIds: presentPlayerIds,
             currentRound: currentRound,
@@ -703,8 +683,8 @@ final class TournamentDetailViewModel {
             forceRandom: forceRandom
         )
 
-        tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
-        tournament.tableScoringOrders = pods.map { $0.map(\.id) }
+        tournament.currentRoundPodsPlayerIds = tables.map { $0.map(\.id) }
+        tournament.tableScoringOrders = tables.map { $0.map(\.id) }
         tournament.roundScoringStarted = false
         currentScoringTableIndex = 0
 
@@ -712,14 +692,9 @@ final class TournamentDetailViewModel {
         refresh()
     }
 
-    /// Legacy alias.
-    func generatePods() {
-        seatPlayers()
-    }
-
     /// Begins scoring tables after the host reviews seatings.
     func startScoring() {
-        guard let tournament = tournament, !pods.isEmpty else { return }
+        guard let tournament = tournament, !tables.isEmpty else { return }
         tournament.roundScoringStarted = true
         syncScoringTableIndex()
         _ = saveRoundChanges()
@@ -730,22 +705,22 @@ final class TournamentDetailViewModel {
     }
 
     func playersForTable(at index: Int) -> [Player] {
-        guard index >= 0, index < pods.count else { return [] }
-        let order = tournament?.tableScoringOrders[safe: index] ?? pods[index].map(\.id)
+        guard index >= 0, index < tables.count else { return [] }
+        let order = tournament?.tableScoringOrders[safe: index] ?? tables[index].map(\.id)
         return order.compactMap { id in allPlayers.first(where: { $0.id == id }) }
     }
 
     func movePlayerInTable(at tableIndex: Int, from source: Int, to destination: Int) {
         guard let tournament,
               tableIndex >= 0,
-              tableIndex < pods.count,
+              tableIndex < tables.count,
               source != destination,
               source >= 0,
               destination >= 0 else { return }
 
         var orders = tournament.tableScoringOrders
-        if orders.count != pods.count {
-            orders = pods.map { $0.map(\.id) }
+        if orders.count != tables.count {
+            orders = tables.map { $0.map(\.id) }
         }
 
         var order = orders[tableIndex]
@@ -771,7 +746,7 @@ final class TournamentDetailViewModel {
     }
 
     func selectScoringTable(_ index: Int) {
-        guard index >= 0, index < pods.count else { return }
+        guard index >= 0, index < tables.count else { return }
         currentScoringTableIndex = index
     }
 
@@ -779,9 +754,9 @@ final class TournamentDetailViewModel {
     func confirmTable(at index: Int) {
         guard let tournament = tournament,
               index >= 0,
-              index < pods.count else { return }
+              index < tables.count else { return }
 
-        let playerIds = tournament.tableScoringOrders[safe: index] ?? pods[index].map(\.id)
+        let playerIds = tournament.tableScoringOrders[safe: index] ?? tables[index].map(\.id)
         var placements = tournament.roundPlacements
         for (placeIndex, playerId) in playerIds.enumerated() {
             placements[playerId] = placeIndex + 1
@@ -795,14 +770,14 @@ final class TournamentDetailViewModel {
         guard saveRoundChanges() else { return }
         refresh()
 
-        if let next = pods.indices.first(where: { !confirmedTableIndices.contains($0) }) {
+        if let next = tables.indices.first(where: { !confirmedTableIndices.contains($0) }) {
             currentScoringTableIndex = next
         }
     }
 
     /// Confirms every table for the current round (used in tests and tooling).
     func confirmAllTables() {
-        for index in pods.indices where !confirmedTableIndices.contains(index) {
+        for index in tables.indices where !confirmedTableIndices.contains(index) {
             confirmTable(at: index)
         }
     }
@@ -838,13 +813,13 @@ final class TournamentDetailViewModel {
     /// Toggles an achievement check for a player (auto-saves immediately).
     func toggleAchievementCheck(playerId: String, achievementId: String) {
         let currentlyChecked = isAchievementChecked(playerId: playerId, achievementId: achievementId)
-        let podPlayerIds = pods.first(where: { pod in pod.contains(where: { $0.id == playerId }) })?.map(\.id)
+        let tablePlayerIds = tables.first(where: { table in table.contains(where: { $0.id == playerId }) })?.map(\.id)
         guard LeagueEngine.updateAchievementCheck(
             context: context,
             playerId: playerId,
             achievementId: achievementId,
             checked: !currentlyChecked,
-            podPlayerIds: podPlayerIds
+            tablePlayerIds: tablePlayerIds
         ) else {
             persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
             refresh()
@@ -885,15 +860,15 @@ final class TournamentDetailViewModel {
               fromTable != toTable,
               fromTable >= 0,
               toTable >= 0,
-              fromTable < pods.count,
-              toTable < pods.count,
-              let playerIndex = pods[fromTable].firstIndex(where: { $0.id == playerId }) else { return }
+              fromTable < tables.count,
+              toTable < tables.count,
+              let playerIndex = tables[fromTable].firstIndex(where: { $0.id == playerId }) else { return }
 
-        let player = pods[fromTable].remove(at: playerIndex)
-        pods[toTable].append(player)
+        let player = tables[fromTable].remove(at: playerIndex)
+        tables[toTable].append(player)
 
-        tournament.currentRoundPodsPlayerIds = pods.map { $0.map(\.id) }
-        tournament.tableScoringOrders = pods.map { $0.map(\.id) }
+        tournament.currentRoundPodsPlayerIds = tables.map { $0.map(\.id) }
+        tournament.tableScoringOrders = tables.map { $0.map(\.id) }
         guard saveRoundChanges() else { return }
         refresh()
     }
@@ -917,7 +892,7 @@ final class TournamentDetailViewModel {
             LeagueEngine.clearTransientRoundState(on: tournament)
             guard saveRoundChanges() else { return }
         }
-        pods = []
+        tables = []
         currentScoringTableIndex = 0
         refresh()
     }
@@ -932,7 +907,7 @@ final class TournamentDetailViewModel {
             persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
             return
         }
-        pods = []
+        tables = []
         currentScoringTableIndex = 0
         refresh()
 

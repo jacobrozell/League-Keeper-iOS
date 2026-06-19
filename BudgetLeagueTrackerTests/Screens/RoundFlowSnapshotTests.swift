@@ -100,7 +100,7 @@ struct RoundFlowSnapshotTests {
             viewModel.refresh()
             viewModel.seatPlayers()
             viewModel.startScoring()
-            for index in viewModel.pods.indices {
+            for index in viewModel.tables.indices {
                 viewModel.selectScoringTable(index)
                 viewModel.confirmTable(at: index)
             }

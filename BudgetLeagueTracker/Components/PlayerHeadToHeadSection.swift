@@ -14,7 +14,7 @@ struct PlayerHeadToHeadSection: View {
             Text("Head-to-Head")
                 .font(.headline)
 
-            Text("Compare win records when two players sat at the same pod table — not a league format or partner preference.")
+            Text("Compare win records when two players sat at the same table — not a league format or partner preference.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -36,7 +36,7 @@ struct PlayerHeadToHeadSection: View {
                         .font(.subheadline.weight(.semibold))
                         .accessibilityLabel(summaryText(record: record, opponentName: opponentName))
                 } else if selectedOpponentId != nil {
-                    Text("No shared pods yet.")
+                    Text("No shared tables yet.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -46,12 +46,12 @@ struct PlayerHeadToHeadSection: View {
 
     private func summaryText(record: HeadToHeadRecord, opponentName: String) -> String {
         if record.player1Wins > record.player2Wins {
-            return "\(playerName) leads \(opponentName) \(record.player1Wins)–\(record.player2Wins) in shared pods"
+            return "\(playerName) leads \(opponentName) \(record.player1Wins)–\(record.player2Wins) in shared tables"
         }
         if record.player2Wins > record.player1Wins {
-            return "\(opponentName) leads \(playerName) \(record.player2Wins)–\(record.player1Wins) in shared pods"
+            return "\(opponentName) leads \(playerName) \(record.player2Wins)–\(record.player1Wins) in shared tables"
         }
-        return "\(playerName) and \(opponentName) are tied \(record.player1Wins)–\(record.player2Wins) in shared pods"
+        return "\(playerName) and \(opponentName) are tied \(record.player1Wins)–\(record.player2Wins) in shared tables"
     }
 }
 

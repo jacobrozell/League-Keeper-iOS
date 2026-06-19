@@ -27,7 +27,7 @@ struct RoundReviewView: View {
             }
 
             Section("Round \(viewModel.currentRound) results") {
-                ForEach(viewModel.pods.indices, id: \.self) { index in
+                ForEach(viewModel.tables.indices, id: \.self) { index in
                     tableResultsBlock(index: index)
                 }
             }
@@ -49,13 +49,13 @@ struct RoundReviewView: View {
 
                 LazyVGrid(
                     columns: AdaptiveLayout.tableCardGridColumns(
-                        tableCount: viewModel.pods.count,
+                        tableCount: viewModel.tables.count,
                         horizontalSizeClass: horizontalSizeClass
                     ),
                     alignment: .leading,
                     spacing: 16
                 ) {
-                    ForEach(viewModel.pods.indices, id: \.self) { index in
+                    ForEach(viewModel.tables.indices, id: \.self) { index in
                         tableResultsBlock(index: index, style: .card)
                     }
                 }

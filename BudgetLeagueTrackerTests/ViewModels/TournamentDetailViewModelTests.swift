@@ -138,9 +138,9 @@ struct TournamentDetailViewModelTests {
         }
     }
     
-    @Suite("canGeneratePods")
+    @Suite("canSeatPlayers")
     @MainActor
-    struct CanGeneratePodsTests {
+    struct CanSeatPlayersTests {
         
         @Test("Returns true when players are present")
         func returnsTrueWithPlayers() throws {
@@ -151,7 +151,7 @@ struct TournamentDetailViewModelTests {
             
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             
-            #expect(viewModel.canGeneratePods == true)
+            #expect(viewModel.canSeatPlayers == true)
         }
         
         @Test("Returns false when no players are present")
@@ -163,16 +163,16 @@ struct TournamentDetailViewModelTests {
             
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             
-            #expect(viewModel.canGeneratePods == false)
+            #expect(viewModel.canSeatPlayers == false)
         }
     }
     
-    @Suite("generatePods")
+    @Suite("seatPlayers")
     @MainActor
-    struct GeneratePodsTests {
+    struct SeatPlayersTests {
         
-        @Test("Generates pods from present players")
-        func generatesPods() throws {
+        @Test("Generates tables from present players")
+        func generatesTables() throws {
             let context = try TestHelpers.contextWithTournament()
             let players = TestFixtures.insertStandardPlayers(into: context)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
@@ -180,10 +180,10 @@ struct TournamentDetailViewModelTests {
             try context.save()
             
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            viewModel.generatePods()
+            viewModel.seatPlayers()
             
-            #expect(!viewModel.pods.isEmpty)
-            #expect(viewModel.pods[0].count == 4) // Standard 4-player pod
+            #expect(!viewModel.tables.isEmpty)
+            #expect(viewModel.tables[0].count == 4)
         }
         
         @Test("Does nothing when no tournament")
@@ -191,9 +191,9 @@ struct TournamentDetailViewModelTests {
             let context = try TestHelpers.bootstrappedContext()
             
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: "non-existent")
-            viewModel.generatePods()
+            viewModel.seatPlayers()
             
-            #expect(viewModel.pods.isEmpty)
+            #expect(viewModel.tables.isEmpty)
         }
     }
     
@@ -313,7 +313,7 @@ struct TournamentDetailViewModelTests {
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
 
             #expect(viewModel.tableLoadIssueMessage != nil)
-            #expect(viewModel.pods.count == 1)
+            #expect(viewModel.tables.count == 1)
         }
 
         @Test("Moves player between tables before scoring")
@@ -327,14 +327,14 @@ struct TournamentDetailViewModelTests {
 
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             viewModel.seatPlayers()
-            #expect(viewModel.pods.count == 2)
-            #expect(viewModel.pods[0].count == 4)
+            #expect(viewModel.tables.count == 2)
+            #expect(viewModel.tables[0].count == 4)
 
-            let movingPlayer = viewModel.pods[0][0]
+            let movingPlayer = viewModel.tables[0][0]
             viewModel.movePlayer(movingPlayer.id, fromTable: 0, toTable: 1)
 
-            #expect(viewModel.pods[0].count == 3)
-            #expect(viewModel.pods[1].contains { $0.id == movingPlayer.id })
+            #expect(viewModel.tables[0].count == 3)
+            #expect(viewModel.tables[1].contains { $0.id == movingPlayer.id })
             #expect(viewModel.canEditSeatings == true)
         }
     }
@@ -513,7 +513,7 @@ struct TournamentDetailViewModelTests {
             try context.save()
 
             var viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
-            viewModel.generatePods()
+            viewModel.seatPlayers()
 
             #expect(viewModel.hostStep == .scoreRound)
             #expect(viewModel.nextStepHint.contains("Review tables"))

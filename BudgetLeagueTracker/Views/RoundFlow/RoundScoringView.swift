@@ -20,7 +20,7 @@ struct RoundScoringView: View {
         let players = viewModel.playersForTable(at: tableIndex)
 
         List {
-            if viewModel.pods.count > 1 {
+            if viewModel.tables.count > 1 {
                 Section {
                     HintText(message: "Score one table at a time. Use All tables below or Next Table to switch.")
                 }
@@ -62,9 +62,9 @@ struct RoundScoringView: View {
                     .font(.caption)
             }
 
-            if viewModel.pods.count > 1 {
+            if viewModel.tables.count > 1 {
                 Section("All tables") {
-                    ForEach(viewModel.pods.indices, id: \.self) { index in
+                    ForEach(viewModel.tables.indices, id: \.self) { index in
                         scoringTablePickerRow(index: index, currentTableIndex: tableIndex)
                     }
                 }
@@ -115,11 +115,11 @@ struct RoundScoringView: View {
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
 
-                if viewModel.pods.count > 1 {
+                if viewModel.tables.count > 1 {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("All tables")
                             .font(.headline)
-                        ForEach(viewModel.pods.indices, id: \.self) { index in
+                        ForEach(viewModel.tables.indices, id: \.self) { index in
                             scoringTablePickerRow(index: index, currentTableIndex: tableIndex, style: .card)
                         }
                     }
@@ -135,9 +135,9 @@ struct RoundScoringView: View {
     @ViewBuilder
     private func scoringProgressHeader(tableIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Table \(tableIndex + 1) of \(viewModel.pods.count)")
+            Text("Table \(tableIndex + 1) of \(viewModel.tables.count)")
                 .font(.headline)
-            Text("\(viewModel.scoredTablesCount) of \(viewModel.pods.count) tables scored")
+            Text("\(viewModel.scoredTablesCount) of \(viewModel.tables.count) tables scored")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

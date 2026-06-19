@@ -42,31 +42,14 @@ struct PlayersView: View {
         }
         .sheet(isPresented: $viewModel.isShowingAddPlayerSheet, onDismiss: {
             if let message = viewModel.consumePendingToast() {
-                showToast(message)
+                ToastPresentation.show(message, binding: $toastMessage)
             }
         }) {
             AddPlayerSheet(viewModel: viewModel)
         }
-        .overlay(alignment: .top) {
-            if let toastMessage {
-                ToastBanner(message: toastMessage)
-                    .padding(.top, 8)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: toastMessage)
+        .toastOverlay(toastMessage)
         .onAppear {
             viewModel.refresh()
-        }
-    }
-
-    private func showToast(_ message: String) {
-        toastMessage = message
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            if toastMessage == message {
-                toastMessage = nil
-            }
         }
     }
 

@@ -463,21 +463,21 @@ enum LeagueEngine {
     }
 
     /// Updates a single achievement check for the current round (auto-save).
-    /// Enforces one-per-pod exclusivity when checking on.
+    /// Enforces one-per-table exclusivity when checking on.
     @discardableResult
     static func updateAchievementCheck(
         context: ModelContext,
         playerId: String,
         achievementId: String,
         checked: Bool,
-        podPlayerIds: [String]? = nil
+        tablePlayerIds: [String]? = nil
     ) -> Bool {
         ScoringEngine.updateAchievementCheck(
             context: context,
             playerId: playerId,
             achievementId: achievementId,
             checked: checked,
-            podPlayerIds: podPlayerIds
+            tablePlayerIds: tablePlayerIds
         )
     }
 
@@ -595,44 +595,6 @@ enum LeagueEngine {
         return PersistenceSave.save(context: context, event: .round)
     }
 
-    /// Closes weekly standings and advances to next week or tournament standings.
-    @discardableResult
-    static func closeWeeklyStandings(context: ModelContext) -> Bool {
-        guard let tournament = fetchActiveTournament(context: context) else { return false }
-        guard let state = fetchLeagueState(context: context) else { return false }
-        
-        if tournament.isFinalWeek {
-            tournament.status = .completed
-            tournament.endDate = Date()
-            state.screen = .tournaments
-        } else {
-            tournament.currentWeek += 1
-            tournament.currentRound = AppConstants.League.defaultCurrentRound
-            tournament.presentPlayerIds = []
-            tournament.weeklyPointsByPlayer = [:]
-            tournament.podHistorySnapshots = []
-            
-            // Roll new active achievements
-            let achievements = fetchAllAchievements(context: context)
-            tournament.activeAchievementIds = rollActiveAchievements(
-                achievements: achievements,
-                randomPerWeek: tournament.randomAchievementsPerWeek
-            ).map { $0.id }
-            
-            state.screen = .attendance
-        }
-        
-        return PersistenceSave.save(context: context, event: .round)
-    }
-    
-    /// Exits weekly standings back to pods without advancing.
-    /// - Parameter context: The SwiftData model context
-    static func exitWeeklyStandings(context: ModelContext) {
-        guard let state = fetchLeagueState(context: context) else { return }
-        state.screen = .tournaments
-        _ = PersistenceSave.save(context: context, event: .tournament)
-    }
-    
     /// Closes tournament standings and returns to tournaments list.
     @discardableResult
     static func closeTournamentStandings(context: ModelContext) -> Bool {

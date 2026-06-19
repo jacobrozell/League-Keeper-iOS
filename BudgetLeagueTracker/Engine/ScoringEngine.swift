@@ -20,7 +20,7 @@ enum ScoringEngine {
         playerId: String,
         achievementId: String,
         checked: Bool,
-        podPlayerIds: [String]? = nil
+        tablePlayerIds: [String]? = nil
     ) -> Bool {
         guard let tournament = LeagueEngine.fetchActiveTournament(context: context) else { return false }
 
@@ -30,8 +30,8 @@ enum ScoringEngine {
         if checked {
             if let achievement = LeagueEngine.fetchAchievement(context: context, id: achievementId),
                achievement.exclusivity == .onePerPod,
-               let podPlayerIds {
-                for otherPlayerId in podPlayerIds where otherPlayerId != playerId {
+               let tablePlayerIds {
+                for otherPlayerId in tablePlayerIds where otherPlayerId != playerId {
                     checks.remove("\(otherPlayerId):\(achievementId)")
                 }
             }

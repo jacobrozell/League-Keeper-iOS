@@ -17,7 +17,7 @@ struct HintText: View {
 #Preview {
     VStack(alignment: .leading, spacing: 16) {
         HintText(message: "Add at least one player to start")
-        HintText(message: "Undo is disabled because no pods have been saved")
+        HintText(message: "Undo is disabled because no tables have been saved")
     }
     .padding()
 }

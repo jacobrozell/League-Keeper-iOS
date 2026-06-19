@@ -1201,53 +1201,6 @@ struct LeagueEngineTests {
         }
     }
     
-    @Suite("closeWeeklyStandings")
-    @MainActor
-    struct CloseWeeklyStandingsTests {
-        
-        @Test("Advances week correctly")
-        func advancesWeekCorrectly() throws {
-            let context = try TestHelpers.contextWithTournament(week: 2)
-            
-            LeagueEngine.closeWeeklyStandings(context: context)
-            
-            let tournament = try TestHelpers.fetchActiveTournament(from: context)
-            #expect(tournament?.currentWeek == 3)
-            #expect(tournament?.currentRound == 1)
-        }
-        
-        @Test("Transitions to tournament standings on final week")
-        func transitionsOnFinalWeek() throws {
-            let context = try TestHelpers.contextWithTournament(week: 6)
-            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
-            tournament.totalWeeks = 6
-            try context.save()
-            
-            LeagueEngine.closeWeeklyStandings(context: context)
-            
-            let state = try TestHelpers.fetchLeagueState(from: context)
-            #expect(state?.screen == .tournaments)
-        }
-    }
-    
-    @Suite("exitWeeklyStandings")
-    @MainActor
-    struct ExitWeeklyStandingsTests {
-        
-        @Test("Returns to pods screen")
-        func returnsToPods() throws {
-            let context = try TestHelpers.bootstrappedContext()
-            let state = try TestHelpers.fetchLeagueState(from: context)!
-            state.currentScreen = Screen.attendance.rawValue
-            try context.save()
-            
-            LeagueEngine.exitWeeklyStandings(context: context)
-            
-            let updated = try TestHelpers.fetchLeagueState(from: context)
-            #expect(updated?.screen == .tournaments)
-        }
-    }
-    
     @Suite("closeTournamentStandings")
     @MainActor
     struct CloseTournamentStandingsTests {

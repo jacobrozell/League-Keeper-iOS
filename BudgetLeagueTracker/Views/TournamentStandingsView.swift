@@ -71,20 +71,8 @@ struct TournamentStandingsView: View {
                     }
                 }
             }
-            .overlay(alignment: .top) {
-                if let toastMessage {
-                    ToastBanner(message: toastMessage)
-                        .padding(.top, 8)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-            }
-            .animation(.easeInOut(duration: 0.2), value: toastMessage != nil)
-            .onChange(of: viewModel.persistenceErrorMessage) { _, message in
-                if let message {
-                    showToast(message)
-                    viewModel.clearPersistenceError()
-                }
-            }
+            .toastOverlay(toastMessage)
+            .onPersistenceError(viewModel.persistenceErrorMessage, showToast: showToast, clearError: viewModel.clearPersistenceError)
             .onAppear {
                 viewModel.refresh()
                 if viewModel.isFinal {
@@ -100,13 +88,7 @@ struct TournamentStandingsView: View {
     }
 
     private func showToast(_ message: String) {
-        toastMessage = message
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            if toastMessage == message {
-                toastMessage = nil
-            }
-        }
+        ToastPresentation.show(message, binding: $toastMessage)
     }
 }
 

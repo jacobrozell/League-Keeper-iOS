@@ -101,7 +101,7 @@ struct AttendanceView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    if let hint = viewModel.podLayoutHint {
+                    if let hint = viewModel.tableLayoutHint {
                         Text(hint)
                             .font(.caption)
                             .foregroundStyle(.secondary)

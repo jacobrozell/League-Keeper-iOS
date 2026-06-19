@@ -164,7 +164,7 @@ struct RoundFlowView: View {
     @ViewBuilder
     private func secondaryRoundActions(stacked: Bool) -> some View {
         switch viewModel.roundPhase {
-        case .seatingsReady where viewModel.canUndoLastTable && !viewModel.pods.isEmpty:
+        case .seatingsReady where viewModel.canUndoLastTable && !viewModel.tables.isEmpty:
             SecondaryButton(
                 title: "Undo Last Table",
                 action: onRequestUndoLastTable,
@@ -228,7 +228,7 @@ struct RoundFlowView: View {
             )
 
         case .scoring:
-            if viewModel.pods.count > 1, viewModel.currentScoringTableIndex > 0 {
+            if viewModel.tables.count > 1, viewModel.currentScoringTableIndex > 0 {
                 SecondaryButton(
                     title: "Previous Table",
                     action: { viewModel.selectScoringTable(viewModel.currentScoringTableIndex - 1) },
@@ -243,7 +243,7 @@ struct RoundFlowView: View {
                     accessibilityLabel: "Done with this table",
                     accessibilityIdentifier: "Done with Table"
                 )
-            } else if let next = viewModel.pods.indices.first(where: { !viewModel.isTableConfirmed($0) }) {
+            } else if let next = viewModel.tables.indices.first(where: { !viewModel.isTableConfirmed($0) }) {
                 PrimaryActionButton(
                     title: "Next Table",
                     action: { viewModel.selectScoringTable(next) },

@@ -35,7 +35,7 @@ final class AttendanceViewModel {
         return "\(present) of \(total) present"
     }
 
-    var podLayoutHint: String? {
+    var tableLayoutHint: String? {
         PodLayoutHint.message(presentCount: presentPlayerIds.count)
     }
 

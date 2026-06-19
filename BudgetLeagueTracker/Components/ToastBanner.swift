@@ -38,6 +38,59 @@ struct ToastBanner: View {
     }
 }
 
+// MARK: - Toast presentation
+
+enum ToastPresentation {
+    static let defaultDuration: Duration = .seconds(2.5)
+
+    @MainActor
+    static func show(_ message: String, binding: Binding<String?>) {
+        binding.wrappedValue = message
+        let shown = message
+        Task {
+            try? await Task.sleep(for: defaultDuration)
+            if binding.wrappedValue == shown {
+                binding.wrappedValue = nil
+            }
+        }
+    }
+}
+
+private struct ToastOverlayModifier: ViewModifier {
+    let message: String?
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .top) {
+                if let message {
+                    ToastBanner(message: message)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: message != nil)
+    }
+}
+
+extension View {
+    func toastOverlay(_ message: String?) -> some View {
+        modifier(ToastOverlayModifier(message: message))
+    }
+
+    func onPersistenceError(
+        _ message: String?,
+        showToast: @escaping (String) -> Void,
+        clearError: @escaping () -> Void
+    ) -> some View {
+        onChange(of: message) { _, newMessage in
+            if let newMessage {
+                showToast(newMessage)
+                clearError()
+            }
+        }
+    }
+}
+
 #Preview {
     ToastBanner(message: "Round 1 saved")
         .padding(.top)

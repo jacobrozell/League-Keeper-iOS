@@ -125,12 +125,12 @@ struct RoundSeatingView: View {
 
             if viewModel.canEditSeatings {
                 Section("Tables for Round \(viewModel.currentRound)") {
-                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                    ForEach(Array(viewModel.tables.enumerated()), id: \.offset) { index, pod in
                         EditableTableSeatingCard(
                             tableNumber: index + 1,
                             players: pod,
                             displayName: viewModel.displayName(for:),
-                            tableCount: viewModel.pods.count,
+                            tableCount: viewModel.tables.count,
                             onMovePlayer: { playerId, destination in
                                 viewModel.movePlayer(playerId, fromTable: index, toTable: destination)
                                 onMovePlayerFeedback(destination + 1)
@@ -140,7 +140,7 @@ struct RoundSeatingView: View {
                 }
             } else {
                 Section("Tables for Round \(viewModel.currentRound)") {
-                    ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                    ForEach(Array(viewModel.tables.enumerated()), id: \.offset) { index, pod in
                         TableSeatingCard(
                             tableNumber: index + 1,
                             playerNames: pod.map { viewModel.displayName(for: $0) }
@@ -156,7 +156,7 @@ struct RoundSeatingView: View {
     private var ipadSeatingsReadyContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if viewModel.pods.count == 1 {
+                if viewModel.tables.count == 1 {
                     Spacer(minLength: 32)
                 }
 
@@ -170,18 +170,18 @@ struct RoundSeatingView: View {
 
                 LazyVGrid(
                     columns: AdaptiveLayout.tableCardGridColumns(
-                        tableCount: viewModel.pods.count,
+                        tableCount: viewModel.tables.count,
                         horizontalSizeClass: horizontalSizeClass
                     ),
                     alignment: .leading,
                     spacing: 16
                 ) {
                     if viewModel.canEditSeatings {
-                        ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                        ForEach(Array(viewModel.tables.enumerated()), id: \.offset) { index, pod in
                             editableTableCard(tableIndex: index, pod: pod)
                         }
                     } else {
-                        ForEach(Array(viewModel.pods.enumerated()), id: \.offset) { index, pod in
+                        ForEach(Array(viewModel.tables.enumerated()), id: \.offset) { index, pod in
                             TableSeatingCard(
                                 tableNumber: index + 1,
                                 playerNames: pod.map { viewModel.displayName(for: $0) },
@@ -191,12 +191,12 @@ struct RoundSeatingView: View {
                     }
                 }
 
-                if viewModel.pods.count == 1 {
+                if viewModel.tables.count == 1 {
                     Spacer(minLength: 32)
                 }
             }
             .padding(20)
-            .frame(maxWidth: .infinity, minHeight: viewModel.pods.count == 1 ? 520 : nil, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: viewModel.tables.count == 1 ? 520 : nil, alignment: .topLeading)
         }
         .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -214,7 +214,7 @@ struct RoundSeatingView: View {
                         .font(.body)
                     Spacer()
                     Menu {
-                        ForEach(viewModel.pods.indices, id: \.self) { destination in
+                        ForEach(viewModel.tables.indices, id: \.self) { destination in
                             if destination != tableIndex {
                                 Button("Move to Table \(destination + 1)") {
                                     viewModel.movePlayer(player.id, fromTable: tableIndex, toTable: destination)

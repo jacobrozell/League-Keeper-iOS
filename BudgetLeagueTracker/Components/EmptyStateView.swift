@@ -55,7 +55,7 @@ struct EmptyStateView: View {
 
             EmptyStateView(
                 message: "No stats yet",
-                hint: "Add players and run pods to see stats.",
+                hint: "Add players and seat tables to see stats.",
                 systemImage: "chart.bar"
             )
         }

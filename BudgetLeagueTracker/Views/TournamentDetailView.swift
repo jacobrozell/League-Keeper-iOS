@@ -154,20 +154,9 @@ struct TournamentDetailView: View {
         } message: {
             Text("Clears saved placements and bonuses for Round \(viewModel.currentRound) of Week \(viewModel.currentWeek) so you can score again.")
         }
-        .overlay(alignment: .top) {
-            if let toastMessage {
-                ToastBanner(message: toastMessage)
-                    .padding(.top, 8)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
+        .toastOverlay(toastMessage)
         .animation(.easeInOut(duration: 0.2), value: toastMessage)
-        .onChange(of: viewModel.persistenceErrorMessage) { _, message in
-            if let message {
-                showToast(message)
-                viewModel.clearPersistenceError()
-            }
-        }
+        .onPersistenceError(viewModel.persistenceErrorMessage, showToast: showToast, clearError: viewModel.clearPersistenceError)
     }
 
     private var showsAttendanceCoachMarkBanner: Bool {
@@ -372,7 +361,7 @@ struct TournamentDetailView: View {
     private var roundTabContent: some View {
         RoundFlowView(
             viewModel: viewModel,
-            showsSeatPlayersCoachMark: showsGeneratePodsCoachMarkBanner && viewModel.pods.isEmpty,
+            showsSeatPlayersCoachMark: showsGeneratePodsCoachMarkBanner && viewModel.tables.isEmpty,
             onDismissSeatPlayersCoachMark: dismissGeneratePodsCoachMark,
             onShowToast: showToast,
             onRequestFinishRound: { showNextRoundConfirmation = true },
@@ -491,13 +480,7 @@ struct TournamentDetailView: View {
     }
 
     private func showToast(_ message: String) {
-        toastMessage = message
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            if toastMessage == message {
-                toastMessage = nil
-            }
-        }
+        ToastPresentation.show(message, binding: $toastMessage)
     }
     
     // MARK: - Completed Tournament Content
