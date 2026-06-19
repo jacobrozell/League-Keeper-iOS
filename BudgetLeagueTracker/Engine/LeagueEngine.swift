@@ -87,6 +87,30 @@ enum LeagueEngine {
     }
     
     /// Updates an existing tournament's name and settings.
+    struct TournamentEditWarnings: Equatable {
+        let messages: [String]
+        var requiresConfirmation: Bool { !messages.isEmpty }
+    }
+
+    static func tournamentEditWarnings(
+        for tournament: Tournament,
+        totalWeeks: Int,
+        standingsBasedSeating: Bool,
+        rules: TournamentRules
+    ) -> TournamentEditWarnings {
+        var messages: [String] = []
+        if tournament.status == .ongoing, totalWeeks < tournament.currentWeek {
+            messages.append("This season is on week \(tournament.currentWeek). Shortening total weeks hides later weeks but keeps saved scores.")
+        }
+        if tournament.status == .ongoing, tournament.standingsBasedSeating != standingsBasedSeating {
+            messages.append("Seating rule changes apply to future rounds, not tables already scored.")
+        }
+        if tournament.status == .ongoing, tournament.rules != rules {
+            messages.append("House rule changes mid-season affect how you run future nights — existing scores stay as recorded.")
+        }
+        return TournamentEditWarnings(messages: messages)
+    }
+
     static func updateTournament(
         context: ModelContext,
         id: String,

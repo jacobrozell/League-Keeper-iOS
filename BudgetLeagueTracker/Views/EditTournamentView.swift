@@ -57,8 +57,7 @@ struct EditTournamentView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        viewModel.saveEdit()
-                        dismiss()
+                        viewModel.requestSaveEdit()
                     }
                     .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                     .disabled(viewModel.editName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -72,6 +71,18 @@ struct EditTournamentView: View {
             }
         }
         .presentationDetents([.large])
+        .alert("Save tournament changes?", isPresented: $viewModel.showEditSaveConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Save", role: .destructive) {
+                viewModel.saveEdit()
+                dismiss()
+            }
+        } message: {
+            Text(viewModel.pendingEditWarningMessages.joined(separator: "\n\n"))
+        }
+        .onChange(of: viewModel.editingTournament) { _, tournament in
+            if tournament == nil { dismiss() }
+        }
     }
 
     private func dismissKeyboard() {

@@ -74,7 +74,8 @@ struct TournamentDetailView: View {
         }
         .sheet(isPresented: $showEditRoundPicker) {
             EditRoundPickerView(
-                rounds: viewModel.editableRoundsThisWeek,
+                rounds: viewModel.editableRounds,
+                currentWeek: viewModel.currentWeek,
                 onSelect: { index in
                     showEditRoundPicker = false
                     viewModel.editRound(snapshotIndex: index)
@@ -134,7 +135,7 @@ struct TournamentDetailView: View {
         .alert("Edit scored round?", isPresented: $showEditLastRoundConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button(viewModel.editRoundConfirmationButtonTitle) {
-                let rounds = viewModel.editableRoundsThisWeek
+                let rounds = viewModel.editableRounds
                 if rounds.count == 1, let only = rounds.first {
                     viewModel.editRound(snapshotIndex: only.snapshotIndex)
                 } else {

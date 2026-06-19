@@ -35,7 +35,7 @@ struct OnboardingView: View {
             symbol: "trophy.fill",
             title: AppInfo.displayName,
             subtitle: "Your league scorekeeper",
-            body: "Track Magic game nights on your iPhone or iPad — who's playing, table seating, finish order, bonus achievements, and weekly standings."
+            body: "Track Magic game nights on this device — who's playing, table seating, finish order, bonus achievements, and weekly standings."
         ),
         Page(
             id: 1,
@@ -288,17 +288,17 @@ struct OnboardingView: View {
                 }
             } else {
                 VStack(spacing: 12) {
-                    Button("Try sample league") { onComplete(.loadSample) }
+                    Button("Create my tournament") { onComplete(.createTournament) }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.regular)
                         .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier("onboardingLoadSample")
+                        .accessibilityIdentifier("onboardingCreateTournament")
 
-                    Button("Create my tournament") { onComplete(.createTournament) }
+                    Button("Try sample league") { onComplete(.loadSample) }
                         .buttonStyle(.bordered)
                         .controlSize(.regular)
                         .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier("onboardingCreateTournament")
+                        .accessibilityIdentifier("onboardingLoadSample")
                 }
 
                 HStack(spacing: 12) {
@@ -325,17 +325,17 @@ struct OnboardingView: View {
                 .accessibilityIdentifier("onboardingContinue")
         } else {
             VStack(spacing: 10) {
-                Button("Try sample league") { onComplete(.loadSample) }
+                Button("Create my tournament") { onComplete(.createTournament) }
                     .buttonStyle(.borderedProminent)
                     .controlSize(largeText ? .regular : .large)
                     .frame(maxWidth: .infinity)
-                    .accessibilityIdentifier("onboardingLoadSample")
+                    .accessibilityIdentifier("onboardingCreateTournament")
 
-                Button("Create my tournament") { onComplete(.createTournament) }
+                Button("Try sample league") { onComplete(.loadSample) }
                     .buttonStyle(.bordered)
                     .controlSize(largeText ? .regular : .large)
                     .frame(maxWidth: .infinity)
-                    .accessibilityIdentifier("onboardingCreateTournament")
+                    .accessibilityIdentifier("onboardingLoadSample")
 
                 Button("Set up later") { onComplete(.dismiss) }
                     .font(.subheadline.weight(.medium))

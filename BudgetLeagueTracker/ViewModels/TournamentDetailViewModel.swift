@@ -250,7 +250,36 @@ final class TournamentDetailViewModel {
     }
     
     var canEdit: Bool {
-        !editableRoundsThisWeek.isEmpty
+        !editableRounds.isEmpty
+    }
+
+    /// All scored rounds that can be corrected, including prior weeks.
+    var editableRounds: [EditableRoundOption] {
+        guard let tournament else { return [] }
+        return tournament.podHistorySnapshots.enumerated().map { index, snapshot in
+            EditableRoundOption(
+                snapshotIndex: index,
+                week: snapshot.week,
+                round: snapshot.round,
+                playerCount: snapshot.playerIds.count
+            )
+        }
+    }
+
+    /// Scored rounds from the current week that can be corrected.
+    var editableRoundsThisWeek: [EditableRoundOption] {
+        editableRounds.filter { $0.week == currentWeek }
+    }
+
+    var editableRoundsGroupedByWeek: [(week: Int, rounds: [EditableRoundOption])] {
+        let grouped = Dictionary(grouping: editableRounds, by: \.week)
+        return grouped.keys.sorted().map { week in
+            (week: week, rounds: grouped[week]?.sorted(by: { $0.round < $1.round }) ?? [])
+        }
+    }
+
+    func isPriorWeekEdit(_ option: EditableRoundOption) -> Bool {
+        option.week != currentWeek
     }
 
     /// Whether the host can undo the most recently saved table from a prior round.
@@ -261,20 +290,6 @@ final class TournamentDetailViewModel {
     /// Whether the host can drag players between tables before scoring starts.
     var canEditSeatings: Bool {
         roundPhase == .seatingsReady
-    }
-
-    /// Scored rounds from the current week that can be corrected.
-    var editableRoundsThisWeek: [EditableRoundOption] {
-        guard let tournament else { return [] }
-        return tournament.podHistorySnapshots.enumerated().compactMap { index, snapshot in
-            guard snapshot.week == currentWeek else { return nil }
-            return EditableRoundOption(
-                snapshotIndex: index,
-                week: snapshot.week,
-                round: snapshot.round,
-                playerCount: snapshot.playerIds.count
-            )
-        }
     }
 
     /// Rows for table-facing standings display.
@@ -331,15 +346,18 @@ final class TournamentDetailViewModel {
     }
 
     var editRoundConfirmationButtonTitle: String {
-        editableRoundsThisWeek.count == 1 ? "Edit" : "Choose Round"
+        editableRounds.count == 1 ? "Edit" : "Choose Round"
     }
 
     var editRoundConfirmationMessage: String {
-        if editableRoundsThisWeek.count == 1, let round = editableRoundsThisWeek.first {
+        if editableRounds.count == 1, let round = editableRounds.first {
+            if isPriorWeekEdit(round) {
+                return "Fix Week \(round.week) Round \(round.round). Standings will recalculate for that week."
+            }
             return "Fix Week \(round.week) Round \(round.round) placements or achievements."
         }
-        let count = editableRoundsThisWeek.count
-        return "Pick one of \(count) scored rounds from this week to fix placements or achievements."
+        let count = editableRounds.count
+        return "Pick one of \(count) scored rounds to fix placements or achievements. Prior weeks recalculate standings."
     }
 
     /// Whether the host can advance to the next round or week.

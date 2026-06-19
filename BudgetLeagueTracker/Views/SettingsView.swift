@@ -18,6 +18,8 @@ struct SettingsView: View {
     @State private var pendingImportPreview: LeagueBackupImportPreview?
     @State private var backupError: String?
     @State private var backupSuccessMessage: String?
+    @State private var dataHealthIssues: [DataHealthChecker.Issue] = []
+    @State private var showDataHealthDetail = false
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
@@ -63,6 +65,29 @@ struct SettingsView: View {
                 .brandedInsetListRow()
             } header: {
                 Text("Appearance")
+            }
+
+            Section {
+                if dataHealthIssues.isEmpty {
+                    Label("All league data looks healthy", systemImage: "checkmark.seal")
+                        .foregroundStyle(AppConstants.AccessibleColors.activeStatus)
+                        .brandedInsetListRow()
+                } else {
+                    Button {
+                        showDataHealthDetail = true
+                    } label: {
+                        Label("\(dataHealthIssues.count) data issue\(dataHealthIssues.count == 1 ? "" : "s") found", systemImage: "exclamationmark.triangle")
+                    }
+                    .accessibilityIdentifier("settings_dataHealth")
+                    .brandedInsetListRow()
+                }
+            } header: {
+                Text("Data health")
+            } footer: {
+                if dataHealthIssues.isEmpty {
+                    Text("Checks stored tournament data for problems. Export a backup before major changes.")
+                        .font(.caption)
+                }
             }
 
             Section {
@@ -156,6 +181,10 @@ struct SettingsView: View {
             if exportURL == nil {
                 prepareExport()
             }
+            refreshDataHealth()
+        }
+        .sheet(isPresented: $showDataHealthDetail) {
+            dataHealthSheet
         }
         .fileImporter(
             isPresented: $showImportPicker,
@@ -244,6 +273,39 @@ struct SettingsView: View {
                 Text("Help")
             }
         }
+    }
+
+    @ViewBuilder
+    private var dataHealthSheet: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Export a backup first if you plan to edit tournaments or import new data.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                ForEach(dataHealthIssues) { issue in
+                    Section {
+                        Text(issue.message)
+                        Text(issue.repairHint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Data health")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { showDataHealthDetail = false }
+                }
+            }
+        }
+    }
+
+    private func refreshDataHealth() {
+        dataHealthIssues = DataHealthChecker.scan(context: modelContext)
     }
 
     @ViewBuilder
@@ -357,6 +419,7 @@ struct SettingsView: View {
             self.pendingImportData = nil
             self.pendingImportPreview = nil
             prepareExport()
+            refreshDataHealth()
             backupSuccessMessage = preview?.successMessage ?? "League data restored from backup."
             AppHaptics.success()
         } catch {

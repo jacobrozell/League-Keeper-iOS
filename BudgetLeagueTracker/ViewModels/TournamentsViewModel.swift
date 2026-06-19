@@ -25,6 +25,8 @@ final class TournamentsViewModel {
     var editRandomPerWeek: Int = AppConstants.League.defaultRandomAchievementsPerWeek
     var editStandingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating
     var editRules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
+    var showEditSaveConfirmation = false
+    var pendingEditWarningMessages: [String] = []
     
     // MARK: - Computed Properties
     
@@ -182,6 +184,22 @@ final class TournamentsViewModel {
     }
     
     /// Saves the current edit and dismisses the sheet.
+    func requestSaveEdit() {
+        guard let tournament = editingTournament else { return }
+        let warnings = LeagueEngine.tournamentEditWarnings(
+            for: tournament,
+            totalWeeks: editWeeks,
+            standingsBasedSeating: editStandingsBasedSeating,
+            rules: editRules
+        )
+        if warnings.requiresConfirmation {
+            pendingEditWarningMessages = warnings.messages
+            showEditSaveConfirmation = true
+        } else {
+            saveEdit()
+        }
+    }
+
     func saveEdit() {
         guard let tournament = editingTournament else { return }
         LeagueEngine.updateTournament(
@@ -193,6 +211,8 @@ final class TournamentsViewModel {
             standingsBasedSeating: editStandingsBasedSeating,
             rules: editRules
         )
+        showEditSaveConfirmation = false
+        pendingEditWarningMessages = []
         editingTournament = nil
         refresh()
     }
