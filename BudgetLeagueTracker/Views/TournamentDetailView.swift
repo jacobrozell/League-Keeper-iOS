@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SwiftData
 
 /// Tournament detail view - landing page for a tournament.
@@ -25,6 +26,7 @@ struct TournamentDetailView: View {
     @State private var showRulesSheet = false
     @State private var showStandingsDisplay = false
     @State private var showEditRoundPicker = false
+    @State private var showUndoLastTableConfirmation = false
     @State private var toastMessage: String?
     
     var body: some View {
@@ -118,6 +120,17 @@ struct TournamentDetailView: View {
                 onContinue: { viewModel.dismissWeekCompleteSheet() }
             )
         }
+        .alert("Undo last table?", isPresented: $showUndoLastTableConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Undo", role: .destructive) {
+                if viewModel.undoLastTable() {
+                    AppHaptics.success()
+                    showToast("Last table removed")
+                }
+            }
+        } message: {
+            Text("Removes scores from the most recently saved table this week. You can seat and score again.")
+        }
         .alert("Edit scored round?", isPresented: $showEditLastRoundConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button(viewModel.editRoundConfirmationButtonTitle) {
@@ -131,14 +144,14 @@ struct TournamentDetailView: View {
         } message: {
             Text(viewModel.editRoundConfirmationMessage)
         }
-        .alert("Back to scoring?", isPresented: $showReopenScoringConfirmation) {
+        .alert("Clear all table scores?", isPresented: $showReopenScoringConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Clear Scores", role: .destructive) {
                 viewModel.reopenScoring()
                 showToast("Update table results, then review again")
             }
         } message: {
-            Text("Clears saved placements and bonuses for every table this round so you can score again.")
+            Text("Clears saved placements and bonuses for Round \(viewModel.currentRound) of Week \(viewModel.currentWeek) so you can score again.")
         }
         .overlay(alignment: .top) {
             if let toastMessage {
@@ -168,6 +181,26 @@ struct TournamentDetailView: View {
     private var tournamentToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             HStack(spacing: 16) {
+                if viewModel.isOngoing, viewModel.activeTab == .standings, !viewModel.standingsForDisplay.isEmpty {
+                    ShareLink(item: viewModel.standingsDisplayShareText) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .adaptiveToolbarLabelStyle(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
+                    .accessibilityLabel("Share standings")
+                    .accessibilityIdentifier("shareStandings")
+                }
+
+                if viewModel.isOngoing {
+                    Button {
+                        viewModel.goToAttendance()
+                    } label: {
+                        Label("Edit Attendance", systemImage: "person.2")
+                    }
+                    .adaptiveToolbarLabelStyle(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
+                    .accessibilityLabel("Edit Attendance")
+                    .accessibilityIdentifier("Edit Attendance")
+                }
+
                 if !viewModel.standingsDisplayRows.isEmpty {
                     Button {
                         showStandingsDisplay = true
@@ -343,7 +376,8 @@ struct TournamentDetailView: View {
             onShowToast: showToast,
             onRequestFinishRound: { showNextRoundConfirmation = true },
             onRequestEditLastRound: { showEditLastRoundConfirmation = true },
-            onRequestReopenScoring: { showReopenScoringConfirmation = true }
+            onRequestReopenScoring: { showReopenScoringConfirmation = true },
+            onRequestUndoLastTable: { showUndoLastTableConfirmation = true }
         )
     }
     
@@ -377,20 +411,11 @@ struct TournamentDetailView: View {
                 )
                 Spacer()
             } else {
-                VStack(spacing: 0) {
-                    Button {
-                        showStandingsDisplay = true
-                    } label: {
-                        Label("Show on Table", systemImage: "display")
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+                standingsActionRow
                     .padding(.horizontal)
                     .padding(.top, 8)
-                    .accessibilityIdentifier("showStandingsDisplay")
 
-                    List {
+                List {
                         ForEach(Array(viewModel.standingsForDisplay.enumerated()), id: \.element.player.id) { index, standing in
                             StandingsRow(
                                 rank: index + 1,
@@ -404,9 +429,45 @@ struct TournamentDetailView: View {
                         }
                     }
                     .listStyle(.insetGrouped)
-                }
             }
         }
+    }
+
+    @ViewBuilder
+    private var standingsActionRow: some View {
+        let usesWideRow = horizontalSizeClass == .regular
+            && UIDevice.current.userInterfaceIdiom == .pad
+
+        if usesWideRow {
+            HStack(spacing: 12) {
+                standingsShowOnTableButton
+                standingsShareButton
+            }
+        } else {
+            standingsShowOnTableButton
+        }
+    }
+
+    private var standingsShowOnTableButton: some View {
+        Button {
+            showStandingsDisplay = true
+        } label: {
+            Label("Show on Table", systemImage: "display")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("showStandingsDisplay")
+    }
+
+    private var standingsShareButton: some View {
+        ShareLink(item: viewModel.standingsDisplayShareText) {
+            Label("Share Standings", systemImage: "square.and.arrow.up")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("shareStandingsInline")
     }
     
     // MARK: - Actions

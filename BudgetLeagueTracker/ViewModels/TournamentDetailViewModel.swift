@@ -252,6 +252,11 @@ final class TournamentDetailViewModel {
         !editableRoundsThisWeek.isEmpty
     }
 
+    /// Whether the host can undo the most recently saved table from a prior round.
+    var canUndoLastTable: Bool {
+        podHistoryCount > 0
+    }
+
     /// Whether the host can drag players between tables before scoring starts.
     var canEditSeatings: Bool {
         roundPhase == .seatingsReady
@@ -630,6 +635,20 @@ final class TournamentDetailViewModel {
     /// Legacy alias.
     func shufflePods() {
         reshuffleTables()
+    }
+
+    /// Undoes the last saved table from pod history.
+    @discardableResult
+    func undoLastTable() -> Bool {
+        guard canUndoLastTable else { return false }
+        guard LeagueEngine.undoLastPod(context: context) else {
+            persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
+            return false
+        }
+        pods = []
+        currentScoringTableIndex = 0
+        refresh()
+        return true
     }
     
     // MARK: - Actions: Round / Table Management

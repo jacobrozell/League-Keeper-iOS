@@ -166,12 +166,10 @@ final class WeeklyRoundFlowTests: XCTestCase {
         advanceRound()
 
         ensurePodsForCurrentRound()
-        // Edit should be available in the More menu
-        app.openPodsMoreMenu()
+        // Edit is on the sticky action bar during review
         let editButton = app.buttons["Edit Last Round"]
         guard editButton.waitForExistence(timeout: 3) else { return }
         
-        // Tap edit, confirm alert, then verify edit sheet
         editButton.tap()
 
         let editConfirm = app.buttons["Edit"]

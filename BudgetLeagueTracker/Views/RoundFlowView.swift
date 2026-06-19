@@ -9,6 +9,7 @@ struct RoundFlowView: View {
     var onRequestFinishRound: () -> Void
     var onRequestEditLastRound: () -> Void
     var onRequestReopenScoring: () -> Void
+    var onRequestUndoLastTable: () -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -803,15 +804,44 @@ struct RoundFlowView: View {
         StickyBottomActionBar {
             if stacked {
                 VStack(spacing: 12) {
+                    secondaryRoundActions(stacked: true)
                     primaryRoundActions(stacked: true)
-                    roundMoreMenu(stacked: true)
                 }
             } else {
-                HStack(spacing: 12) {
-                    primaryRoundActions(stacked: false)
-                    roundMoreMenu(stacked: false)
+                VStack(spacing: 12) {
+                    secondaryRoundActions(stacked: false)
+                    HStack(spacing: 12) {
+                        primaryRoundActions(stacked: false)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func secondaryRoundActions(stacked: Bool) -> some View {
+        switch viewModel.roundPhase {
+        case .seatingsReady where viewModel.canUndoLastTable && !viewModel.pods.isEmpty:
+            SecondaryButton(
+                title: "Undo Last Table",
+                action: onRequestUndoLastTable,
+                accessibilityLabel: "Undo last table",
+                accessibilityIdentifier: "Undo Last Table"
+            )
+            .frame(maxWidth: stacked ? .infinity : nil)
+
+        case .review where viewModel.canEdit:
+            SecondaryButton(
+                title: "Edit Scored Round",
+                action: onRequestEditLastRound,
+                accessibilityLabel: "Edit scored round",
+                accessibilityIdentifier: "Edit Last Round"
+            )
+            .frame(maxWidth: stacked ? .infinity : nil)
+
+        default:
+            EmptyView()
         }
     }
 
@@ -897,33 +927,6 @@ struct RoundFlowView: View {
                 viewModel.canNextRound ? nil : "Score every table before finishing the round."
             )
         }
-    }
-
-    @ViewBuilder
-    private func roundMoreMenu(stacked: Bool) -> some View {
-        Menu {
-            if viewModel.canEdit {
-                Button("Edit Scored Round") {
-                    onRequestEditLastRound()
-                }
-                .accessibilityIdentifier("Edit Last Round")
-            }
-            Button("Edit Attendance") {
-                viewModel.goToAttendance()
-            }
-            .accessibilityIdentifier("Edit Attendance")
-        } label: {
-            Label("More", systemImage: "ellipsis.circle")
-                .font(.subheadline.weight(.medium))
-                .frame(
-                    maxWidth: stacked ? .infinity : nil,
-                    minHeight: AppConstants.UI.minTouchTargetHeight
-                )
-                .padding(.horizontal, stacked ? 0 : 12)
-        }
-        .buttonStyle(.bordered)
-        .accessibilityLabel("More actions")
-        .accessibilityIdentifier("roundMoreMenu")
     }
 
     // MARK: - Actions

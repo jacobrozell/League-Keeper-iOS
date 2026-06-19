@@ -90,10 +90,10 @@ struct AdaptiveLayoutTests {
         )
     }
 
-    @Test("keeps segmented section picker in landscape at default text")
-    func segmentedSectionPickerInLandscape() {
+    @Test("uses menu section picker in landscape at default text")
+    func menuSectionPickerInLandscape() {
         #expect(
-            !AdaptiveLayout.usesMenuSectionPicker(
+            AdaptiveLayout.usesMenuSectionPicker(
                 dynamicType: .large,
                 verticalSizeClass: .compact
             )

@@ -73,12 +73,12 @@ enum AdaptiveLayout {
         )
     }
 
-    /// Use menu-style section pickers when segmented labels won't fit (large Dynamic Type only).
+    /// Use menu-style section pickers when segmented labels won't fit (landscape or large text).
     static func usesMenuSectionPicker(
         dynamicType: DynamicTypeSize,
         verticalSizeClass: UserInterfaceSizeClass?
     ) -> Bool {
-        dynamicType.isAccessibilitySize
+        dynamicType.isAccessibilitySize || verticalSizeClass == .compact
     }
 
     /// Stack the pods action bar vertically in iPhone landscape or at large accessibility text sizes.

@@ -84,7 +84,16 @@ struct AttendanceView: View {
                     Text(viewModel.presentCountLabel)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    Button("Mark all") {
+                        viewModel.markAllPresent()
+                    }
+                    .accessibilityIdentifier("attendanceMarkAll")
+                    Button("Clear all") {
+                        viewModel.markAllAbsent()
+                    }
+                    .accessibilityIdentifier("attendanceClearAll")
                 }
+                .font(.subheadline)
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
                     if !viewModel.canConfirmAttendance {
@@ -97,18 +106,6 @@ struct AttendanceView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    HStack {
-                        Button("Mark all") {
-                            viewModel.markAllPresent()
-                        }
-                        .accessibilityIdentifier("attendanceMarkAll")
-                        Spacer()
-                        Button("Clear all") {
-                            viewModel.markAllAbsent()
-                        }
-                        .accessibilityIdentifier("attendanceClearAll")
-                    }
-                    .font(.subheadline)
                 }
             }
         }
