@@ -1,0 +1,69 @@
+{
+  "element_count": 11,
+  "buttons": 3,
+  "switches": 2,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "CheckBox",
+      "label": "Count achievements this week",
+      "uid": null,
+      "enabled": true,
+      "frame": {
+        "y": 272.33333333333337,
+        "x": 0,
+        "width": 402,
+        "height": 279.33333333333337
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Mark all",
+      "uid": "attendanceMarkAll",
+      "enabled": true,
+      "frame": {
+        "y": 637.3333333333333,
+        "x": 227,
+        "width": 81,
+        "height": 116.66666666666663
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Clear all",
+      "uid": "attendanceClearAll",
+      "enabled": true,
+      "frame": {
+        "y": 608.3333333333333,
+        "x": 316,
+        "width": 70,
+        "height": 174.66666666666663
+      }
+    },
+    {
+      "type": "CheckBox",
+      "label": "Mark Alice as present",
+      "uid": "toggle-Alice",
+      "enabled": true,
+      "frame": {
+        "y": 821.6666666666666,
+        "x": 0,
+        "width": 402,
+        "height": 93.33333333333337
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Confirm Attendance",
+      "uid": "Confirm Attendance",
+      "enabled": false,
+      "frame": {
+        "y": 692.6666666666666,
+        "x": 16,
+        "width": 370,
+        "height": 139.33333333333337
+      }
+    }
+  ]
+}

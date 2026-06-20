@@ -22,6 +22,14 @@ struct RoundFlowView: View {
         )
     }
 
+    private var usesStackedSidebar: Bool {
+        AdaptiveLayout.usesStackedSidebarLayout(
+            dynamicType: dynamicTypeSize,
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+    }
+
     var body: some View {
         Group {
             if !viewModel.hasPresentPlayers {
@@ -55,10 +63,15 @@ struct RoundFlowView: View {
         Group {
             if usesSidebarLayout {
                 AdaptiveSidebarLayout {
-                    ScrollView {
+                    if usesStackedSidebar {
                         roundSidebarPanels
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        ScrollView {
+                            roundSidebarPanels
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
                 } main: {
                     roundPhaseMainContent
                 }

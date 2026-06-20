@@ -24,6 +24,7 @@ struct PrimaryActionButton: View {
         .buttonStyle(.borderedProminent)
         .tint(Color("AccentColor"))
         .disabled(isDisabled)
+        .opacity(isDisabled ? 0.55 : 1)
         .accessibilityLabel(accessibilityLabel ?? title)
         .accessibilityHintIf(isDisabled ? disabledAccessibilityHint : nil)
 

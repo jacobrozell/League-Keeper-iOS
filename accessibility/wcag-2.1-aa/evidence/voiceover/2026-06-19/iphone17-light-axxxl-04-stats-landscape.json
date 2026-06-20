@@ -1,0 +1,57 @@
+{
+  "element_count": 13,
+  "buttons": 4,
+  "switches": 0,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "Button",
+      "label": "Tournaments",
+      "uid": "BackButton",
+      "enabled": true,
+      "frame": {
+        "y": 62,
+        "x": 16,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Edit Attendance",
+      "uid": "Edit Attendance",
+      "enabled": true,
+      "frame": {
+        "y": 66,
+        "x": -7,
+        "width": 209,
+        "height": 36
+      }
+    },
+    {
+      "type": "Button",
+      "label": "House Rules",
+      "uid": "Tournament Rules",
+      "enabled": true,
+      "frame": {
+        "y": 66,
+        "x": 218,
+        "width": 164,
+        "height": 36
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Show progress steps",
+      "uid": "progressStepsToggle",
+      "enabled": true,
+      "frame": {
+        "y": -80.66666666666666,
+        "x": 16,
+        "width": 297.3333333333333,
+        "height": 102.33333333333333
+      }
+    }
+  ]
+}

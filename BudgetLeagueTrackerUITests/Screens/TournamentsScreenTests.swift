@@ -176,4 +176,44 @@ final class TournamentsScreenTests: XCTestCase {
             XCTAssertTrue(tournamentsTab.isHittable, "Tournaments tab should be hittable in landscape")
         }
     }
+
+    func testAttendanceConfirmVisibleInLandscape() {
+        app.terminate()
+        app.launchArguments = ["--uitesting", "UI-Testing-Seed-Attendance"]
+        app.launch()
+
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = XCTWaiter.wait(for: [XCTestExpectation(description: "orientation")], timeout: 2)
+
+        let confirmButton = app.buttons["Confirm Attendance"]
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 8), "Confirm Attendance should exist in landscape")
+        XCTAssertTrue(confirmButton.isHittable, "Confirm Attendance should be fully tappable in landscape")
+    }
+
+    func testTournamentDetailRoundVisibleInLandscape() {
+        app.terminate()
+        app.launchArguments = ["--uitesting", "UI-Testing-Seed-TournamentDetail"]
+        app.launch()
+
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = XCTWaiter.wait(for: [XCTestExpectation(description: "orientation")], timeout: 2)
+
+        let detailPicker = app.descendants(matching: .any)["tournamentDetailSectionPicker"]
+        XCTAssertTrue(detailPicker.waitForExistence(timeout: 8), "Tournament detail should load in landscape")
+
+        app.selectTournamentDetailSection("Round")
+        XCTAssertTrue(app.waitForRoundReady(timeout: 8), "Round tab should be ready in landscape")
+
+        let seatButton = app.buttons["Seat Players"]
+        let startButton = app.buttons["Start Scoring"]
+        XCTAssertTrue(
+            seatButton.exists || startButton.exists,
+            "Round sticky actions should be visible in landscape"
+        )
+        if seatButton.exists {
+            XCTAssertTrue(seatButton.isHittable, "Seat Players should be tappable in landscape")
+        } else {
+            XCTAssertTrue(startButton.isHittable, "Start Scoring should be tappable in landscape")
+        }
+    }
 }

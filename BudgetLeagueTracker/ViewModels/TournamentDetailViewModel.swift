@@ -98,7 +98,7 @@ final class TournamentDetailViewModel {
     }
 
     var tournamentRules: TournamentRules {
-        tournament?.rules ?? AppConstants.TournamentRulesDefaults.defaultRules
+        tournament?.rules ?? AppConstants.TournamentRulesDefaults.simpleLeagueRules
     }
     
     var weekProgressString: String {
@@ -152,7 +152,8 @@ final class TournamentDetailViewModel {
         case .attendance:
             return "Mark who's here this week"
         case .seatPlayers:
-            return "Seat players at tables of four for Round \(currentRound)"
+            let tableSize = tournament?.effectivePlayersPerTable ?? AppConstants.League.defaultPlayersPerTable
+            return "Seat players at tables of \(tableSize) for Round \(currentRound)"
         case .scoreRound:
             switch roundPhase {
             case .seatingsReady:
@@ -189,7 +190,7 @@ final class TournamentDetailViewModel {
 
         return [
             TournamentProgressStep(id: "attendance", title: "Attendance", state: attendanceState),
-            TournamentProgressStep(id: "seat", title: "Seat Tables", state: seatState),
+            TournamentProgressStep(id: "seat", title: "Seat Players", state: seatState),
             TournamentProgressStep(id: "score", title: "Score Round", state: scoreState)
         ]
     }
@@ -200,7 +201,18 @@ final class TournamentDetailViewModel {
     }
 
     var tableLayoutHint: String? {
-        PodLayoutHint.message(presentCount: presentPlayerIds.count)
+        PodLayoutHint.message(
+            presentCount: presentPlayerIds.count,
+            podSize: tournament?.effectivePlayersPerTable ?? AppConstants.League.defaultPlayersPerTable
+        )
+    }
+
+    var leaguePresetLabel: String? {
+        tournament?.leaguePreset?.summaryLabel
+    }
+
+    var playersPerTable: Int {
+        tournament?.effectivePlayersPerTable ?? AppConstants.League.defaultPlayersPerTable
     }
 
     /// Whether any present player has scored points this week.
@@ -680,7 +692,8 @@ final class TournamentDetailViewModel {
             currentRound: currentRound,
             standingsBasedSeating: tournament.standingsBasedSeating,
             previousRoundPlacements: previousPlacements,
-            forceRandom: forceRandom
+            forceRandom: forceRandom,
+            podSize: tournament.effectivePlayersPerTable
         )
 
         tournament.currentRoundPodsPlayerIds = tables.map { $0.map(\.id) }

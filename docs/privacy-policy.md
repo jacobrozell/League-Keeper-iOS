@@ -8,7 +8,7 @@
 
 ## Overview
 
-League Keeper is an iOS app for running and tracking Magic: The Gathering budget leagues. This policy describes how the app handles your data.
+League Keeper is an iOS app for running and tracking recurring game leagues — weekly game nights, tabletop groups, and card-game seasons. Magic: The Gathering budget leagues are a common use case; the app includes an optional Budget Commander preset. This policy describes how the app handles your data.
 
 ---
 
@@ -20,7 +20,7 @@ League Keeper **does not collect, transmit, or store any personal data** on serv
 
 ## Data storage
 
-All data you create in the app (players, tournaments, pods, standings, achievements, settings) is stored **only on your device** using Apple’s standard on-device storage (SwiftData). No league data is sent to the internet.
+All data you create in the app (players, tournaments, table seatings, standings, achievements, settings) is stored **only on your device** using Apple’s standard on-device storage (SwiftData). No league data is sent to the internet.
 
 ---
 

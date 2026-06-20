@@ -55,19 +55,42 @@ struct StatsView: View {
                 dynamicType: dynamicTypeSize,
                 verticalSizeClass: verticalSizeClass
             ) {
-                HStack {
-                    Text("Section")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Picker("Section", selection: $viewModel.activeSegment) {
-                        ForEach(viewModel.visibleSegments, id: \.self) { segment in
-                            Text(segment.rawValue).tag(segment)
+                Group {
+                    if AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Section")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Picker("Section", selection: $viewModel.activeSegment) {
+                                ForEach(viewModel.visibleSegments, id: \.self) { segment in
+                                    Text(segment.rawValue).tag(segment)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .accessibilityIdentifier("statsSectionPicker")
+                            .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        HStack {
+                            Text("Section")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer(minLength: 12)
+                            Picker("Section", selection: $viewModel.activeSegment) {
+                                ForEach(viewModel.visibleSegments, id: \.self) { segment in
+                                    Text(segment.rawValue).tag(segment)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .accessibilityIdentifier("statsSectionPicker")
+                            .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
+                            .frame(maxWidth: 240, alignment: .trailing)
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .pickerStyle(.menu)
-                    .accessibilityIdentifier("statsSectionPicker")
-                    .accessibilitySelectedSection("Section", value: viewModel.activeSegment.rawValue)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, chromePadding)

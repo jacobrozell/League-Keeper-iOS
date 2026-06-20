@@ -1,6 +1,6 @@
 # Support – League Keeper
 
-Get help with League Keeper (Budget League Tracker) for iOS.
+Get help with League Keeper — a weekly league scorekeeper for game nights, tabletop groups, and optional Budget Commander (MTG) presets.
 
 ---
 

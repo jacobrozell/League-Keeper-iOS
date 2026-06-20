@@ -10,13 +10,20 @@ struct AchievementDescriptionText: View {
     let description: String?
     var style: Style = .standard
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         if let description, !description.isEmpty {
             Text(description)
                 .font(style == .standard ? .caption : .caption2)
-                .foregroundStyle(style == .standard ? .secondary : .tertiary)
-                .lineLimit(style == .compact ? 2 : nil)
+                .foregroundStyle(.secondary)
+                .lineLimit(compactLineLimit)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var compactLineLimit: Int? {
+        guard style == .compact else { return nil }
+        return dynamicTypeSize.isAccessibilitySize ? nil : 2
     }
 }

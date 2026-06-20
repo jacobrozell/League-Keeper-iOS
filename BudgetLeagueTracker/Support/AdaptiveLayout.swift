@@ -9,6 +9,12 @@ enum AdaptiveLayout {
     /// Fixed width for sidebar panels in two-column iPad layouts.
     static let sidebarWidth: CGFloat = 320
 
+    /// Minimum sidebar width when using proportional sizing on iPad.
+    static let sidebarMinimumWidth: CGFloat = 300
+
+    /// Maximum sidebar width when using proportional sizing on iPad.
+    static let sidebarMaximumWidth: CGFloat = 420
+
     /// Horizontal gap between sidebar and main column.
     static let columnSpacing: CGFloat = 20
 
@@ -18,6 +24,13 @@ enum AdaptiveLayout {
         if dynamicType >= .accessibility3 { return 160 }
         if dynamicType.isAccessibilitySize { return 120 }
         return 88
+    }
+
+    /// Bottom scroll inset so list content clears sticky primary action bars.
+    static func stickyActionBarClearance(for dynamicType: DynamicTypeSize) -> CGFloat {
+        if dynamicType >= .accessibility5 { return 180 }
+        if dynamicType.isAccessibilitySize { return 140 }
+        return 96
     }
 
     /// iPad landscape: regular width with limited vertical space (not iPhone landscape).
@@ -79,6 +92,11 @@ enum AdaptiveLayout {
         verticalSizeClass: UserInterfaceSizeClass?
     ) -> Bool {
         dynamicType.isAccessibilitySize || verticalSizeClass == .compact
+    }
+
+    /// Stack label + menu picker vertically at accessibility text sizes.
+    static func usesStackedLabelPickerRow(dynamicType: DynamicTypeSize) -> Bool {
+        dynamicType.isAccessibilitySize
     }
 
     /// Stack the pods action bar vertically in iPhone landscape or at large accessibility text sizes.
@@ -143,6 +161,28 @@ enum AdaptiveLayout {
             horizontalSizeClass: horizontalSizeClass,
             verticalSizeClass: verticalSizeClass
         )
+    }
+
+    /// Stack sidebar panels above main content when side-by-side columns are too narrow for large text.
+    @MainActor
+    static func usesStackedSidebarLayout(
+        dynamicType: DynamicTypeSize,
+        horizontalSizeClass: UserInterfaceSizeClass?,
+        verticalSizeClass: UserInterfaceSizeClass? = nil
+    ) -> Bool {
+        guard dynamicType.isAccessibilitySize else { return false }
+        return usesRegularWidthLayout(
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: verticalSizeClass
+        )
+    }
+
+    /// Sidebar column width for iPad two-column layouts.
+    static func sidebarWidth(for dynamicType: DynamicTypeSize, containerWidth: CGFloat) -> CGFloat {
+        let proportion: CGFloat = dynamicType.isAccessibilitySize ? 0.4 : 0.35
+        let minimum: CGFloat = dynamicType.isAccessibilitySize ? 360 : sidebarMinimumWidth
+        let maximum = min(sidebarMaximumWidth, containerWidth * 0.45)
+        return min(maximum, max(minimum, containerWidth * proportion))
     }
 
     /// Two-column grid for player toggle lists on regular-width layouts.
@@ -212,22 +252,50 @@ private struct AdaptiveEmptyStateLayout: ViewModifier {
     }
 }
 
-/// Sidebar + main column on iPad; stacked vertically on iPhone.
+/// Sidebar + main column on iPad; stacked vertically on iPhone or at accessibility text sizes.
 struct AdaptiveSidebarLayout<Sidebar: View, Main: View>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ViewBuilder let sidebar: () -> Sidebar
     @ViewBuilder let main: () -> Main
 
-    var body: some View {
-        if AdaptiveLayout.usesTwoColumnLayout(
+    private var usesRegularWidth: Bool {
+        AdaptiveLayout.usesTwoColumnLayout(
             horizontalSizeClass: horizontalSizeClass,
             verticalSizeClass: verticalSizeClass
-        ) {
-            HStack(alignment: .top, spacing: AdaptiveLayout.columnSpacing) {
+        )
+    }
+
+    private var usesSideBySideColumns: Bool {
+        usesRegularWidth
+            && !AdaptiveLayout.usesStackedSidebarLayout(
+                dynamicType: dynamicTypeSize,
+                horizontalSizeClass: horizontalSizeClass,
+                verticalSizeClass: verticalSizeClass
+            )
+    }
+
+    var body: some View {
+        if usesSideBySideColumns {
+            GeometryReader { proxy in
+                let width = AdaptiveLayout.sidebarWidth(
+                    for: dynamicTypeSize,
+                    containerWidth: proxy.size.width
+                )
+                HStack(alignment: .top, spacing: AdaptiveLayout.columnSpacing) {
+                    sidebar()
+                        .frame(width: width, alignment: .topLeading)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                    main()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+        } else if usesRegularWidth {
+            VStack(alignment: .leading, spacing: 16) {
                 sidebar()
-                    .frame(width: AdaptiveLayout.sidebarWidth, alignment: .top)
-                    .frame(maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 main()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }

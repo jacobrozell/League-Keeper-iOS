@@ -10,6 +10,8 @@ struct RoundSeatingView: View {
     var includeSidebarSections: Bool
     var onMovePlayerFeedback: (Int) -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         switch viewModel.roundPhase {
         case .seating:
@@ -39,7 +41,7 @@ struct RoundSeatingView: View {
                 Section {
                     CoachMarkBanner(
                         title: "Ready to seat players",
-                        message: "When everyone's here, use Seat Players below to assign tables of four for Round \(viewModel.currentRound).",
+                        message: "When everyone's here, use Seat Players below to assign tables of \(viewModel.playersPerTable) for Round \(viewModel.currentRound).",
                         onDismiss: { onDismissSeatPlayersCoachMark?() }
                     )
                 }
@@ -59,13 +61,18 @@ struct RoundSeatingView: View {
                 VStack(spacing: 16) {
                     EmptyStateView(
                         message: "No tables yet",
-                        hint: "Use Seat Players below to assign tables of four for Round \(viewModel.currentRound)."
+                        hint: "Use Seat Players below to assign tables of \(viewModel.playersPerTable) for Round \(viewModel.currentRound)."
                     )
                 }
                 .padding(.vertical, 8)
             }
         }
         .listStyle(.insetGrouped)
+        .contentMargins(
+            .bottom,
+            AdaptiveLayout.stickyActionBarClearance(for: dynamicTypeSize),
+            for: .scrollContent
+        )
     }
 
     @ViewBuilder
@@ -75,14 +82,14 @@ struct RoundSeatingView: View {
                 if showsSeatPlayersCoachMark {
                     CoachMarkBanner(
                         title: "Ready to seat players",
-                        message: "When everyone's here, use Seat Players below to assign tables of four for Round \(viewModel.currentRound).",
+                        message: "When everyone's here, use Seat Players below to assign tables of \(viewModel.playersPerTable) for Round \(viewModel.currentRound).",
                         onDismiss: { onDismissSeatPlayersCoachMark?() }
                     )
                 }
 
                 EmptyStateView(
                     message: "No tables yet",
-                    hint: "Use Seat Players below to assign tables of four for Round \(viewModel.currentRound)."
+                    hint: "Use Seat Players below to assign tables of \(viewModel.playersPerTable) for Round \(viewModel.currentRound)."
                 )
             }
             .frame(maxWidth: .infinity)

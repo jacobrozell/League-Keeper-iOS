@@ -43,7 +43,7 @@ struct PlayerRoundDetailSheet: View {
                     }
                 }
 
-                Section("Pod") {
+                Section("Table") {
                     ForEach(detail.podmates) { podmate in
                         HStack {
                             Text(podmate.playerName)

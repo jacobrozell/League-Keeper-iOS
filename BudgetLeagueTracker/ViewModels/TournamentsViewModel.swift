@@ -24,7 +24,8 @@ final class TournamentsViewModel {
     var editWeeks: Int = AppConstants.League.defaultTotalWeeks
     var editRandomPerWeek: Int = AppConstants.League.defaultRandomAchievementsPerWeek
     var editStandingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating
-    var editRules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
+    var editRules: TournamentRules = AppConstants.TournamentRulesDefaults.simpleLeagueRules
+    var editPreset: LeaguePreset = .simpleLeague
     var showEditSaveConfirmation = false
     var pendingEditWarningMessages: [String] = []
     private(set) var persistenceErrorMessage: String?
@@ -190,6 +191,7 @@ final class TournamentsViewModel {
         editRandomPerWeek = tournament.randomAchievementsPerWeek
         editStandingsBasedSeating = tournament.standingsBasedSeating
         editRules = tournament.rules
+        editPreset = tournament.leaguePreset ?? (tournament.rules.includesDeckBudgetRules ? .budgetCommander : .simpleLeague)
     }
     
     /// Saves the current edit and dismisses the sheet.

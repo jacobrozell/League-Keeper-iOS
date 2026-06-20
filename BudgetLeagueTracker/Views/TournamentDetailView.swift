@@ -270,19 +270,26 @@ struct TournamentDetailView: View {
                 dynamicType: dynamicTypeSize,
                 verticalSizeClass: verticalSizeClass
             ) {
-                HStack {
-                    Text("Section")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Picker("Section", selection: sectionTabSelection) {
-                        ForEach(TournamentDetailTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
+                Group {
+                    if AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Section")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            sectionMenuPicker
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        HStack {
+                            Text("Section")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer(minLength: 12)
+                            sectionMenuPicker
+                                .frame(maxWidth: 240, alignment: .trailing)
                         }
                     }
-                    .pickerStyle(.menu)
-                    .accessibilityIdentifier("tournamentDetailSectionPicker")
-                    .accessibilitySelectedSection("Section", value: viewModel.activeTab.rawValue)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, chromePadding)
@@ -305,6 +312,30 @@ struct TournamentDetailView: View {
         }
     }
 
+    private var sectionMenuPicker: some View {
+        Picker("Section", selection: sectionTabSelection) {
+            ForEach(TournamentDetailTab.allCases, id: \.self) { tab in
+                Text(tab.rawValue).tag(tab)
+            }
+        }
+        .pickerStyle(.menu)
+        .accessibilityIdentifier("tournamentDetailSectionPicker")
+        .accessibilitySelectedSection("Section", value: viewModel.activeTab.rawValue)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var standingsWeekPicker: some View {
+        Picker("Week", selection: $viewModel.selectedStandingsWeek) {
+            ForEach(Array(viewModel.standingsWeekOptions.enumerated()), id: \.offset) { _, option in
+                Text(option.label).tag(option.week as Int?)
+            }
+        }
+        .pickerStyle(.menu)
+        .accessibilityLabel("Standings week")
+        .accessibilityValue(viewModel.standingsWeekPickerLabel)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     private var sectionTabSelection: Binding<TournamentDetailTab> {
         Binding(
             get: { viewModel.activeTab },
@@ -320,7 +351,8 @@ struct TournamentDetailView: View {
             steps: viewModel.progressSteps,
             currentRound: viewModel.currentRound,
             roundsPerWeek: AppConstants.League.roundsPerWeek,
-            nextStepHint: viewModel.nextStepHint
+            nextStepHint: viewModel.nextStepHint,
+            presetLabel: viewModel.leaguePresetLabel
         )
     }
 
@@ -374,20 +406,28 @@ struct TournamentDetailView: View {
     @ViewBuilder
     private var standingsTabContent: some View {
         VStack(spacing: 0) {
-            // Week selector
-            HStack {
-                Text("View by week")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Picker("Week", selection: $viewModel.selectedStandingsWeek) {
-                    ForEach(Array(viewModel.standingsWeekOptions.enumerated()), id: \.offset) { _, option in
-                        Text(option.label).tag(option.week as Int?)
+            Group {
+                if AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("View by week")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        standingsWeekPicker
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack {
+                        Text("View by week")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 12)
+                        standingsWeekPicker
+                            .frame(maxWidth: 240, alignment: .trailing)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .pickerStyle(.menu)
-                .accessibilityLabel("Standings week")
-                .accessibilityValue(viewModel.standingsWeekPickerLabel)
             }
             .padding()
             .background(Color(.secondarySystemBackground))
@@ -603,6 +643,11 @@ struct TournamentDetailRoute: View {
             showsGeneratePodsCoachMark: showsGeneratePodsCoachMark,
             onDismissGeneratePodsCoachMark: onDismissGeneratePodsCoachMark
         )
+        .onAppear {
+            if let tab = UITestSnapshot.consumePendingDetailTab() {
+                viewModel.setTab(tab, userInitiated: false)
+            }
+        }
     }
 }
 

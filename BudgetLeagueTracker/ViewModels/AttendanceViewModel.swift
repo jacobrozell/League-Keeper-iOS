@@ -36,7 +36,11 @@ final class AttendanceViewModel {
     }
 
     var tableLayoutHint: String? {
-        PodLayoutHint.message(presentCount: presentPlayerIds.count)
+        guard let tournament = LeagueEngine.fetchActiveTournament(context: context) else { return nil }
+        return PodLayoutHint.message(
+            presentCount: presentPlayerIds.count,
+            podSize: tournament.effectivePlayersPerTable
+        )
     }
 
     /// True when attendance has already been saved for the active tournament week.

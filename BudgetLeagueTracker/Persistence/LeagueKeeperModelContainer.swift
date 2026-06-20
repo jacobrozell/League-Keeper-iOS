@@ -11,7 +11,7 @@ enum LeagueKeeperModelContainer {
             config = ModelConfiguration(isStoredInMemoryOnly: isStoredInMemoryOnly)
         }
         return try ModelContainer(
-            for: Schema(versionedSchema: LeagueKeeperSchemaV1.self),
+            for: Schema(versionedSchema: LeagueKeeperSchemaV2.self),
             migrationPlan: LeagueKeeperMigrationPlan.self,
             configurations: [config]
         )

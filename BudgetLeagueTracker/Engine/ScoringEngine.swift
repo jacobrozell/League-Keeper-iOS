@@ -67,9 +67,10 @@ enum ScoringEngine {
 
         let roundPodGroups = tournament.currentRoundPodsPlayerIds
         let podIdByPlayer = podIds(forPlacements: placements, podGroups: roundPodGroups)
+        let placementScale = tournament.placementPointsScale
 
         for (playerId, place) in placements {
-            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
+            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place, scale: placementScale)
 
             var achievementPts = 0
             var earnedAchievementIds: [String] = []
@@ -251,9 +252,10 @@ enum ScoringEngine {
         var newPlayerDeltas: [String: PlayerDelta] = [:]
         var newWeeklyDeltas: [String: WeeklyPlayerPoints] = [:]
         var newCheckRecords: [AchievementCheck] = []
+        let placementScale = tournament.placementPointsScale
 
         for (playerId, place) in newPlacements {
-            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place)
+            let placementPts = AppConstants.Scoring.placementPoints(forPlace: place, scale: placementScale)
 
             var achievementPts = 0
 

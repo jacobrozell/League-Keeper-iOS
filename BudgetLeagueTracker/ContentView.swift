@@ -95,6 +95,9 @@ struct ContentView: View {
             if attendanceViewModel == nil {
                 attendanceViewModel = AttendanceViewModel(context: modelContext)
             }
+            if let snapshotTab = UITestSnapshot.consumePendingMainTab() {
+                selectedTab = appTab(for: snapshotTab)
+            }
             UITestBootstrap.openPendingTournamentDetailIfNeeded(
                 context: modelContext,
                 navigationPath: &tournamentsNavigationPath
@@ -289,6 +292,14 @@ struct ContentView: View {
         attendanceViewModel?.refresh()
         if let tournamentId = LeagueEngine.fetchLeagueState(context: modelContext)?.activeTournamentId {
             openTournamentDetail(tournamentId: tournamentId)
+        }
+    }
+
+    private func appTab(for tab: ContentViewSnapshotTab) -> AppTab {
+        switch tab {
+        case .stats: return .stats
+        case .achievements: return .achievements
+        case .settings: return .settings
         }
     }
 }

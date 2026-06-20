@@ -8,25 +8,29 @@ enum PodEngine {
         currentRound: Int,
         standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
         previousRoundPlacements: [String: Int] = [:],
-        forceRandom: Bool = false
+        forceRandom: Bool = false,
+        podSize: Int = AppConstants.League.defaultPlayersPerTable
     ) -> [[Player]] {
         let presentPlayers = players.filter { presentPlayerIds.contains($0.id) }
         guard !presentPlayers.isEmpty else { return [] }
 
-        let podSize = AppConstants.League.podSize
+        let tableSize = min(
+            max(podSize, AppConstants.League.playersPerTableRange.lowerBound),
+            AppConstants.League.playersPerTableRange.upperBound
+        )
         let useRandomSeating = forceRandom
             || currentRound == 1
             || !standingsBasedSeating
             || previousRoundPlacements.isEmpty
 
         if useRandomSeating {
-            return chunkIntoPods(presentPlayers.shuffled(), podSize: podSize)
+            return chunkIntoPods(presentPlayers.shuffled(), podSize: tableSize)
         }
 
         return podsGroupedByPreviousPlacement(
             presentPlayers: presentPlayers,
             previousPlacements: previousRoundPlacements,
-            podSize: podSize
+            podSize: tableSize
         )
     }
 

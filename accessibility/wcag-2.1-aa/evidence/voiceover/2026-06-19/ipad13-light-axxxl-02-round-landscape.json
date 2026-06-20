@@ -1,0 +1,33 @@
+{
+  "element_count": 12,
+  "buttons": 2,
+  "switches": 0,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "Button",
+      "label": "Show progress steps",
+      "uid": "progressStepsToggle",
+      "enabled": true,
+      "frame": {
+        "y": 227,
+        "x": 72,
+        "width": 404,
+        "height": 51.5
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Seat Players",
+      "uid": "Seat Players",
+      "enabled": true,
+      "frame": {
+        "y": 1270.5,
+        "x": 72,
+        "width": 888,
+        "height": 77.5
+      }
+    }
+  ]
+}

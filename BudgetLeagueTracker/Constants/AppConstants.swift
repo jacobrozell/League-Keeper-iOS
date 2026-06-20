@@ -12,6 +12,17 @@ enum AppConstants {
         static let minTouchTargetHeight: CGFloat = 44
     }
 
+    /// User-facing terminology (internal code may still use "pod").
+    enum Copy {
+        static let tableSingular = "table"
+        static let tablePlural = "tables"
+        static let seatPlayers = "Seat players"
+        static let scoreRound = "Score round"
+        static let onePerTable = "One player per table"
+        static let onePerTableFootnote = "Only one player at a table can earn this each round."
+        static let unlimitedFootnote = "Multiple players can earn full points at the same table."
+    }
+
     enum Player {
         /// Optional nickname shown when distinguishing same-name players.
         static let nameNoteMaxLength = 32
@@ -73,8 +84,13 @@ enum AppConstants {
         /// Number of rounds per week
         static let roundsPerWeek = 3
         
-        /// Number of players per pod
+        /// Default number of players per table (legacy alias: podSize)
         static let podSize = 4
+
+        /// Valid range for players per table when creating a tournament
+        static let playersPerTableRange = 2...8
+
+        static let defaultPlayersPerTable = 4
         
         /// Default current week when starting
         static let defaultCurrentWeek = 1
@@ -126,30 +142,46 @@ enum AppConstants {
                 playstyleNotes: playstyleNotes
             )
         }
+
+        static var simpleLeagueRules: TournamentRules {
+            TournamentRules(
+                entryFeeCents: 0,
+                signupBoosterPrize: false,
+                podWinnerBoosterPrize: false,
+                deckBudgetCents: 0,
+                pricingSource: .tcgPlayer,
+                maxCardPriceCents: 0,
+                commanderExcludedFromBudget: false,
+                basicLandsExcludedFromBudget: false,
+                commanderPriceLimitCents: nil,
+                targetBracket: nil,
+                playstyleNotes: ""
+            )
+        }
     }
     
     // MARK: - Scoring
     
     enum Scoring {
-        /// Returns placement points for a given place (1st through 4th)
-        /// - Parameter place: The finishing place (1-4)
-        /// - Returns: Points awarded (1st=4, 2nd=3, 3rd=2, 4th=1)
+        static let defaultPlacementScale = [4, 3, 2, 1]
+
+        /// Returns placement points for a given place using the default 4-player scale.
         static func placementPoints(forPlace place: Int) -> Int {
-            switch place {
-            case 1: return 4
-            case 2: return 3
-            case 3: return 2
-            case 4: return 1
-            default: return 0
-            }
+            placementPoints(forPlace: place, scale: defaultPlacementScale)
         }
-        
-        /// Dictionary mapping placement to points
+
+        /// Returns placement points for a given place using a tournament-specific scale.
+        static func placementPoints(forPlace place: Int, scale: [Int]) -> Int {
+            guard place >= 1, place <= scale.count else { return 0 }
+            return scale[place - 1]
+        }
+
+        /// Dictionary mapping placement to points (default scale)
         static let placementToPoints: [Int: Int] = [
-            1: 4,
-            2: 3,
-            3: 2,
-            4: 1
+            1: defaultPlacementScale[0],
+            2: defaultPlacementScale[1],
+            3: defaultPlacementScale[2],
+            4: defaultPlacementScale[3]
         ]
         
         /// Initial placement points for a new player
@@ -176,7 +208,7 @@ enum AppConstants {
 
     enum DefaultAchievement {
         /// Name of the default seeded achievement
-        static let name = "First Blood"
+        static let name = "Table Captain"
 
         /// Points for the default achievement
         static let points = 1
@@ -185,13 +217,13 @@ enum AppConstants {
         static let alwaysOn = false
 
         /// Default rule description
-        static let achievementDescription = "First player to eliminate another player"
+        static let achievementDescription = "Kept the game moving and helped others"
 
         /// Default category
-        static let category: AchievementCategory = .combat
+        static let category: AchievementCategory = .social
 
         /// Default icon
-        static let iconName = "flame.fill"
+        static let iconName = "megaphone.fill"
 
         /// Default exclusivity
         static let exclusivity: AchievementExclusivity = .onePerPod

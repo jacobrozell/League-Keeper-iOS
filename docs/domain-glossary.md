@@ -4,15 +4,29 @@ Terms used throughout League Keeper documentation, specs, and support.
 
 ---
 
+## UI vs code terminology
+
+| Internal (code) | User-facing (UI) |
+|-----------------|------------------|
+| Pod | Table |
+| Generate pods | Seat players |
+| Pod scoring | Score round |
+| onePerPod (exclusivity) | One player per table |
+
+Code types (`PodEngine`, `PodSnapshot`, analytics events) keep internal names. User-visible strings use **table** or **round** as appropriate.
+
+---
+
 ## League & tournament
 
 | Term | Definition |
 |------|------------|
 | **League** | The overall player pool and achievement catalog shared across tournaments. Persisted as global `Player` and `Achievement` records plus one `LeagueState`. |
 | **Tournament** | A multi-week season with a fixed number of weeks, weekly rounds, and final standings. Only one tournament is *active* at a time. |
-| **Active tournament** | The tournament referenced by `LeagueState.activeTournamentId`. Drives attendance, pods, and stats for the current season. |
-| **Week** | One meeting of the league within a tournament. Each week has up to three **rounds** of pods. |
-| **Round** | One set of pods played in a week (1, 2, or 3). After round 3, **weekly standings** are shown. |
+| **League preset** | Template applied at tournament creation (`simpleLeague` or `budgetCommander`). Copied into stored rules; optional metadata on `Tournament`. |
+| **Active tournament** | The tournament referenced by `LeagueState.activeTournamentId`. Drives attendance, table seating, and stats for the current season. |
+| **Week** | One meeting of the league within a tournament. Each week has up to three **rounds** of table play. |
+| **Round** | One set of tables played in a week (1, 2, or 3). After round 3, **weekly standings** are shown. |
 
 ---
 
@@ -20,18 +34,18 @@ Terms used throughout League Keeper documentation, specs, and support.
 
 | Term | Definition |
 |------|------------|
-| **Pod** | A group of four players who play one game together in a round. Placements (1st–4th) are recorded per player. |
-| **Placement** | Finish position in a pod: 1st, 2nd, 3rd, or 4th. |
-| **Placement points** | Points from placement: 4 / 3 / 2 / 1 for 1st–4th. See [scoring-rules.md](scoring-rules.md). |
-| **Achievement** | A named bonus (e.g. "First Blood") worth a fixed number of points when earned in a pod. May include a description, icon, category, and exclusivity rules (v2). |
-| **Achievement template** | Pre-defined achievement used to seed the add form; not stored until the host saves. |
+| **Pod** (internal) / **Table** (UI) | A group of players (default four, configurable 2–8) who play one game together in a round. Placements are recorded per player. |
+| **Placement** | Finish position at a table: 1st through N (N = players per table). |
+| **Placement points** | Points from placement; default scale 4 / 3 / 2 / 1 for 1st–4th. Configurable per tournament. See [scoring-rules.md](scoring-rules.md). |
+| **Achievement** | A named bonus (e.g. "Table Captain") worth a fixed number of points when earned at a table. May include a description, icon, category, and exclusivity rules. |
+| **Achievement template** | Pre-defined achievement used to seed the add form; grouped into **Generic** and **Card game** libraries. |
 | **Points tier** | UI preset (Small / Standard / Big / Trophy) mapping to point values with placement context. |
 | **Always-on achievement** | Counts every week it is active without being rolled randomly. UI label: "Every week". |
 | **Random achievement** | Rolled from the catalog each week (`randomAchievementsPerWeek` on the tournament). UI label: "Random pool". |
-| **Achievement exclusivity** | Who can earn: anyone (`unlimited`), one player per pod (`onePerPod`), or once per week per player (`onePerWeekPerPlayer`). |
-| **Achievements on this week** | User toggle during attendance: whether achievement checkboxes appear in pod scoring. |
-| **Present players** | Players marked attending for the current week; only they are grouped into pods. |
-| **Pod history** | Saved pods for the current week, used for undo and standings calculation. |
+| **Achievement exclusivity** | Who can earn: anyone (`unlimited`), one player per table (`onePerPod`), or once per week per player (`onePerWeekPerPlayer`). |
+| **Achievements on this week** | User toggle during attendance: whether achievement checkboxes appear during round scoring. |
+| **Present players** | Players marked attending for the current week; only they are seated at tables. |
+| **Pod history** (internal) | Saved table results for the current week, used for undo and standings calculation. |
 
 ---
 
@@ -62,3 +76,4 @@ Terms used throughout League Keeper documentation, specs, and support.
 - [scoring-rules.md](scoring-rules.md) — numeric rules
 - [data-model.md](data-model.md) — persistence
 - [user-flows.md](user-flows.md) — journeys
+- [generic-league-positioning-plan.md](generic-league-positioning-plan.md) — positioning initiative

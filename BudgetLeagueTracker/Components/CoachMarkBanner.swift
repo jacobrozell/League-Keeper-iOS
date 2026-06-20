@@ -42,7 +42,7 @@ struct CoachMarkBanner: View {
         Section {
             CoachMarkBanner(
                 title: "Start each week here",
-                message: "Mark who's here, then tap Confirm Attendance to unlock pod scoring.",
+                message: "Mark who's here, then tap Confirm Attendance to unlock round scoring.",
                 onDismiss: {}
             )
         }

@@ -212,11 +212,27 @@ extension XCUIApplication {
         moreMenu.tap()
     }
 
-    /// Selects a section on the tournament detail segmented control.
+    /// Selects a section on the tournament detail segmented control or menu picker.
     func selectTournamentDetailSection(_ title: String) {
         let picker = descendants(matching: .any)["tournamentDetailSectionPicker"]
         XCTAssertTrue(picker.waitForExistence(timeout: 5), "Tournament detail section picker should exist")
-        picker.buttons[title].tap()
+
+        if picker.buttons[title].waitForExistence(timeout: 1) {
+            picker.buttons[title].tap()
+            return
+        }
+
+        picker.tap()
+
+        let menuOption = buttons[title]
+        if menuOption.waitForExistence(timeout: 3) {
+            menuOption.tap()
+            return
+        }
+
+        let menuItem = menus.buttons[title]
+        XCTAssertTrue(menuItem.waitForExistence(timeout: 3), "Section menu option \(title) should exist")
+        menuItem.tap()
     }
     
     // MARK: - Verification Helpers

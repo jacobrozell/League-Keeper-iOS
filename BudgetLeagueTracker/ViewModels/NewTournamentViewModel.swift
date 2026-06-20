@@ -22,8 +22,22 @@ final class NewTournamentViewModel {
     /// When true, rounds 2–3 seat by previous-round finish instead of random.
     var standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating
 
+    /// Selected league preset (defaults to simple league).
+    var selectedPreset: LeaguePreset = .simpleLeague {
+        didSet {
+            guard selectedPreset != oldValue else { return }
+            rules = selectedPreset.defaultRules()
+        }
+    }
+
+    /// Players seated at each table for this tournament.
+    var playersPerTable: Int = AppConstants.League.defaultPlayersPerTable
+
+    /// Placement point scale preset.
+    var placementScalePreset: PlacementScalePreset = .standard
+
     /// Deck, prize, and playstyle rules for the new tournament.
-    var rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
+    var rules: TournamentRules = LeaguePreset.simpleLeague.defaultRules()
     
     /// All existing players
     var allPlayers: [Player] = []
@@ -84,6 +98,12 @@ final class NewTournamentViewModel {
         let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\.name)])
         allPlayers = (try? context.fetch(descriptor)) ?? []
     }
+
+    /// Applies a league preset, resetting rules to preset defaults.
+    func applyPreset(_ preset: LeaguePreset) {
+        selectedPreset = preset
+        rules = preset.defaultRules()
+    }
     
     /// Toggles player selection.
     func togglePlayer(_ player: Player) {
@@ -139,7 +159,10 @@ final class NewTournamentViewModel {
             playerIds: Array(selectedPlayerIds),
             presentAttendance: !isSheetMode,
             standingsBasedSeating: standingsBasedSeating,
-            rules: rules
+            rules: rules,
+            leaguePreset: selectedPreset,
+            playersPerTable: playersPerTable,
+            placementPointsScale: placementScalePreset.scale
         ) else {
             persistenceErrorMessage = PersistenceError.saveFailed.toastMessage
             return false

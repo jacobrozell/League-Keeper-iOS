@@ -39,7 +39,13 @@ struct EditTournamentView: View {
                         .font(.caption)
                 }
 
-                TournamentRulesFormSection(rules: $viewModel.editRules)
+                TournamentRulesFormSection(
+                    rules: $viewModel.editRules,
+                    showsDeckBudgetDetails: viewModel.editPreset.showsDeckBudgetDetails,
+                    resetButtonTitle: viewModel.editPreset == .budgetCommander
+                        ? "Reset to Budget Commander defaults"
+                        : "Reset to simple league defaults"
+                )
                     .id(tournament.id)
             }
             .listStyle(.insetGrouped)

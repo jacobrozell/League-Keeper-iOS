@@ -62,32 +62,62 @@ struct TournamentRules: Codable, Equatable, Sendable {
     var playstyleNotes: String
 
     static var clientDefault: TournamentRules {
-        AppConstants.TournamentRulesDefaults.defaultRules
+        AppConstants.TournamentRulesDefaults.simpleLeagueRules
+    }
+
+    /// Whether deck-budget and commander-specific fields apply to this rules set.
+    var includesDeckBudgetRules: Bool {
+        deckBudgetCents > 0
+            || maxCardPriceCents > 0
+            || commanderExcludedFromBudget
+            || basicLandsExcludedFromBudget
+            || commanderPriceLimitCents != nil
+            || targetBracket != nil
     }
 
     /// Grouped summary for display in tournament detail.
     func summarySections() -> [TournamentRulesSummarySection] {
-        [
+        var sections: [TournamentRulesSummarySection] = [
             TournamentRulesSummarySection(
                 title: "Entry & Prizes",
                 iconName: "ticket",
                 lines: entryAndPrizeLines()
-            ),
-            TournamentRulesSummarySection(
-                title: "Deck Budget",
-                iconName: "square.stack.3d.up",
-                lines: deckBudgetLines()
-            ),
-            TournamentRulesSummarySection(
-                title: "Playstyle",
-                iconName: "sparkles",
-                lines: playstyleLines()
             )
-        ].filter { !$0.lines.isEmpty }
+        ]
+
+        if includesDeckBudgetRules {
+            sections.append(
+                TournamentRulesSummarySection(
+                    title: "Deck Budget",
+                    iconName: "square.stack.3d.up",
+                    lines: deckBudgetLines()
+                )
+            )
+        }
+
+        let playstyle = playstyleLines()
+        if !playstyle.isEmpty {
+            sections.append(
+                TournamentRulesSummarySection(
+                    title: "Playstyle",
+                    iconName: "sparkles",
+                    lines: playstyle
+                )
+            )
+        }
+
+        return sections
     }
 
     /// Short subtitle for headers and list context.
     func compactSummary() -> String {
+        if !includesDeckBudgetRules {
+            if entryFeeCents == 0 {
+                return "Simple league rules"
+            }
+            return "\(Self.formatDollars(entryFeeCents)) entry"
+        }
+
         var parts: [String] = []
         parts.append(entryFeeCents == 0 ? "Free Entry" : Self.formatDollars(entryFeeCents))
         parts.append("\(Self.formatDollars(deckBudgetCents)) Budget")

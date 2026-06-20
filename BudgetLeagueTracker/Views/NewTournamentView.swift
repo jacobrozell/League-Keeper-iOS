@@ -31,6 +31,18 @@ struct NewTournamentView: View {
                     range: AppConstants.League.randomAchievementsPerWeekRange
                 )
 
+                LabeledStepper(
+                    title: "Players per table",
+                    value: $viewModel.playersPerTable,
+                    range: AppConstants.League.playersPerTableRange
+                )
+
+                Picker("Placement points", selection: $viewModel.placementScalePreset) {
+                    ForEach(PlacementScalePreset.allCases) { preset in
+                        Text(preset.displayName).tag(preset)
+                    }
+                }
+
                 LabeledToggle(
                     title: "Standings-based seating",
                     isOn: $viewModel.standingsBasedSeating
@@ -42,7 +54,28 @@ struct NewTournamentView: View {
                     .font(.caption)
             }
 
-            TournamentRulesFormSection(rules: $viewModel.rules)
+            Section {
+                Picker("League type", selection: $viewModel.selectedPreset) {
+                    ForEach(LeaguePreset.allCases) { preset in
+                        Text(preset.displayName).tag(preset)
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } header: {
+                Text("League Type")
+            } footer: {
+                Text(viewModel.selectedPreset.footer)
+                    .font(.caption)
+            }
+
+            TournamentRulesFormSection(
+                rules: $viewModel.rules,
+                showsDeckBudgetDetails: viewModel.selectedPreset.showsDeckBudgetDetails,
+                resetButtonTitle: viewModel.selectedPreset == .budgetCommander
+                    ? "Reset to Budget Commander defaults"
+                    : "Reset to simple league defaults"
+            )
             
             // Players
             Section {

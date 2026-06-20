@@ -34,7 +34,7 @@ struct PlacementPicker: View {
     }
 
     private var placementPicker: some View {
-        let upperBound = min(max(maxPlace, 1), AppConstants.League.podSize)
+        let upperBound = max(maxPlace, 1)
         return Picker("Placement", selection: $selection) {
             ForEach(1...upperBound, id: \.self) { place in
                 Text(Self.shortLabel(for: place))

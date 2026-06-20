@@ -1,0 +1,33 @@
+{
+  "element_count": 9,
+  "buttons": 2,
+  "switches": 0,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "Button",
+      "label": "Skip",
+      "uid": "onboardingSkip",
+      "enabled": true,
+      "frame": {
+        "y": 36,
+        "x": 1305,
+        "width": 57,
+        "height": 36
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Continue",
+      "uid": "onboardingContinue",
+      "enabled": true,
+      "frame": {
+        "y": 961.5,
+        "x": 1055,
+        "width": 93,
+        "height": 34.5
+      }
+    }
+  ]
+}

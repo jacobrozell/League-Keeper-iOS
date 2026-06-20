@@ -105,7 +105,7 @@ struct TournamentDetailViewModelTests {
             let context = try TestHelpers.bootstrappedContext()
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: "missing")
 
-            #expect(viewModel.tournamentRules == AppConstants.TournamentRulesDefaults.defaultRules)
+            #expect(viewModel.tournamentRules == AppConstants.TournamentRulesDefaults.simpleLeagueRules)
         }
     }
     

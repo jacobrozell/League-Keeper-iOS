@@ -1,6 +1,6 @@
 # League Keeper (Budget League Tracker)
 
-League Keeper helps you run and track Magic: The Gathering budget leagues: create tournaments, record attendance and pods, score placement and achievements, and view weekly and final standings.
+League Keeper helps you run and track recurring game leagues: create tournaments, record attendance and table seating, score placement and achievements, and view weekly and final standings. Budget Commander (MTG) is available as a one-tap preset for card-game hosts.
 
 - **Platform:** iOS 18+, Swift 6, SwiftUI, SwiftData
 - **Project:** XcodeGen (`project.yml`) → `BudgetLeagueTracker.xcodeproj`

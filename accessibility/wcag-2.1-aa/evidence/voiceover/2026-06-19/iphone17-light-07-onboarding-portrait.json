@@ -1,0 +1,33 @@
+{
+  "element_count": 9,
+  "buttons": 2,
+  "switches": 0,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "Button",
+      "label": "Skip",
+      "uid": "onboardingSkip",
+      "enabled": true,
+      "frame": {
+        "y": 66,
+        "x": 325,
+        "width": 57,
+        "height": 36
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Continue",
+      "uid": "onboardingContinue",
+      "enabled": true,
+      "frame": {
+        "y": 773.6666666666666,
+        "x": 146.66666666666666,
+        "width": 108.66666666666666,
+        "height": 50.33333333333337
+      }
+    }
+  ]
+}

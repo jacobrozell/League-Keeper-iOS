@@ -11,6 +11,7 @@ struct AttendanceView: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable var viewModel: AttendanceViewModel
     var navigationStyle: NavigationStyle = .embedded
     /// When true, shows a banner that attendance is already confirmed for this week.
@@ -58,6 +59,11 @@ struct AttendanceView: View {
             }
             
             Section {
+                if AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+                    whoIsPlayingHeader
+                        .listRowSeparator(.hidden)
+                }
+
                 if AdaptiveLayout.usesTwoColumnPlayerGrid(
                     horizontalSizeClass: horizontalSizeClass,
                     verticalSizeClass: verticalSizeClass
@@ -78,22 +84,9 @@ struct AttendanceView: View {
 
                 addPlayerRow
             } header: {
-                HStack {
-                    Text("Who's playing?")
-                    Spacer()
-                    Text(viewModel.presentCountLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Button("Mark all") {
-                        viewModel.markAllPresent()
-                    }
-                    .accessibilityIdentifier("attendanceMarkAll")
-                    Button("Clear all") {
-                        viewModel.markAllAbsent()
-                    }
-                    .accessibilityIdentifier("attendanceClearAll")
+                if !AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+                    whoIsPlayingHeader
                 }
-                .font(.subheadline)
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
                     if !viewModel.canConfirmAttendance {
@@ -140,6 +133,48 @@ struct AttendanceView: View {
     }
     
     @ViewBuilder
+    private var whoIsPlayingHeader: some View {
+        if AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: dynamicTypeSize) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Who's playing?")
+                Text(viewModel.presentCountLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 16) {
+                    Button("Mark all") {
+                        viewModel.markAllPresent()
+                    }
+                    .accessibilityIdentifier("attendanceMarkAll")
+                    Button("Clear all") {
+                        viewModel.markAllAbsent()
+                    }
+                    .accessibilityIdentifier("attendanceClearAll")
+                }
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textCase(nil)
+        } else {
+            HStack {
+                Text("Who's playing?")
+                Spacer()
+                Text(viewModel.presentCountLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("Mark all") {
+                    viewModel.markAllPresent()
+                }
+                .accessibilityIdentifier("attendanceMarkAll")
+                Button("Clear all") {
+                    viewModel.markAllAbsent()
+                }
+                .accessibilityIdentifier("attendanceClearAll")
+            }
+            .font(.subheadline)
+        }
+    }
+
+    @ViewBuilder
     private func attendancePlayerRow(_ player: Player) -> some View {
         PlayerRow(
             name: viewModel.displayName(for: player),
@@ -180,6 +215,7 @@ struct AttendanceView: View {
 }
 
 private struct AttendanceNavigationModifier: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let style: AttendanceView.NavigationStyle
     let week: Int
 
@@ -190,6 +226,9 @@ private struct AttendanceNavigationModifier: ViewModifier {
         case .standalone:
             content
                 .navigationTitle("Attendance – Week \(week)")
+                .navigationBarTitleDisplayMode(
+                    dynamicTypeSize.isAccessibilitySize ? .inline : .large
+                )
         }
     }
 }

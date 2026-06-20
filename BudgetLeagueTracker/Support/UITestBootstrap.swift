@@ -22,6 +22,12 @@ enum UITestBootstrap {
         let arguments = ProcessInfo.processInfo.arguments
         guard arguments.contains("--uitesting") else { return }
 
+        UITestSnapshot.configure(from: arguments)
+        if arguments.contains(UITestSnapshot.marketingSeed) {
+            UITestSnapshot.seedMarketingIfNeeded(context: context, arguments: arguments)
+            return
+        }
+
         let scenario: Scenario?
         if arguments.contains(seedAttendance) {
             scenario = .attendance
@@ -38,6 +44,20 @@ enum UITestBootstrap {
         guard let scenario else { return }
         pendingTournamentNavigationName = nil
         seed(scenario, in: context)
+    }
+
+    static func queueTournamentNavigation(name: String) {
+        pendingTournamentNavigationName = name
+    }
+
+    static func resetAllData(in context: ModelContext) {
+        resetUITestData(in: context)
+    }
+
+    static func seedScoredRound(in context: ModelContext) {
+        let playerIds = (try? context.fetch(FetchDescriptor<Player>()))?.map(\.id) ?? []
+        confirmAttendance(in: context, playerIds: playerIds)
+        seedPodsForCurrentRound(in: context)
     }
 
     /// Opens a seeded tournament detail screen when launch args request it.

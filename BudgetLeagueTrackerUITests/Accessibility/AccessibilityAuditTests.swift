@@ -298,6 +298,20 @@ final class AccessibilityAuditTests: XCTestCase {
 
         try app.performAccessibilityAudit(for: [.textClipped])
     }
+
+    /// Attendance at AXXXL in landscape should not clip Confirm Attendance or player toggles.
+    @available(iOS 17.0, *)
+    func testAXXXLAttendanceTextNotClippedInLandscape() throws {
+        relaunch(with: ["--uitesting", "UI-Testing-Accessibility", "UI-Testing-Seed-Attendance"])
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = XCTWaiter.wait(for: [XCTestExpectation(description: "orientation")], timeout: 2)
+
+        let confirmButton = app.buttons["Confirm Attendance"]
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(confirmButton.isHittable, "Confirm Attendance should be hittable at AXXXL in landscape")
+
+        try app.performAccessibilityAudit(for: [.textClipped])
+    }
     
     // MARK: - VoiceOver Navigation Tests
     

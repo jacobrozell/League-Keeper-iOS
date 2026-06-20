@@ -1,0 +1,129 @@
+{
+  "element_count": 17,
+  "buttons": 4,
+  "switches": 5,
+  "text_fields": 1,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "CheckBox",
+      "label": "Count achievements this week",
+      "uid": null,
+      "enabled": true,
+      "frame": {
+        "y": 178.5,
+        "x": 56,
+        "width": 920,
+        "height": 74
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Mark all",
+      "uid": "attendanceMarkAll",
+      "enabled": true,
+      "frame": {
+        "y": 280,
+        "x": 839,
+        "width": 53.5,
+        "height": 18
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Clear all",
+      "uid": "attendanceClearAll",
+      "enabled": true,
+      "frame": {
+        "y": 280,
+        "x": 900.5,
+        "width": 55.5,
+        "height": 18
+      }
+    },
+    {
+      "type": "CheckBox",
+      "label": "Mark Alice as present",
+      "uid": "toggle-Alice",
+      "enabled": true,
+      "frame": {
+        "y": 331,
+        "x": 76,
+        "width": 434,
+        "height": 28
+      }
+    },
+    {
+      "type": "CheckBox",
+      "label": "Mark Bob as present",
+      "uid": "toggle-Bob",
+      "enabled": true,
+      "frame": {
+        "y": 331,
+        "x": 522,
+        "width": 434,
+        "height": 28
+      }
+    },
+    {
+      "type": "CheckBox",
+      "label": "Mark Carol as present",
+      "uid": "toggle-Carol",
+      "enabled": true,
+      "frame": {
+        "y": 387,
+        "x": 76,
+        "width": 434,
+        "height": 28
+      }
+    },
+    {
+      "type": "CheckBox",
+      "label": "Mark Dave as present",
+      "uid": "toggle-Dave",
+      "enabled": true,
+      "frame": {
+        "y": 387,
+        "x": 522,
+        "width": 434,
+        "height": 28
+      }
+    },
+    {
+      "type": "TextField",
+      "label": "Add player this week",
+      "uid": "attendanceAddPlayerField",
+      "enabled": true,
+      "frame": {
+        "y": 464,
+        "x": 76,
+        "width": 841,
+        "height": 22
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Add player",
+      "uid": "attendanceAddPlayerButton",
+      "enabled": false,
+      "frame": {
+        "y": 464.75,
+        "x": 925,
+        "width": 31,
+        "height": 20.5
+      }
+    },
+    {
+      "type": "Button",
+      "label": "Confirm Attendance",
+      "uid": "Confirm Attendance",
+      "enabled": false,
+      "frame": {
+        "y": 1290,
+        "x": 72,
+        "width": 888,
+        "height": 58
+      }
+    }
+  ]
+}

@@ -84,6 +84,15 @@ final class Tournament: Identifiable {
 
     /// JSON-encoded deck, prize, and playstyle rules for this tournament.
     var rulesData: Data?
+
+    /// Optional preset identifier for display (e.g. simpleLeague, budgetCommander).
+    var leaguePresetRaw: String?
+
+    /// Number of players seated at each table for this tournament.
+    var playersPerTable: Int = AppConstants.League.defaultPlayersPerTable
+
+    /// JSON-encoded placement point scale (index 0 = 1st place, etc.).
+    var placementPointsData: Data?
     
     // MARK: - Initialization
     
@@ -99,7 +108,10 @@ final class Tournament: Identifiable {
         currentWeek: Int = AppConstants.League.defaultCurrentWeek,
         currentRound: Int = AppConstants.League.defaultCurrentRound,
         achievementsOnThisWeek: Bool = AppConstants.League.defaultAchievementsOnThisWeek,
-        rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
+        rules: TournamentRules = AppConstants.TournamentRulesDefaults.simpleLeagueRules,
+        leaguePreset: LeaguePreset = .simpleLeague,
+        playersPerTable: Int = AppConstants.League.defaultPlayersPerTable,
+        placementPointsScale: [Int] = AppConstants.Scoring.defaultPlacementScale
     ) {
         self.id = id
         self.name = name
@@ -112,6 +124,12 @@ final class Tournament: Identifiable {
         self.currentRound = currentRound
         self.achievementsOnThisWeek = achievementsOnThisWeek
         self.rules = rules
+        self.leaguePresetRaw = leaguePreset.rawValue
+        self.playersPerTable = min(
+            max(playersPerTable, AppConstants.League.playersPerTableRange.lowerBound),
+            AppConstants.League.playersPerTableRange.upperBound
+        )
+        self.placementPointsScale = placementPointsScale
     }
     
     // MARK: - Status Convenience
@@ -250,16 +268,47 @@ final class Tournament: Identifiable {
     
     // MARK: - Tournament Rules
 
-    /// Deck, prize, and playstyle rules. Falls back to client defaults when unset.
+    /// Deck, prize, and playstyle rules. Falls back to simple league defaults when unset.
     var rules: TournamentRules {
         get {
-            guard let data = rulesData else { return AppConstants.TournamentRulesDefaults.defaultRules }
+            guard let data = rulesData else { return AppConstants.TournamentRulesDefaults.simpleLeagueRules }
             return (try? JSONDecoder().decode(TournamentRules.self, from: data))
-                ?? AppConstants.TournamentRulesDefaults.defaultRules
+                ?? AppConstants.TournamentRulesDefaults.simpleLeagueRules
         }
         set {
             rulesData = try? JSONEncoder().encode(newValue)
         }
+    }
+
+    /// League preset used when creating this tournament (optional for legacy records).
+    var leaguePreset: LeaguePreset? {
+        get {
+            guard let leaguePresetRaw else { return nil }
+            return LeaguePreset(rawValue: leaguePresetRaw)
+        }
+        set {
+            leaguePresetRaw = newValue?.rawValue
+        }
+    }
+
+    /// Placement points awarded by finish position for this tournament.
+    var placementPointsScale: [Int] {
+        get {
+            guard let data = placementPointsData else { return AppConstants.Scoring.defaultPlacementScale }
+            return (try? JSONDecoder().decode([Int].self, from: data))
+                ?? AppConstants.Scoring.defaultPlacementScale
+        }
+        set {
+            placementPointsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    /// Effective table size for seating and scoring (clamped to valid range).
+    var effectivePlayersPerTable: Int {
+        min(
+            max(playersPerTable, AppConstants.League.playersPerTableRange.lowerBound),
+            AppConstants.League.playersPerTableRange.upperBound
+        )
     }
 
     // MARK: - Computed Properties

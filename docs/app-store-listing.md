@@ -14,26 +14,27 @@ Reference copy for App Store Connect. Copy-paste into the corresponding fields a
 
 ## Subtitle (30 characters max)
 
-Track pods, standings & achievements
+Weekly leagues, seating & standings
 
-**Alternatives:** Budget league scoring & pods | Pods, standings, achievements
+**Alternatives:** Game night scoring & standings | Tables, standings, achievements
 
 ---
 
 ## Description (4000 characters max)
 
-League Keeper helps you run Magic: The Gathering budget leagues from your iPhone or iPad. Add players, set up multi-week tournaments, and track pods, placement, and achievements in one place.
+League Keeper is your weekly league scorekeeper on iPhone and iPad. Run recurring game nights — board games, card games, poker, or tabletop — with attendance, table seating, finish order, bonus achievements, and standings in one place.
 
 RUN LEAGUES YOUR WAY
 • Create tournaments with your chosen number of weeks and optional random achievements per week.
+• Configure players per table and placement scoring.
 • Add and manage players, then mark attendance each week.
-• Add new players mid-league and they join that week's pods.
+• Add new players mid-league and they join that week's tables.
 
-PODS & SCORING
-• Generate pods (groups of 4) for each round—shuffled for round 1, then by weekly points for later rounds.
-• Record placement (1st–4th) and award placement points (4 for 1st down to 1 for 4th).
+SEATING & SCORING
+• Seat players at tables for each round — shuffled for round 1, then by weekly standings when you enable it.
+• Record finish order and award placement points.
 • Track custom achievements: add your own, set points, and mark "always on" or rotate them weekly.
-• Save each pod with one tap; undo the last saved pod if you make a mistake.
+• Save each table with one tap; undo the last saved table if you make a mistake.
 
 STANDINGS & STATS
 • View weekly standings after each round set and final tournament rankings.
@@ -41,29 +42,31 @@ STANDINGS & STATS
 • Review past tournaments and standings anytime.
 
 BUILT FOR ORGANIZERS
-• No account required—all data stays on your device.
-• Simple flow: New Tournament → Add Players → Attendance → Pods → Standings.
+• No account required — all data stays on your device.
+• Simple flow: New Tournament → Add Players → Attendance → Round → Standings.
 • Clear empty states and hints so you always know what to do next.
 
-Whether you run a store league or a kitchen-table budget league, League Keeper keeps scoring fair and standings clear.
+Also supports **Budget Commander** and other MTG house rules: deck budget, pricing source, commander bracket, and booster prizes — opt in when creating a tournament.
+
+Whether you host a store league, a kitchen-table Commander night, or a weekly board-game group, League Keeper keeps scoring fair and standings clear.
 
 ---
 
 ## Keywords (100 characters max, comma-separated, no spaces after commas)
 
-MTG,magic,league,tournament,pods,standings,achievements,budget,limited,organizer,scoring
+MTG,magic,league,tournament,standings,achievements,budget,board game,game night,tabletop,organizer
 
 ---
 
 ## What's New (4000 characters – use for first version release notes)
 
-Welcome to League Keeper. Track your MTG budget league with tournaments, pods, placement and achievement scoring, weekly and final standings, and per-player stats. All data stays on your device. Enjoy and thanks for trying it.
+Welcome to League Keeper. Track weekly game leagues with tournaments, table seating, placement and achievement scoring, weekly and final standings, and per-player stats. Budget Commander preset included for MTG hosts. All data stays on your device.
 
 ---
 
 ## Promotional text (170 characters, editable anytime without new version)
 
-Run your MTG budget league from your iPhone or iPad: pods, placement points, achievements, and standings. No account needed—data stays on your device.
+Run weekly game leagues from your iPhone or iPad: attendance, table seating, achievements, and standings. No account needed — data stays on your device.
 
 ---
 
@@ -78,5 +81,3 @@ Run your MTG budget league from your iPhone or iPad: pods, placement points, ach
 - [ ] Privacy policy URL (see docs/privacy-policy.md)
 - [ ] Support URL (see docs/support.md)
 - [ ] Screenshots (iPhone 6.7", 6.5", 5.5")
-- [ ] Age rating questionnaire
-- [ ] Copyright

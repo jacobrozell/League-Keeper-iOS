@@ -4,6 +4,24 @@ import Testing
 @Suite("TournamentRules")
 struct TournamentRulesTests {
 
+    @Test("Simple league default differs from Budget Commander")
+    func simpleLeagueDiffersFromBudgetCommander() {
+        let simple = AppConstants.TournamentRulesDefaults.simpleLeagueRules
+        let budget = AppConstants.TournamentRulesDefaults.defaultRules
+
+        #expect(simple.entryFeeCents == 0)
+        #expect(!simple.signupBoosterPrize)
+        #expect(!simple.podWinnerBoosterPrize)
+        #expect(simple.deckBudgetCents == 0)
+        #expect(simple.targetBracket == nil)
+        #expect(simple.playstyleNotes.isEmpty)
+        #expect(!simple.includesDeckBudgetRules)
+
+        #expect(budget.entryFeeCents == 1_000)
+        #expect(budget.deckBudgetCents == 7_500)
+        #expect(budget.includesDeckBudgetRules)
+    }
+
     @Test("Client default matches Budget Commander league rules")
     func clientDefaultMatchesBudgetCommander() {
         let rules = AppConstants.TournamentRulesDefaults.defaultRules

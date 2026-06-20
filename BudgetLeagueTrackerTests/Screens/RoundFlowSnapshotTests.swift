@@ -14,7 +14,7 @@ struct RoundFlowSnapshotTests {
         @Test("Seating empty state")
         func seatingEmptyState() throws {
             let context = try TestHelpers.contextWithTournament()
-            let tournament = try #require(TestHelpers.fetchActiveTournament(from: context))
+            let tournament = try #require(try TestHelpers.fetchActiveTournament(from: context))
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             viewModel.refresh()
 
@@ -38,7 +38,7 @@ struct RoundFlowSnapshotTests {
         @Test("Seatings ready with tables")
         func seatingsReady() throws {
             let context = try TestHelpers.contextWithTournament()
-            let tournament = try #require(TestHelpers.fetchActiveTournament(from: context))
+            let tournament = try #require(try TestHelpers.fetchActiveTournament(from: context))
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             viewModel.refresh()
             viewModel.seatPlayers()
@@ -67,7 +67,7 @@ struct RoundFlowSnapshotTests {
         @Test("Scoring table")
         func scoringTable() throws {
             let context = try TestHelpers.contextWithTournament()
-            let tournament = try #require(TestHelpers.fetchActiveTournament(from: context))
+            let tournament = try #require(try TestHelpers.fetchActiveTournament(from: context))
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             viewModel.refresh()
             viewModel.seatPlayers()
@@ -95,7 +95,7 @@ struct RoundFlowSnapshotTests {
         @Test("Review after all tables scored")
         func reviewState() throws {
             let context = try TestHelpers.contextWithTournament()
-            let tournament = try #require(TestHelpers.fetchActiveTournament(from: context))
+            let tournament = try #require(try TestHelpers.fetchActiveTournament(from: context))
             let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
             viewModel.refresh()
             viewModel.seatPlayers()

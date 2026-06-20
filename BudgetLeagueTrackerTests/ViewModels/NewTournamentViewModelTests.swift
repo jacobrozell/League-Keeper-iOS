@@ -139,6 +139,16 @@ struct NewTournamentViewModelTests {
     @MainActor
     struct CreateTournamentTests {
         
+        @Test("Starts on simple league preset and rules")
+        func startsOnSimpleLeaguePreset() throws {
+            let context = try TestHelpers.bootstrappedContext()
+            let viewModel = NewTournamentViewModel(context: context)
+
+            #expect(viewModel.selectedPreset == .simpleLeague)
+            #expect(viewModel.rules == LeaguePreset.simpleLeague.defaultRules())
+            #expect(!viewModel.rules.includesDeckBudgetRules)
+        }
+
         @Test("Creates tournament with selected players")
         func createsTournamentWithSelectedPlayers() throws {
             let context = try TestHelpers.bootstrappedContext()

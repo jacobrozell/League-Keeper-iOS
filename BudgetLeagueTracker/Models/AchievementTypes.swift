@@ -45,7 +45,7 @@ enum AchievementExclusivity: String, Codable, CaseIterable, Identifiable, Sendab
     var displayName: String {
         switch self {
         case .unlimited: return "Anyone can earn"
-        case .onePerPod: return "One player per pod"
+        case .onePerPod: return AppConstants.Copy.onePerTable
         case .onePerWeekPerPlayer: return "Once per week per player"
         }
     }
@@ -53,9 +53,9 @@ enum AchievementExclusivity: String, Codable, CaseIterable, Identifiable, Sendab
     var footnote: String {
         switch self {
         case .unlimited:
-            return "Multiple players can earn full points in the same pod."
+            return AppConstants.Copy.unlimitedFootnote
         case .onePerPod:
-            return "Only one player in a pod can earn this each round."
+            return AppConstants.Copy.onePerTableFootnote
         case .onePerWeekPerPlayer:
             return "Each player can earn this at most once per week."
         }

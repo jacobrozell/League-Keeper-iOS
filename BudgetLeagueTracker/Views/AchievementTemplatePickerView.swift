@@ -4,6 +4,20 @@ import SwiftUI
 struct AchievementTemplatePickerView: View {
     let onSelectTemplate: (AchievementTemplate?) -> Void
     let onCancel: () -> Void
+    var initialLibrary: AchievementTemplateLibrary = .generic
+
+    @State private var selectedLibrary: AchievementTemplateLibrary
+
+    init(
+        onSelectTemplate: @escaping (AchievementTemplate?) -> Void,
+        onCancel: @escaping () -> Void,
+        initialLibrary: AchievementTemplateLibrary = .generic
+    ) {
+        self.onSelectTemplate = onSelectTemplate
+        self.onCancel = onCancel
+        self.initialLibrary = initialLibrary
+        _selectedLibrary = State(initialValue: initialLibrary)
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,8 +32,18 @@ struct AchievementTemplatePickerView: View {
                     .accessibilityIdentifier("Blank custom achievement")
                 }
 
+                Section {
+                    Picker("Template library", selection: $selectedLibrary) {
+                        ForEach(AchievementTemplateLibrary.allCases) { library in
+                            Text(library.displayName).tag(library)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+
                 Section("Templates") {
-                    ForEach(AchievementTemplates.catalog) { template in
+                    ForEach(AchievementTemplates.templates(for: selectedLibrary)) { template in
                         Button {
                             onSelectTemplate(template)
                         } label: {

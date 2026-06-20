@@ -3,6 +3,8 @@ import SwiftUI
 // MARK: - Achievements preview
 
 struct RoundAchievementsPreviewContent: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let achievementsOnThisWeek: Bool
     let achievements: [Achievement]
 
@@ -12,34 +14,68 @@ struct RoundAchievementsPreviewContent: View {
                 Text("Achievements are not counted this week.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if achievements.isEmpty {
                 Text("No achievements active this week.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 ForEach(achievements, id: \.id) { achievement in
-                    HStack(spacing: 12) {
-                        Image(systemName: achievement.iconName)
-                            .foregroundStyle(Color("BrandGold"))
-                            .frame(width: 24)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack {
-                                Text(achievement.name)
-                                Spacer()
-                                Text("+\(achievement.points)")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                            }
-                            AchievementDescriptionText(description: achievement.achievementDescription, style: .compact)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(achievement.name), \(achievement.points) points")
-                    .accessibilityHintIf(achievement.achievementDescription)
+                    achievementRow(achievement)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func achievementRow(_ achievement: Achievement) -> some View {
+        let description = AchievementDescriptionText(
+            description: achievement.achievementDescription,
+            style: .compact
+        )
+
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Image(systemName: achievement.iconName)
+                            .foregroundStyle(Color("BrandGold"))
+                            .frame(width: 24, alignment: .center)
+                        Text(achievement.name)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Text("+\(achievement.points)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    description
+                        .padding(.leading, 32)
+                }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: achievement.iconName)
+                        .foregroundStyle(Color("BrandGold"))
+                        .frame(width: 24, alignment: .center)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(achievement.name)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 8)
+                            Text("+\(achievement.points)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                        description
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(achievement.name), \(achievement.points) points")
+        .accessibilityHintIf(achievement.achievementDescription)
     }
 }
 
@@ -63,14 +99,19 @@ struct RoundAchievementsPreviewPanel: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("This week's achievements")
                 .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             RoundAchievementsPreviewContent(
                 achievementsOnThisWeek: viewModel.achievementsOnThisWeek,
                 achievements: viewModel.activeAchievements
             )
             .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -126,11 +167,15 @@ struct RoundWeeklyStandingsPreviewPanel: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Week \(viewModel.currentWeek) leaderboard")
                 .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             RoundWeeklyStandingsPreviewContent(viewModel: viewModel)
                 .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -146,6 +191,8 @@ struct RoundScoringBonusesPanel: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Bonuses")
                 .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(viewModel.activeAchievements, id: \.id) { achievement in
@@ -155,6 +202,7 @@ struct RoundScoringBonusesPanel: View {
                                 .foregroundStyle(Color("BrandGold"))
                             Text(achievement.name)
                                 .font(.subheadline.weight(.semibold))
+                                .fixedSize(horizontal: false, vertical: true)
                             Spacer()
                             Text("+\(achievement.points)")
                                 .font(.caption.weight(.semibold))
@@ -173,6 +221,7 @@ struct RoundScoringBonusesPanel: View {
                                 )) {
                                     Text(viewModel.displayName(for: player))
                                         .font(.body)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
                                 .disabled(disabled)
@@ -196,8 +245,10 @@ struct RoundScoringBonusesPanel: View {
                 }
             }
             .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

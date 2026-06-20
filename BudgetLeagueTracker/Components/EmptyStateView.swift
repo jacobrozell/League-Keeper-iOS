@@ -18,7 +18,7 @@ struct EmptyStateView: View {
 
             VStack(spacing: 8) {
                 Text(message)
-                    .font(.system(.title3, design: .serif).weight(.semibold))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(Color(hex: palette.ink))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Visual state for a step in the tournament week progress strip.
+/// Shared state for a step in the tournament week progress strip.
 enum TournamentProgressStepState {
     case complete
     case current
@@ -22,18 +22,16 @@ struct TournamentProgressHeader: View {
     let currentRound: Int
     let roundsPerWeek: Int
     let nextStepHint: String
+    var presetLabel: String? = nil
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.palette) private var palette
     @State private var showsProgressDetails = false
 
+    /// Compact header whenever vertical space is limited (iPhone landscape, iPad landscape).
     private var usesLandscapeChrome: Bool {
-        AdaptiveLayout.usesCompactVerticalChrome(
-            horizontalSizeClass: horizontalSizeClass,
-            verticalSizeClass: verticalSizeClass
-        )
+        verticalSizeClass == .compact
     }
 
     var body: some View {
@@ -42,17 +40,22 @@ struct TournamentProgressHeader: View {
                 accessibilityContextHeader
                 if showsProgressDetails {
                     accessibilityStepList
-                    roundDots
                     Button("Hide progress steps") {
                         showsProgressDetails = false
                     }
                     .font(.caption.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityIdentifier("progressStepsToggle")
                 } else {
                     Button("Show progress steps") {
                         showsProgressDetails = true
                     }
                     .font(.caption.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityIdentifier("progressStepsToggle")
                 }
             } else {
@@ -65,27 +68,22 @@ struct TournamentProgressHeader: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if usesLandscapeChrome {
-                    HStack(alignment: .center, spacing: 12) {
-                        compactStepStrip
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        roundDots
-                    }
-                } else {
-                    compactStepStrip
-                }
-
-                if !usesLandscapeChrome {
-                    roundDots
-                }
+                compactStepStrip
             }
 
             Text(nextStepHint)
                 .font(usesLandscapeChrome ? .caption2 : .caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .lineLimit(usesLandscapeChrome ? 1 : nil)
+                .lineLimit(usesLandscapeChrome ? 2 : nil)
                 .accessibilityLabel("Next step: \(nextStepHint)")
+
+            if let presetLabel {
+                Text(presetLabel)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color(hex: palette.gold))
+                    .accessibilityLabel("League type: \(presetLabel)")
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, usesLandscapeChrome ? 6 : 10)
@@ -128,7 +126,7 @@ struct TournamentProgressHeader: View {
                     stepIndicatorCircle(for: step.state)
                     Text(step.title)
                         .font(.subheadline)
-                        .foregroundStyle(step.state == .upcoming ? .tertiary : .primary)
+                        .foregroundStyle(step.state == .upcoming ? Color.secondary : Color.primary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -147,7 +145,7 @@ struct TournamentProgressHeader: View {
             stepIndicatorCircle(for: step.state)
             Text(step.title)
                 .font(titleFont)
-                .foregroundStyle(step.state == .upcoming ? .tertiary : .primary)
+                .foregroundStyle(step.state == .upcoming ? Color.secondary : Color.primary)
                 .lineLimit(titleLineLimit)
                 .minimumScaleFactor(titleLineLimit == 1 ? 0.8 : 1)
                 .multilineTextAlignment(.center)
@@ -179,23 +177,6 @@ struct TournamentProgressHeader: View {
             .padding(.bottom, 14)
     }
 
-    @ViewBuilder
-    private var roundDots: some View {
-        HStack(spacing: 6) {
-            ForEach(1...roundsPerWeek, id: \.self) { round in
-                Circle()
-                    .fill(round <= currentRound ? Color(hex: palette.gold) : Color(.tertiarySystemFill))
-                    .frame(width: 8, height: 8)
-                    .accessibilityHidden(true)
-            }
-            Text("Round \(currentRound) of \(roundsPerWeek)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Round \(currentRound) of \(roundsPerWeek)")
-    }
-
     private func stepFill(for state: TournamentProgressStepState) -> Color {
         switch state {
         case .complete:
@@ -222,10 +203,10 @@ struct TournamentProgressHeader: View {
 #Preview {
     TournamentProgressHeader(
         weekLabel: "Week 2 of 6",
-        roundLabel: "Round 1",
+        roundLabel: "Round 1 of 3",
         steps: [
             TournamentProgressStep(id: "attendance", title: "Attendance", state: .complete),
-            TournamentProgressStep(id: "seat", title: "Seat", state: .current),
+            TournamentProgressStep(id: "seat", title: "Seat Players", state: .current),
             TournamentProgressStep(id: "score", title: "Score", state: .upcoming)
         ],
         currentRound: 1,

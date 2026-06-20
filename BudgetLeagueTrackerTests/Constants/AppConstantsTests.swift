@@ -104,7 +104,7 @@ struct AppConstantsTests {
 
         @Test("Name points and alwaysOn")
         func defaultAchievementValues() {
-            #expect(AppConstants.DefaultAchievement.name == "First Blood")
+            #expect(AppConstants.DefaultAchievement.name == "Table Captain")
             #expect(AppConstants.DefaultAchievement.points == 1)
             #expect(AppConstants.DefaultAchievement.alwaysOn == false)
         }

@@ -90,6 +90,7 @@ See [feature-inventory.md](feature-inventory.md) for detail.
 | Feature | Priority |
 |---------|----------|
 | **Achievement v2** (icons, templates, edit, exclusivity) | High — [achievement-improvements-plan.md](achievement-improvements-plan.md) |
+| **Generic league positioning** (presets, copy, templates, terminology) | High — [generic-league-positioning-plan.md](generic-league-positioning-plan.md) |
 | Crash/analytics monitoring | High |
 | User feedback triage | High |
 | iCloud backup/sync | Medium |

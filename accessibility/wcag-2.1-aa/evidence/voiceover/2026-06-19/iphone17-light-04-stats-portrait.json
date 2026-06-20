@@ -1,0 +1,21 @@
+{
+  "element_count": 15,
+  "buttons": 1,
+  "switches": 0,
+  "text_fields": 0,
+  "unlabeled_buttons": [],
+  "interactive": [
+    {
+      "type": "Button",
+      "label": "Seat Players",
+      "uid": "Seat Players",
+      "enabled": true,
+      "frame": {
+        "y": 774,
+        "x": 16,
+        "width": 370,
+        "height": 58
+      }
+    }
+  ]
+}

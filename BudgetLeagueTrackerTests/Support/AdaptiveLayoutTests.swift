@@ -7,6 +7,12 @@ import Testing
 @MainActor
 struct AdaptiveLayoutTests {
 
+    @Test("uses stacked label picker row at accessibility sizes")
+    func stackedLabelPickerRow() {
+        #expect(AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: .accessibility1))
+        #expect(!AdaptiveLayout.usesStackedLabelPickerRow(dynamicType: .large))
+    }
+
     @Test("uses stacked row layout in iPhone landscape compact height")
     func stackedInLandscape() {
         let isPad = UIDevice.current.userInterfaceIdiom == .pad
@@ -159,7 +165,44 @@ struct AdaptiveLayoutTests {
     func layoutWidthTokens() {
         #expect(AdaptiveLayout.contentMaxWidth == 920)
         #expect(AdaptiveLayout.sidebarWidth == 320)
+        #expect(AdaptiveLayout.sidebarMinimumWidth == 300)
+        #expect(AdaptiveLayout.sidebarMaximumWidth == 420)
         #expect(AdaptiveLayout.columnSpacing == 20)
+    }
+
+    @Test("stacks iPad sidebar at accessibility text sizes")
+    func stackedSidebarAtAccessibility() {
+        #expect(
+            AdaptiveLayout.usesStackedSidebarLayout(
+                dynamicType: .accessibility1,
+                horizontalSizeClass: .regular,
+                verticalSizeClass: .regular
+            )
+        )
+        #expect(
+            !AdaptiveLayout.usesStackedSidebarLayout(
+                dynamicType: .large,
+                horizontalSizeClass: .regular,
+                verticalSizeClass: .regular
+            )
+        )
+        #expect(
+            !AdaptiveLayout.usesStackedSidebarLayout(
+                dynamicType: .accessibility1,
+                horizontalSizeClass: .compact,
+                verticalSizeClass: .regular
+            )
+        )
+    }
+
+    @Test("sidebar width scales with container")
+    func sidebarWidthScaling() {
+        let defaultWidth = AdaptiveLayout.sidebarWidth(for: .large, containerWidth: 920)
+        #expect(defaultWidth >= AdaptiveLayout.sidebarMinimumWidth)
+        #expect(defaultWidth <= AdaptiveLayout.sidebarMaximumWidth)
+
+        let accessibilityWidth = AdaptiveLayout.sidebarWidth(for: .accessibility3, containerWidth: 920)
+        #expect(accessibilityWidth >= defaultWidth)
     }
 
     @Test("table card grid columns")

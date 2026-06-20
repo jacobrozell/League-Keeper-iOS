@@ -4,7 +4,7 @@
 
 ## What the app is
 
-League Keeper (Budget League Tracker) is an iOS app for running and tracking Magic: The Gathering budget leagues. Organizers create multi-week tournaments, add players, record weekly attendance, group players into pods of four, score placement and achievements, and view weekly and final standings. The app targets iOS 18+ and is built with Swift 6, SwiftUI, and SwiftData.
+League Keeper (Budget League Tracker) is an iOS app for running and tracking **recurring game leagues** — weekly game nights, tabletop groups, and card-game seasons. Organizers create multi-week tournaments, add players, record weekly attendance, seat players at tables, score placement and achievements, and view weekly and final standings. **MTG-first, broadly usable:** Budget Commander is a one-tap preset; the default new-tournament flow uses neutral simple-league rules. The app targets iOS 18+ and is built with Swift 6, SwiftUI, and SwiftData.
 
 ## Tech stack
 

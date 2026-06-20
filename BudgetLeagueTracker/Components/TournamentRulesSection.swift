@@ -121,6 +121,8 @@ struct TournamentRulesHintButton: View {
 /// Editable tournament rules used in new/edit tournament flows.
 struct TournamentRulesFormSection: View {
     @Binding var rules: TournamentRules
+    var showsDeckBudgetDetails: Bool = true
+    var resetButtonTitle: String = "Reset to defaults"
 
     @State private var entryFeeDollars: Int = AppConstants.TournamentRulesDefaults.entryFeeCents / 100
     @State private var deckBudgetDollars: Int = AppConstants.TournamentRulesDefaults.deckBudgetCents / 100
@@ -133,7 +135,9 @@ struct TournamentRulesFormSection: View {
     var body: some View {
         Group {
             entryAndPrizesSection
-            deckBudgetSection
+            if showsDeckBudgetDetails {
+                deckBudgetSection
+            }
             playstyleSection
         }
         .onAppear { loadFromRules() }
@@ -224,26 +228,30 @@ struct TournamentRulesFormSection: View {
 
     private var playstyleSection: some View {
         Section {
-            LabeledToggle(title: "Specify Target Bracket", isOn: $specifiesBracket)
-                .onChange(of: specifiesBracket) { _, specified in
-                    rules.targetBracket = specified ? targetBracket : nil
-                }
+            if showsDeckBudgetDetails {
+                LabeledToggle(title: "Specify Target Bracket", isOn: $specifiesBracket)
+                    .onChange(of: specifiesBracket) { _, specified in
+                        rules.targetBracket = specified ? targetBracket : nil
+                    }
 
-            if specifiesBracket {
-                LabeledStepper(
-                    title: "Target Bracket",
-                    value: $targetBracket,
-                    range: AppConstants.TournamentRulesDefaults.bracketRange
-                )
-                .onChange(of: targetBracket) { _, newValue in
-                    if specifiesBracket {
-                        rules.targetBracket = newValue
+                if specifiesBracket {
+                    LabeledStepper(
+                        title: "Target Bracket",
+                        value: $targetBracket,
+                        range: AppConstants.TournamentRulesDefaults.bracketRange
+                    )
+                    .onChange(of: targetBracket) { _, newValue in
+                        if specifiesBracket {
+                            rules.targetBracket = newValue
+                        }
                     }
                 }
             }
 
             TextField(
-                "e.g. Keep it casual — aim for Bracket 2",
+                showsDeckBudgetDetails
+                    ? "e.g. Keep it casual — aim for Bracket 2"
+                    : "e.g. Keep games friendly and moving",
                 text: $rules.playstyleNotes,
                 axis: .vertical
             )
@@ -255,21 +263,28 @@ struct TournamentRulesFormSection: View {
                 }
             }
 
-            Button("Reset to defaults") {
+            Button(resetButtonTitle) {
                 resetToDefaults()
             }
             .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
         } header: {
             Text("Playstyle")
         } footer: {
-            Text("Optional expectations for tone and power level. Brackets run 1 (exhibition) through 5 (cEDH).")
-                .font(.caption)
+            if showsDeckBudgetDetails {
+                Text("Optional expectations for tone and power level. Brackets run 1 (exhibition) through 5 (cEDH).")
+                    .font(.caption)
+            } else {
+                Text("Optional house rules or expectations for your group.")
+                    .font(.caption)
+            }
         }
     }
 
-    /// Restores Budget Commander defaults without affecting other tournament settings.
+    /// Restores preset defaults without affecting other tournament settings.
     func resetToDefaults() {
-        rules = AppConstants.TournamentRulesDefaults.defaultRules
+        rules = showsDeckBudgetDetails
+            ? AppConstants.TournamentRulesDefaults.defaultRules
+            : AppConstants.TournamentRulesDefaults.simpleLeagueRules
         loadFromRules()
     }
 
@@ -304,7 +319,7 @@ struct TournamentRulesSummaryView: View {
     var body: some View {
         List {
             Section {
-                Text("House rules for this tournament. Players build decks within a budget limit and earn points for table placement and achievements each game night.")
+                Text("House rules for this tournament. Players earn points for table placement and achievements each game night.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -313,10 +328,12 @@ struct TournamentRulesSummaryView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section {
-                HintText(
-                    message: "Bracket numbers describe deck power level (1 = weakest, 5 = strongest). Card prices come from the listed source when players check their decks."
-                )
+            if rules.includesDeckBudgetRules {
+                Section {
+                    HintText(
+                        message: "Bracket numbers describe deck power level (1 = weakest, 5 = strongest). Card prices come from the listed source when players check their decks."
+                    )
+                }
             }
 
             ForEach(Array(rules.summarySections().enumerated()), id: \.offset) { _, section in

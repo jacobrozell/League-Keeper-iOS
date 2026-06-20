@@ -25,7 +25,10 @@ enum LeagueEngine {
         playerIds: [String],
         presentAttendance: Bool = true,
         standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
-        rules: TournamentRules = AppConstants.TournamentRulesDefaults.defaultRules
+        rules: TournamentRules = AppConstants.TournamentRulesDefaults.simpleLeagueRules,
+        leaguePreset: LeaguePreset = .simpleLeague,
+        playersPerTable: Int = AppConstants.League.defaultPlayersPerTable,
+        placementPointsScale: [Int] = AppConstants.Scoring.defaultPlacementScale
     ) -> Bool {
         let clampedWeeks = min(max(totalWeeks, AppConstants.League.weeksRange.lowerBound),
                                AppConstants.League.weeksRange.upperBound)
@@ -37,7 +40,10 @@ enum LeagueEngine {
             name: name,
             totalWeeks: clampedWeeks,
             randomAchievementsPerWeek: clampedRandom,
-            rules: rules
+            rules: rules,
+            leaguePreset: leaguePreset,
+            playersPerTable: playersPerTable,
+            placementPointsScale: placementPointsScale
         )
         tournament.standingsBasedSeating = standingsBasedSeating
         context.insert(tournament)
@@ -438,7 +444,8 @@ enum LeagueEngine {
         currentRound: Int,
         standingsBasedSeating: Bool = AppConstants.League.defaultStandingsBasedSeating,
         previousRoundPlacements: [String: Int] = [:],
-        forceRandom: Bool = false
+        forceRandom: Bool = false,
+        podSize: Int = AppConstants.League.defaultPlayersPerTable
     ) -> [[Player]] {
         PodEngine.generatePodsForRound(
             players: players,
@@ -446,7 +453,8 @@ enum LeagueEngine {
             currentRound: currentRound,
             standingsBasedSeating: standingsBasedSeating,
             previousRoundPlacements: previousRoundPlacements,
-            forceRandom: forceRandom
+            forceRandom: forceRandom,
+            podSize: podSize
         )
     }
 

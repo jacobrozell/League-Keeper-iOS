@@ -4,7 +4,7 @@ import SwiftData
 /// Seeds a sample league so new users can explore the app without manual setup.
 @MainActor
 enum DemoLeagueLoader {
-    static let tournamentName = "Kitchen Table League"
+    static let tournamentName = "Weekly Game Night"
     static let playerNames = [
         "Alice", "Bob", "Carol", "Dave",
         "Eve", "Frank", "Grace", "Henry",
@@ -25,7 +25,7 @@ enum DemoLeagueLoader {
         let playerIds = playerNames.compactMap { name in
             LeagueEngine.addPlayer(context: context, name: name)?.id
         }
-        guard playerIds.count >= AppConstants.League.podSize else {
+        guard playerIds.count >= AppConstants.League.defaultPlayersPerTable else {
             throw LoadError.insufficientPlayers
         }
 
@@ -37,7 +37,9 @@ enum DemoLeagueLoader {
             totalWeeks: AppConstants.League.defaultTotalWeeks,
             randomPerWeek: AppConstants.League.defaultRandomAchievementsPerWeek,
             playerIds: playerIds,
-            presentAttendance: false
+            presentAttendance: false,
+            rules: LeaguePreset.simpleLeague.defaultRules(),
+            leaguePreset: .simpleLeague
         )
 
         guard let tournament = fetchOngoingTournaments(in: context).first(where: { $0.name == tournamentName }) else {
@@ -79,8 +81,8 @@ enum DemoLeagueLoader {
     }
 
     private static func seedSampleAchievements(in context: ModelContext) {
-        let samples = AchievementTemplates.catalog.filter {
-            $0.name == "Combat Damage Master" || $0.name == "Five-Color Flavor"
+        let samples = AchievementTemplates.templates(for: .generic).filter {
+            $0.name == "Good Sport" || $0.name == "MVP"
         }
 
         let existing = LeagueEngine.fetchAllAchievements(context: context)

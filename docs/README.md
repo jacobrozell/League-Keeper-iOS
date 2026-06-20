@@ -17,6 +17,7 @@ Central index for all project documentation. Start here when onboarding, prepari
 | See what ships vs planned | [feature-inventory.md](feature-inventory.md) |
 | Plan 1.0 polish (post–tournament UX) | [polish-plan.md](polish-plan.md) |
 | Plan achievement v2 (icons, templates) | [achievement-improvements-plan.md](achievement-improvements-plan.md) |
+| Broaden beyond MTG (presets, copy, templates) | [generic-league-positioning-plan.md](generic-league-positioning-plan.md) |
 | Run tests / CI | [testing.md](testing.md) → [infrastructure.md](infrastructure.md) |
 | Ship to TestFlight / App Store | [release/README.md](release/README.md) |
 | See build-phase status (0 → ship) | [agent-build-checklist.md](agent-build-checklist.md) |
@@ -38,6 +39,7 @@ Central index for all project documentation. Start here when onboarding, prepari
 | [tournament-ux-improvements.md](tournament-ux-improvements.md) | Tournament host UX review (sprints 1–3, complete) |
 | [polish-plan.md](polish-plan.md) | 1.0 polish backlog and sprints 4–6 implementation plan |
 | [achievement-improvements-plan.md](achievement-improvements-plan.md) | Achievement v2: icons, templates, tiers, exclusivity (spec: [AchievementSpec.md](../specs/AchievementSpec.md)) |
+| [generic-league-positioning-plan.md](generic-league-positioning-plan.md) | MTG-first → broadly usable: copy, league presets, template libraries, terminology |
 | [ipad-layout-plan.md](ipad-layout-plan.md) | iPad & landscape polish checklist (spec: [iPadLayoutSpec.md](../specs/iPadLayoutSpec.md)) |
 | [accessibility-layout-plan.md](accessibility-layout-plan.md) | Dynamic Type / AXXXL layout reflow (segmented → menu, progress header, standings) |
 

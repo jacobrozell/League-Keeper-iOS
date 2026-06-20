@@ -24,7 +24,7 @@ struct DemoLeagueLoaderTests {
         #expect(result.tournamentId == tournaments.first?.id)
 
         let achievements = LeagueEngine.fetchAllAchievements(context: context)
-        #expect(achievements.contains { $0.name == "Combat Damage Master" })
+        #expect(achievements.contains { $0.name == "Good Sport" })
     }
 
     @Test("refuses to load when tournaments already exist")

@@ -35,7 +35,7 @@ struct OnboardingView: View {
             symbol: "trophy.fill",
             title: AppInfo.displayName,
             subtitle: "Your league scorekeeper",
-            body: "Track Magic game nights on this device — who's playing, table seating, finish order, bonus achievements, and weekly standings."
+            body: "Track weekly game nights on this device — who's playing, table seating, finish order, bonus achievements, and weekly standings."
         ),
         Page(
             id: 1,
@@ -115,6 +115,7 @@ struct OnboardingView: View {
             }
             .accessibilityIdentifier("onboardingScreen")
         }
+        .tint(Color("AccentColor"))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -128,9 +129,9 @@ struct OnboardingView: View {
                         textBlock(item, alignment: .leading)
                     }
                 } else {
-                    VStack(spacing: largeText ? 20 : 28) {
+                    VStack(spacing: largeText ? 16 : 20) {
                         heroMark(for: item)
-                            .padding(.top, largeText ? 4 : 16)
+                            .padding(.top, largeText ? 4 : 12)
                         textBlock(item, alignment: .center)
                     }
                 }

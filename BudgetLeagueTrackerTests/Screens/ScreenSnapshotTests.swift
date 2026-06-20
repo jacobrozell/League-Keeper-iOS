@@ -45,6 +45,31 @@ struct ScreenSnapshotTests {
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
 
+        @Test("With tournaments (iPad portrait)")
+        func withTournamentsIPadPortrait() throws {
+            let context = try TestHelpers.bootstrappedContext()
+
+            let ongoing = TestFixtures.tournament(name: "Spring League")
+            ongoing.currentWeek = 3
+            context.insert(ongoing)
+
+            let completed = TestFixtures.completedTournament()
+            context.insert(completed)
+            try context.save()
+
+            let viewModel = TournamentsViewModel(context: context)
+            let view = TournamentsView(viewModel: viewModel, navigationPath: .constant([]))
+                .snapshotIPadPortrait()
+                .frame(width: 1032, height: 1376)
+
+            assertSnapshot(
+                of: view,
+                as: .image(precision: 0.98, layout: .fixed(width: 1032, height: 1376)),
+                named: "withTournaments_iPadPortrait",
+                record: SnapshotTestConfiguration.record
+            )
+        }
+
         @Test("Empty state (landscape)")
         func emptyStateLandscape() throws {
             let context = try TestHelpers.bootstrappedContext()
@@ -199,9 +224,44 @@ struct ScreenSnapshotTests {
             let view = TournamentDetailView(viewModel: viewModel).frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
+
+        @Test("Ongoing tournament (iPad portrait)")
+        func ongoingTournamentIPadPortrait() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            let view = TournamentDetailView(viewModel: viewModel)
+                .snapshotIPadPortrait()
+                .frame(width: 1032, height: 1376)
+
+            assertSnapshot(
+                of: view,
+                as: .image(precision: 0.98, layout: .fixed(width: 1032, height: 1376)),
+                named: "ongoingTournament_iPadPortrait",
+                record: SnapshotTestConfiguration.record
+            )
+        }
+
+        @Test("Pods sticky bar (iPhone landscape)")
+        func podsStickyBarLandscape() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+            let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+            viewModel.refresh()
+            viewModel.setTab(.round, userInitiated: false)
+
+            let view = TournamentDetailView(viewModel: viewModel)
+                .snapshotIPhoneLandscape()
+                .frame(width: 844, height: 390)
+
+            assertSnapshot(
+                of: view,
+                as: .image(precision: 0.98, layout: .fixed(width: 844, height: 390)),
+                named: "ongoingTournament_podsLandscape",
+                record: SnapshotTestConfiguration.record
+            )
+        }
     }
-    
-    // MARK: - AttendanceView Snapshots
     
     @Suite("AttendanceView")
     @MainActor
@@ -213,9 +273,23 @@ struct ScreenSnapshotTests {
             let view = AttendanceView(viewModel: viewModel).frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
+
+        @Test("With players (iPhone landscape)")
+        func withPlayersLandscape() throws {
+            let context = try TestHelpers.contextWithTournament()
+            let viewModel = AttendanceViewModel(context: context)
+            let view = AttendanceView(viewModel: viewModel)
+                .snapshotIPhoneLandscape()
+                .frame(width: 844, height: 390)
+
+            assertSnapshot(
+                of: view,
+                as: .image(precision: 0.98, layout: .fixed(width: 844, height: 390)),
+                named: "withPlayers_landscape",
+                record: SnapshotTestConfiguration.record
+            )
+        }
     }
-    
-    // MARK: - TournamentStandingsView Snapshots
     
     @Suite("TournamentStandingsView")
     @MainActor
@@ -300,5 +374,17 @@ struct ScreenSnapshotTests {
                 .frame(width: 390, height: 844)
             assertSnapshot(of: view, as: .image(precision: 0.98, layout: .fixed(width: 390, height: 844)), record: SnapshotTestConfiguration.record)
         }
+    }
+}
+
+private extension View {
+    func snapshotIPadPortrait() -> some View {
+        environment(\.horizontalSizeClass, .regular)
+            .environment(\.verticalSizeClass, .regular)
+    }
+
+    func snapshotIPhoneLandscape() -> some View {
+        environment(\.horizontalSizeClass, .regular)
+            .environment(\.verticalSizeClass, .compact)
     }
 }
