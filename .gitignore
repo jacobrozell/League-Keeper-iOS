@@ -28,3 +28,5 @@ tmp/
 # Snapshot recording (commit __Snapshots__ when ready)
 # BudgetLeagueTrackerTests/**/__Snapshots__/
 build/
+.cursor/mcp.json
+.xcodebuildmcp/
