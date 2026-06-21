@@ -6,8 +6,8 @@ import Testing
 @Suite("LeagueKeeper migration")
 @MainActor
 struct LeagueKeeperMigrationTests {
-    @Test("Version 1.1 schema container boots in memory")
-    func inMemoryContainerV2() throws {
+    @Test("Schema container boots in memory with tournament defaults")
+    func inMemoryContainerWithTournamentDefaults() throws {
         let container = try LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
         let context = container.mainContext
 

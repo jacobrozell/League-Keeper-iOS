@@ -1,6 +1,6 @@
 # Privacy Policy – League Keeper
 
-**Last updated:** February 2025
+**Last updated:** June 2026
 
 **App name:** League Keeper (Budget League Tracker)
 
@@ -8,13 +8,15 @@
 
 ## Overview
 
-League Keeper is an iOS app for running and tracking recurring game leagues — weekly game nights, tabletop groups, and card-game seasons. Magic: The Gathering budget leagues are a common use case; the app includes an optional Budget Commander preset. This policy describes how the app handles your data.
+League Keeper is an iOS app for running and tracking recurring game leagues — weekly game nights, tabletop groups, and card-game seasons. This policy describes how the app handles your data.
 
 ---
 
 ## Data collection
 
-League Keeper **does not collect, transmit, or store any personal data** on servers operated by us or third parties. The app does not require an account or sign-in.
+League Keeper does not require an account or sign-in. **League data** (players, tournaments, standings, achievements) is never uploaded or synced to our servers.
+
+In **App Store Release builds**, the app may send limited anonymous analytics and crash diagnostics via Google Firebase — see [Third parties](#third-parties) below. No player names or league content are included.
 
 ---
 

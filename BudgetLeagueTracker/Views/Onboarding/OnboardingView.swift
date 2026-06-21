@@ -42,7 +42,7 @@ struct OnboardingView: View {
             symbol: "lock.iphone",
             title: "Stays on your device",
             subtitle: "No account required",
-            body: "Players, tournaments, and standings stay on this device. Nothing is uploaded or synced to a server."
+            body: "Players, tournaments, and standings stay on this device — no account and no cloud sync. See the Privacy Policy in Settings for details."
         ),
         Page(
             id: 2,
