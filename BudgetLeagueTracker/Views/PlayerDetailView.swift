@@ -4,6 +4,7 @@ import Charts
 /// Player detail view - displays comprehensive player statistics with charts.
 struct PlayerDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable var viewModel: PlayerDetailViewModel
     @State private var deleteFailed = false
 
@@ -83,9 +84,6 @@ struct PlayerDetailView: View {
         .onAppear {
             viewModel.refresh()
         }
-        .refreshable {
-            viewModel.refresh()
-        }
     }
 
     // MARK: - Hero
@@ -110,7 +108,7 @@ struct PlayerDetailView: View {
     private var scopeSection: some View {
         sectionContainer {
             Group {
-                if viewModel.availableScopes.count <= 3 {
+                if viewModel.availableScopes.count <= 3 && !dynamicTypeSize.isAccessibilitySize {
                     Picker("Stats scope", selection: $viewModel.selectedScope) {
                         ForEach(viewModel.availableScopes) { scope in
                             Text(scope.title).tag(scope)

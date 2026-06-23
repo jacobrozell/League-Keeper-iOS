@@ -55,17 +55,26 @@ struct PlayerRoundDetailSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(podmateAccessibilityLabel(podmate))
                     }
                 }
             }
+            .adaptiveContentWidth()
             .navigationTitle("Round Detail")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .accessibilityIdentifier("playerRoundDetailDone")
                 }
             }
         }
+    }
+
+    private func podmateAccessibilityLabel(_ podmate: PodmateResult) -> String {
+        let selfLabel = podmate.isSelf ? "You" : podmate.playerName
+        return "\(selfLabel), \(podmate.placementLabel), \(podmate.totalPoints) points"
     }
 }
 

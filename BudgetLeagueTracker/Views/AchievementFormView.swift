@@ -3,6 +3,9 @@ import SwiftUI
 /// Shared create/edit form for achievements.
 struct AchievementFormView: View {
     @Bindable var viewModel: AchievementFormViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     var body: some View {
         NavigationStack {
@@ -55,12 +58,7 @@ struct AchievementFormView: View {
                 }
 
                 Section {
-                    Picker("When active", selection: $viewModel.alwaysOn) {
-                        Text("Random pool").tag(false)
-                        Text("Every week").tag(true)
-                    }
-                    .pickerStyle(.segmented)
-                    .accessibilityLabel("Availability")
+                    availabilityPicker
                 } header: {
                     Text("Availability")
                 } footer: {
@@ -136,6 +134,25 @@ struct AchievementFormView: View {
             } message: {
                 Text(viewModel.persistenceErrorMessage ?? PersistenceError.saveFailed.toastMessage)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var availabilityPicker: some View {
+        let picker = Picker("When active", selection: $viewModel.alwaysOn) {
+            Text("Random pool").tag(false)
+            Text("Every week").tag(true)
+        }
+        .accessibilityLabel("Availability")
+
+        if AdaptiveLayout.usesMenuPickerStyle(
+            dynamicType: dynamicTypeSize,
+            verticalSizeClass: verticalSizeClass,
+            horizontalSizeClass: horizontalSizeClass
+        ) {
+            picker.pickerStyle(.menu)
+        } else {
+            picker.pickerStyle(.segmented)
         }
     }
 }

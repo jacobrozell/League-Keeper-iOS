@@ -41,7 +41,7 @@ struct SettingsView: View {
                     BrandCrest(size: 56, showsShadow: false)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(appDisplayName)
-                            .font(.system(.title3, design: .serif).weight(.bold))
+                            .font(.title3.weight(.bold))
                             .foregroundStyle(Color(hex: palette.ink))
                         Text(AppInfo.tagline)
                             .font(.caption.weight(.semibold))

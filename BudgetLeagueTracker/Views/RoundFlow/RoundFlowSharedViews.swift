@@ -236,7 +236,7 @@ struct RoundScoringBonusesPanel: View {
                                 if disabled {
                                     Text("Already earned this week")
                                         .font(.caption2)
-                                        .foregroundStyle(.tertiary)
+                                        .foregroundStyle(.secondary)
                                         .padding(.leading, 4)
                                 }
                             }
@@ -294,6 +294,6 @@ struct TableRankRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(placementLabel), \(name)")
-        .accessibilityHint("Drag to reorder, or use the up and down buttons")
+        .accessibilityHint("Use the up and down buttons to change placement")
     }
 }

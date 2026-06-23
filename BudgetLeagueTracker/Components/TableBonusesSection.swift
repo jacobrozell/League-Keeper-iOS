@@ -56,7 +56,7 @@ struct TableBonusesSection: View {
                                 if disabled {
                                     Text("Already earned this week")
                                         .font(.caption2)
-                                        .foregroundStyle(.tertiary)
+                                        .foregroundStyle(.secondary)
                                         .padding(.leading, 4)
                                 }
                             }

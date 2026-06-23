@@ -156,7 +156,7 @@ struct OnboardingView: View {
     private func textBlock(_ item: Page, alignment: TextAlignment) -> some View {
         VStack(spacing: 10) {
             Text(item.title)
-                .font(.system(widePageLayout ? .title : .largeTitle, design: .serif).weight(.bold))
+                .font(.system(widePageLayout ? .title : .largeTitle).weight(.bold))
                 .multilineTextAlignment(alignment)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
@@ -308,7 +308,7 @@ struct OnboardingView: View {
                     Button("Set up later") { onComplete(.dismiss) }
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
-                        .accessibilityIdentifier("onboardingContinue")
+                        .accessibilityIdentifier("onboardingSetUpLater")
                 }
             }
         }
@@ -342,7 +342,7 @@ struct OnboardingView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
-                    .accessibilityIdentifier("onboardingContinue")
+                    .accessibilityIdentifier("onboardingSetUpLater")
             }
         }
     }

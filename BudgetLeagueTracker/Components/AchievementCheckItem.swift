@@ -54,7 +54,7 @@ struct AchievementCheckItem: View {
                     if let disabledReason, isDisabled {
                         Text(disabledReason)
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -63,7 +63,12 @@ struct AchievementCheckItem: View {
         .disabled(isDisabled)
         .accessibilityLabel("\(name), \(points) points")
         .accessibilityValue(isChecked ? "checked" : (isDisabled ? "disabled" : "unchecked"))
-        .accessibilityHintIf(achievementDescription)
+        .accessibilityHintIf(accessibilityHintText)
+    }
+
+    private var accessibilityHintText: String? {
+        if let disabledReason, isDisabled { return disabledReason }
+        return achievementDescription
     }
 }
 

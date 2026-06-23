@@ -6,6 +6,9 @@ struct AchievementTemplatePickerView: View {
     let onCancel: () -> Void
     var initialLibrary: AchievementTemplateLibrary = .generic
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var selectedLibrary: AchievementTemplateLibrary
 
     init(
@@ -33,13 +36,8 @@ struct AchievementTemplatePickerView: View {
                 }
 
                 Section {
-                    Picker("Template library", selection: $selectedLibrary) {
-                        ForEach(AchievementTemplateLibrary.allCases) { library in
-                            Text(library.displayName).tag(library)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    templateLibraryPicker
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
 
                 Section("Templates") {
@@ -72,12 +70,32 @@ struct AchievementTemplatePickerView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .adaptiveContentWidth()
             .navigationTitle("Add Achievement")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onCancel)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var templateLibraryPicker: some View {
+        let picker = Picker("Template library", selection: $selectedLibrary) {
+            ForEach(AchievementTemplateLibrary.allCases) { library in
+                Text(library.displayName).tag(library)
+            }
+        }
+
+        if AdaptiveLayout.usesMenuPickerStyle(
+            dynamicType: dynamicTypeSize,
+            verticalSizeClass: verticalSizeClass,
+            horizontalSizeClass: horizontalSizeClass
+        ) {
+            picker.pickerStyle(.menu)
+        } else {
+            picker.pickerStyle(.segmented)
         }
     }
 }

@@ -30,6 +30,8 @@ struct TournamentDetailView: View {
     @State private var toastMessage: String?
     
     var body: some View {
+        let _ = ensureAttendanceViewModel()
+
         Group {
             if viewModel.isOngoing {
                 ongoingContent
@@ -56,7 +58,6 @@ struct TournamentDetailView: View {
         .onAppear {
             viewModel.setAsActiveTournament()
             viewModel.refresh()
-            attendanceViewModel = AttendanceViewModel(context: modelContext)
         }
         .sheet(isPresented: $viewModel.showEditLastRound) {
             EditLastRoundView(
@@ -521,6 +522,12 @@ struct TournamentDetailView: View {
 
     private func showToast(_ message: String) {
         ToastPresentation.show(message, binding: $toastMessage)
+    }
+
+    private func ensureAttendanceViewModel() {
+        if attendanceViewModel == nil {
+            attendanceViewModel = AttendanceViewModel(context: modelContext)
+        }
     }
     
     // MARK: - Completed Tournament Content

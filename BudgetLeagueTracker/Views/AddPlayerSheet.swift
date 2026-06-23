@@ -45,6 +45,7 @@ struct AddPlayerSheet: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            .adaptiveContentWidth()
             .navigationTitle("Add Player")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

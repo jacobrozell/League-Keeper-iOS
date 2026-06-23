@@ -22,9 +22,9 @@ struct PrimaryActionButton: View {
                 .frame(minHeight: AppConstants.UI.minTouchTargetHeight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(Color("AccentColor"))
+        .tint(isDisabled ? Color(.tertiarySystemFill) : Color("AccentColor"))
+        .foregroundStyle(isDisabled ? Color.secondary : Color.white)
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.55 : 1)
         .accessibilityLabel(accessibilityLabel ?? title)
         .accessibilityHintIf(isDisabled ? disabledAccessibilityHint : nil)
 

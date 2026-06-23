@@ -228,7 +228,7 @@ struct AchievementsView: View {
                 HStack {
                     Label("Earned \(totalEarned) times", systemImage: "trophy")
                         .font(.caption)
-                        .foregroundStyle(totalEarned > 0 ? .secondary : .tertiary)
+                        .foregroundStyle(.secondary)
 
                     Spacer()
                 }
@@ -239,7 +239,7 @@ struct AchievementsView: View {
                     HStack(spacing: 4) {
                         Text("Top:")
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.secondary)
 
                         ForEach(Array(topEarners.enumerated()), id: \.offset) { index, earner in
                             HStack(spacing: 2) {

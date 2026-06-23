@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Guided round flow: seat tables, score one at a time, review, then finish the round.
+/// Guided round flow: seat players, score one at a time, review, then finish the round.
 struct RoundFlowView: View {
     @Bindable var viewModel: TournamentDetailViewModel
     var showsSeatPlayersCoachMark: Bool = false

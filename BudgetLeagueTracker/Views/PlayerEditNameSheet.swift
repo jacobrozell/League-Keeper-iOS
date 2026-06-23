@@ -16,12 +16,14 @@ struct PlayerEditNameSheet: View {
                         .textContentType(.name)
                         .submitLabel(.next)
                         .accessibilityLabel("Player name")
+                        .accessibilityIdentifier("editPlayerNameField")
                         .onSubmit { save() }
 
                     TextField("Nickname (optional)", text: $nameNote)
                         .textContentType(.nickname)
                         .submitLabel(.done)
                         .accessibilityLabel("Nickname")
+                        .accessibilityIdentifier("editPlayerNicknameField")
                         .onSubmit { save() }
                 } footer: {
                     if let errorMessage {
@@ -32,6 +34,7 @@ struct PlayerEditNameSheet: View {
                     }
                 }
             }
+            .adaptiveContentWidth()
             .navigationTitle("Edit Player")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -41,6 +44,7 @@ struct PlayerEditNameSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
                         .disabled(!canSave)
+                        .accessibilityHintIf(canSave ? nil : "Enter a player name to save")
                 }
             }
             .onAppear {

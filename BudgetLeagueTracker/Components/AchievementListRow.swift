@@ -55,7 +55,7 @@ struct AchievementListRow: View {
 
                         Text(achievement.category.displayName)
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(AppConstants.AccessibleColors.captionText)
                     }
                 }
 

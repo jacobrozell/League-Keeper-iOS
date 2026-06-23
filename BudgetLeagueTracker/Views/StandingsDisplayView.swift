@@ -11,6 +11,7 @@ struct StandingsDisplayView: View {
     var onDismiss: () -> Void
 
     @Environment(\.palette) private var palette
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -68,6 +69,11 @@ struct StandingsDisplayView: View {
             .onAppear {
                 UIApplication.shared.isIdleTimerDisabled = true
                 onRefresh?()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    onRefresh?()
+                }
             }
             .onDisappear {
                 UIApplication.shared.isIdleTimerDisabled = false

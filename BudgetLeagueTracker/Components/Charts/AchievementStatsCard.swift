@@ -134,7 +134,7 @@ struct AchievementStatsCard: View {
                     .foregroundStyle(.secondary)
                 Text("\(totalEarned)")
                     .font(.title2.bold())
-                    .foregroundStyle(totalEarned > 0 ? .primary : .tertiary)
+                    .foregroundStyle(totalEarned > 0 ? .primary : .secondary)
             }
             
             if !topEarners.isEmpty {
@@ -284,14 +284,8 @@ struct AchievementStatsRow: View {
                 Label("Earned \(totalEarned)×", systemImage: "trophy")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
+
                 Spacer()
-                
-                if let top = topEarners.first {
-                    Text("Top: \(top.playerName) (\(top.count))")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
             }
             
             // Mini earners display
