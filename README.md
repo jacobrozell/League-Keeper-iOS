@@ -2,6 +2,8 @@
 
 League Keeper helps you run and track recurring game leagues: create tournaments, record attendance and table seating, score placement and achievements, and view weekly and final standings. Budget Commander (MTG) is available as a one-tap preset for card-game hosts.
 
+**Status:** Pre–TestFlight · v1.0.0 (1) · **Branch:** `main` · [Release todo](docs/release/todo.md)
+
 - **Platform:** iOS 18+, Swift 6, SwiftUI, SwiftData
 - **Project:** XcodeGen (`project.yml`) → `BudgetLeagueTracker.xcodeproj`
 - **Repo:** [github.com/jacobrozell/League-Keeper-iOS](https://github.com/jacobrozell/League-Keeper-iOS)
