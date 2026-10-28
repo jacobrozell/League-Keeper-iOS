@@ -80,6 +80,12 @@ struct PodSnapshot: Codable, Equatable {
     /// Delta applied to each player's weekly points
     var weeklyDeltas: [String: WeeklyPlayerPoints]
 
+    /// Whether achievements counted that week (nil for snapshots saved before this was recorded).
+    var achievementsOn: Bool?
+
+    /// Achievements active that week (nil for snapshots saved before this was recorded).
+    var activeAchievementIds: [String]?
+
     init(
         week: Int = 1,
         round: Int = 1,
@@ -87,7 +93,9 @@ struct PodSnapshot: Codable, Equatable {
         placements: [String: Int],
         achievementChecks: [AchievementCheck],
         playerDeltas: [String: PlayerDelta],
-        weeklyDeltas: [String: WeeklyPlayerPoints]
+        weeklyDeltas: [String: WeeklyPlayerPoints],
+        achievementsOn: Bool? = nil,
+        activeAchievementIds: [String]? = nil
     ) {
         self.week = week
         self.round = round
@@ -96,6 +104,8 @@ struct PodSnapshot: Codable, Equatable {
         self.achievementChecks = achievementChecks
         self.playerDeltas = playerDeltas
         self.weeklyDeltas = weeklyDeltas
+        self.achievementsOn = achievementsOn
+        self.activeAchievementIds = activeAchievementIds
     }
 
     init(from decoder: Decoder) throws {
@@ -107,10 +117,13 @@ struct PodSnapshot: Codable, Equatable {
         achievementChecks = try container.decode([AchievementCheck].self, forKey: .achievementChecks)
         playerDeltas = try container.decode([String: PlayerDelta].self, forKey: .playerDeltas)
         weeklyDeltas = try container.decode([String: WeeklyPlayerPoints].self, forKey: .weeklyDeltas)
+        achievementsOn = try container.decodeIfPresent(Bool.self, forKey: .achievementsOn)
+        activeAchievementIds = try container.decodeIfPresent([String].self, forKey: .activeAchievementIds)
     }
 
     private enum CodingKeys: String, CodingKey {
         case week, round, playerIds, placements, achievementChecks, playerDeltas, weeklyDeltas
+        case achievementsOn, activeAchievementIds
     }
 }
 

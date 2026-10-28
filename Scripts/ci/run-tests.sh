@@ -9,12 +9,16 @@ PACKAGES_ROOT="${CI_PACKAGES_ROOT:-.packages}"
 LOG_FILE="${CI_XCODE_TEST_LOG:-xcodebuild-test.log}"
 PARALLEL_TESTING="${CI_PARALLEL_TESTING:-NO}"
 
-# Snapshot references are recorded locally; skip until __Snapshots__ are committed.
-SKIP_SNAPSHOTS=(
-  -skip-testing:BudgetLeagueTrackerTests/ChartsSnapshotTests
-  -skip-testing:BudgetLeagueTrackerTests/ComponentSnapshotTests
-  -skip-testing:BudgetLeagueTrackerTests/ScreenSnapshotTests
-)
+# __Snapshots__ refs are committed but rendering differs across iOS runtimes.
+# Set CI_RUN_SNAPSHOTS=YES once refs are re-recorded on the CI Xcode/simulator.
+SKIP_SNAPSHOTS=()
+if [ "${CI_RUN_SNAPSHOTS:-NO}" != "YES" ]; then
+  SKIP_SNAPSHOTS=(
+    -skip-testing:BudgetLeagueTrackerTests/ChartsSnapshotTests
+    -skip-testing:BudgetLeagueTrackerTests/ComponentSnapshotTests
+    -skip-testing:BudgetLeagueTrackerTests/ScreenSnapshotTests
+  )
+fi
 
 echo "::group::Running tests (without building)"
 echo "Scheme: $SCHEME (parallel testing: $PARALLEL_TESTING)"
@@ -31,7 +35,7 @@ xcodebuild test-without-building \
   -clonedSourcePackagesDirPath "./${PACKAGES_ROOT}/cloned_sources" \
   -packageCachePath "$(pwd)/${PACKAGES_ROOT}/cache" \
   -resultBundlePath TestResults.xcresult \
-  "${SKIP_SNAPSHOTS[@]}" \
+  ${SKIP_SNAPSHOTS[@]+"${SKIP_SNAPSHOTS[@]}"} \
   CODE_SIGN_IDENTITY=- \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \

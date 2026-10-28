@@ -143,7 +143,9 @@ enum ScoringEngine {
             placements: placements,
             achievementChecks: checkRecords,
             playerDeltas: playerDeltas,
-            weeklyDeltas: weeklyDeltas
+            weeklyDeltas: weeklyDeltas,
+            achievementsOn: tournament.achievementsOnThisWeek,
+            activeAchievementIds: tournament.activeAchievementIds
         ))
         tournament.podHistorySnapshots = snapshots
 
@@ -158,7 +160,8 @@ enum ScoringEngine {
         guard let tournament = LeagueEngine.fetchActiveTournament(context: context) else { return false }
 
         var snapshots = tournament.podHistorySnapshots
-        guard let lastSnapshot = snapshots.popLast() else { return true }
+        guard let last = snapshots.last, last.week == tournament.currentWeek,
+              let lastSnapshot = snapshots.popLast() else { return true }
 
         let playerDescriptor = FetchDescriptor<Player>()
         if let allPlayers = try? context.fetch(playerDescriptor) {
@@ -224,6 +227,10 @@ enum ScoringEngine {
         let lastSnapshot = snapshots.remove(at: index)
         let editWeek = lastSnapshot.week
         let editRound = lastSnapshot.round
+        let isCurrentWeek = editWeek == tournament.currentWeek
+        let countsAchievements = isCurrentWeek
+            ? tournament.achievementsOnThisWeek
+            : (lastSnapshot.achievementsOn ?? true)
 
         let playerDescriptor = FetchDescriptor<Player>()
         guard let allPlayers = try? context.fetch(playerDescriptor) else { return false }
@@ -242,11 +249,13 @@ enum ScoringEngine {
         }
 
         var weeklyPoints = tournament.weeklyPointsByPlayer
-        for (playerId, delta) in lastSnapshot.weeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints -= delta.placementPoints
-            current.achievementPoints -= delta.achievementPoints
-            weeklyPoints[playerId] = current
+        if isCurrentWeek {
+            for (playerId, delta) in lastSnapshot.weeklyDeltas {
+                var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
+                current.placementPoints -= delta.placementPoints
+                current.achievementPoints -= delta.achievementPoints
+                weeklyPoints[playerId] = current
+            }
         }
 
         var newPlayerDeltas: [String: PlayerDelta] = [:]
@@ -259,7 +268,7 @@ enum ScoringEngine {
 
             var achievementPts = 0
 
-            if tournament.achievementsOnThisWeek {
+            if countsAchievements {
                 for key in newAchievementChecks where key.hasPrefix("\(playerId):") {
                     let achievementId = String(key.dropFirst(playerId.count + 1))
                     if let achievement = achievementLookup[achievementId] {
@@ -296,13 +305,15 @@ enum ScoringEngine {
             }
         }
 
-        for (playerId, delta) in newWeeklyDeltas {
-            var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
-            current.placementPoints += delta.placementPoints
-            current.achievementPoints += delta.achievementPoints
-            weeklyPoints[playerId] = current
+        if isCurrentWeek {
+            for (playerId, delta) in newWeeklyDeltas {
+                var current = weeklyPoints[playerId] ?? WeeklyPlayerPoints()
+                current.placementPoints += delta.placementPoints
+                current.achievementPoints += delta.achievementPoints
+                weeklyPoints[playerId] = current
+            }
+            tournament.weeklyPointsByPlayer = weeklyPoints
         }
-        tournament.weeklyPointsByPlayer = weeklyPoints
 
         var existingPodIdByPlayer: [String: String] = [:]
         let gameResultDescriptor = FetchDescriptor<GameResult>()
@@ -351,7 +362,9 @@ enum ScoringEngine {
             placements: newPlacements,
             achievementChecks: newCheckRecords,
             playerDeltas: newPlayerDeltas,
-            weeklyDeltas: newWeeklyDeltas
+            weeklyDeltas: newWeeklyDeltas,
+            achievementsOn: lastSnapshot.achievementsOn,
+            activeAchievementIds: lastSnapshot.activeAchievementIds
         )
         snapshots.insert(newSnapshot, at: index)
         tournament.podHistorySnapshots = snapshots

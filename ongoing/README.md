@@ -9,7 +9,7 @@ Plans and projects **in implementation** — approved, specced, and actively bei
 | Ship blockers / release train | [`docs/release/`](../docs/release/) |
 | Shipped behavior | [`specs/`](../specs/) + [`docs/feature-inventory.md`](../docs/feature-inventory.md) |
 
-**Last updated:** 2026-06-21
+**Last updated:** 2026-10-27
 
 ## Active
 
@@ -20,6 +20,7 @@ Plans and projects **in implementation** — approved, specced, and actively bei
 | Achievement v2 | [`docs/achievement-improvements-plan.md`](../docs/achievement-improvements-plan.md) | Partial — QA pending | Sprints A1–A4 done; A5 a11y sign-off |
 | iPad layout | [`docs/ipad-layout-plan.md`](../docs/ipad-layout-plan.md) | Partial — QA pending | Code mostly done |
 | App Store reviewer readiness | [`FutureIdeas/ReviewerReadinessHandoff.md`](../FutureIdeas/ReviewerReadinessHandoff.md) | **Mostly done** — P0 crash + privacy copy committed; Connect nutrition label + TestFlight remain |
+| Unified audit track (phases 1–5) | Unified League Keeper plan | **Partial** | Phase 1 + nav cleanup shipped. Open: game-night UX (edit/attendance/undo table), RoundFlow split, snapshot CI honesty, VoiceOver sign-off |
 
 ## See also
 

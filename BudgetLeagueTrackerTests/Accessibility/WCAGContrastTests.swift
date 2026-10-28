@@ -1,5 +1,7 @@
 import Foundation
+import SwiftUI
 import Testing
+@testable import BudgetLeagueTracker
 
 /// WCAG 2.1 contrast math for semantic UI colors (P-1.4.3).
 @Suite("WCAG contrast ratios")
@@ -59,6 +61,30 @@ struct WCAGContrastTests {
         // iOS system blue is ~4:1 — meets AA for large text / UI components, not 4.5:1 body text.
         #expect(ratio >= 4.0)
     }
+
+    @Test("Increase Contrast palette text tokens meet AA on every brand surface")
+    func increasedContrastPalette() throws {
+        for palette in [Tokens.lightIncreasedContrast, Tokens.darkIncreasedContrast] {
+            let surfaces = [palette.bg, palette.bg2, palette.surface, palette.surface2]
+            let textTokens = [palette.ink, palette.inkDim, palette.inkFaint, palette.gold, palette.goldBright, palette.err]
+            for text in textTokens {
+                for surface in surfaces {
+                    let ratio = WCAGContrastMath.contrastRatio(
+                        foreground: try #require(WCAGContrastMath.RGB(hex: text)),
+                        background: try #require(WCAGContrastMath.RGB(hex: surface))
+                    )
+                    #expect(ratio >= 4.5, "\(text) on \(surface) is \(ratio):1")
+                }
+            }
+        }
+    }
+
+    @Test("Increase Contrast palette is selected only when the setting is on")
+    func paletteSelection() {
+        #expect(Tokens.palette(for: .light, contrast: .increased).gold == Tokens.lightIncreasedContrast.gold)
+        #expect(Tokens.palette(for: .dark, contrast: .increased).inkDim == Tokens.darkIncreasedContrast.inkDim)
+        #expect(Tokens.palette(for: .light).gold == Tokens.light.gold)
+    }
 }
 
 enum WCAGContrastMath {
@@ -71,6 +97,16 @@ enum WCAGContrastMath {
             self.r = r
             self.g = g
             self.b = b
+        }
+
+        init?(hex: String) {
+            let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+            guard digits.count == 6, let value = UInt32(digits, radix: 16) else { return nil }
+            self.init(
+                Double((value >> 16) & 0xFF) / 255,
+                Double((value >> 8) & 0xFF) / 255,
+                Double(value & 0xFF) / 255
+            )
         }
     }
 

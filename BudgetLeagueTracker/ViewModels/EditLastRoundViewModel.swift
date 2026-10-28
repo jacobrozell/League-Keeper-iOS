@@ -96,7 +96,9 @@ final class EditLastRoundViewModel {
         originalSnapshot = snapshot
         weekNumber = snapshot.week
         roundNumber = snapshot.round
-        achievementsEnabled = tournament.achievementsOnThisWeek || !snapshot.achievementChecks.isEmpty
+        let isCurrentWeek = snapshot.week == tournament.currentWeek
+        let weekAchievementsOn = isCurrentWeek ? tournament.achievementsOnThisWeek : (snapshot.achievementsOn ?? true)
+        achievementsEnabled = weekAchievementsOn || !snapshot.achievementChecks.isEmpty
         
         // Load placements from snapshot
         placements = snapshot.placements
@@ -116,7 +118,11 @@ final class EditLastRoundViewModel {
         // Load achievements
         let achievementDescriptor = FetchDescriptor<Achievement>()
         if let allAchievements = try? context.fetch(achievementDescriptor) {
-            achievements = allAchievements.filter { tournament.activeAchievementIds.contains($0.id) }
+            let checkedIds = Set(snapshot.achievementChecks.map(\.achievementId))
+            let activeIds = Set(isCurrentWeek
+                ? tournament.activeAchievementIds
+                : snapshot.activeAchievementIds ?? allAchievements.filter(\.alwaysOn).map(\.id))
+            achievements = allAchievements.filter { activeIds.contains($0.id) || checkedIds.contains($0.id) }
         }
     }
     
@@ -176,7 +182,9 @@ final class EditLastRoundViewModel {
     // MARK: - Actions
     
     /// Saves the edited round, applying changes to stats and GameResults.
-    func save() {
+    /// Returns `false` when persistence failed.
+    @discardableResult
+    func save() -> Bool {
         LeagueEngine.applyEditedRound(
             context: context,
             snapshotIndex: snapshotIndex,

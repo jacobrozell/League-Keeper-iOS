@@ -6,6 +6,7 @@ struct EditLastRoundView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: EditLastRoundViewModel
     var onSave: (Int) -> Void
+    @State private var saveFailed = false
     
     var body: some View {
         NavigationStack {
@@ -21,13 +22,21 @@ struct EditLastRoundView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            viewModel.save()
+                            guard viewModel.save() else {
+                                saveFailed = true
+                                return
+                            }
                             onSave(viewModel.roundNumber)
                             dismiss()
                         }
                         .disabled(!viewModel.hasValidPlacements)
                     }
                 }
+        }
+        .alert("Couldn't Save", isPresented: $saveFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(PersistenceError.saveFailed.toastMessage)
         }
     }
     

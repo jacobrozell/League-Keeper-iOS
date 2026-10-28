@@ -175,3 +175,47 @@ jobs:
             coverage-summary.txt
             xcodebuild-test.log
           if-no-files-found: ignore
+
+  ui-smoke:
+    name: UI Smoke
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+        with:
+          xcode-version: '26.2'
+
+      - name: Prepare Firebase config
+        run: cp Resources/GoogleService-Info.plist.example Resources/GoogleService-Info.plist
+
+      - name: Install CI tools
+        run: brew install xcodegen xcbeautify
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Restore SPM Cache
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: .packages
+          key: ${{ runner.os }}-spm-${{ hashFiles('project.yml', '**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Run UI Smoke Tests
+        run: Scripts/ci/run-ui-smoke.sh "${{ env.SIM_DESTINATION }}"
+
+      - name: Upload UI Smoke Results
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        if: always()
+        with:
+          name: ui-smoke-results
+          path: |
+            UISmokeResults.xcresult
+            xcodebuild-ui-smoke.log
+          if-no-files-found: ignore

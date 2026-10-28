@@ -205,13 +205,6 @@ extension XCUIApplication {
         }
     }
 
-    /// Opens the More menu on the tournament round sticky action bar.
-    func openPodsMoreMenu() {
-        let moreMenu = buttons["roundMoreMenu"]
-        XCTAssertTrue(moreMenu.waitForExistence(timeout: 5), "Round more menu should exist")
-        moreMenu.tap()
-    }
-
     /// Selects a section on the tournament detail segmented control or menu picker.
     func selectTournamentDetailSection(_ title: String) {
         let picker = descendants(matching: .any)["tournamentDetailSectionPicker"]

@@ -328,7 +328,8 @@ enum LeagueEngine {
         }
         tournament.weeklyPointsByPlayer = weeklyPoints
         
-        tournament.podHistorySnapshots = []
+        let week = tournament.currentWeek
+        tournament.podHistorySnapshots = tournament.podHistorySnapshots.filter { $0.week != week }
         
         // Clear any leftover round data
         tournament.roundPlacements = [:]
@@ -587,7 +588,6 @@ enum LeagueEngine {
                 tournament.currentRound = AppConstants.League.defaultCurrentRound
                 tournament.presentPlayerIds = []
                 tournament.weeklyPointsByPlayer = [:]
-                tournament.podHistorySnapshots = []
                 
                 // Roll new active achievements
                 let achievements = fetchAllAchievements(context: context)

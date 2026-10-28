@@ -565,7 +565,7 @@ final class TournamentDetailViewModel {
         let allAchievements = (try? context.fetch(achievementDescriptor)) ?? []
         
         if let tournament = tournament {
-            podHistoryCount = tournament.podHistorySnapshots.count
+            podHistoryCount = tournament.podHistorySnapshots.filter { $0.week == tournament.currentWeek }.count
             syncActiveTab(for: tournament)
             reloadTablesFromTournament(tournament)
 
@@ -684,7 +684,8 @@ final class TournamentDetailViewModel {
         tableLoadIssueMessage = nil
         LeagueEngine.clearRoundData(context: context)
 
-        let previousPlacements = tournament.podHistorySnapshots.last?.placements ?? [:]
+        let previousPlacements = tournament.podHistorySnapshots
+            .last { $0.week == tournament.currentWeek }?.placements ?? [:]
 
         tables = LeagueEngine.generatePodsForRound(
             players: allPlayers,

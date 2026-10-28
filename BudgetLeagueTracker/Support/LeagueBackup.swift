@@ -260,7 +260,15 @@ enum LeagueBackupService {
   }
 
   /// Replaces all league data with the contents of a backup file.
-  static func importBackup(_ data: Data, context: ModelContext) throws {
+  ///
+  /// The backup is validated and saved into a scratch in-memory store before the live
+  /// store is touched; any failure during the swap rolls back to the pre-import data.
+  /// `beforeCommit` runs after the swap is staged and before it is saved.
+  static func importBackup(
+    _ data: Data,
+    context: ModelContext,
+    beforeCommit: () throws -> Void = {}
+  ) throws {
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
     guard let backup = try? decoder.decode(LeagueBackupFile.self, from: data) else {
@@ -269,37 +277,81 @@ enum LeagueBackupService {
     guard backup.formatVersion <= LeagueBackupFile.currentFormatVersion else {
       throw LeagueBackupError.unsupportedVersion(backup.formatVersion)
     }
+    try validate(backup)
+    try stageInScratchStore(backup)
 
-    try deleteAll(context: context)
-    try insertAll(backup: backup, context: context)
+    if context.hasChanges {
+      do {
+        try context.save()
+      } catch {
+        throw LeagueBackupError.importFailed(error.localizedDescription)
+      }
+    }
+
     do {
+      try deleteAll(context: context)
+      insertAll(backup: backup, context: context)
+      try beforeCommit()
       try context.save()
     } catch {
       context.rollback()
+      AppLog.shared.error(
+        .persistence,
+        eventName: "backup_import_failed",
+        message: "Backup import rolled back",
+        metadata: ["errorDescription": String(describing: error)]
+      )
       throw LeagueBackupError.importFailed(error.localizedDescription)
     }
     LeagueEngine.validateAndSanitizeState(context: context)
   }
 
+  /// Rejects backups whose records would collide once inserted.
+  static func validate(_ backup: LeagueBackupFile) throws {
+    func requireUniqueIDs(_ ids: [String], _ label: String) throws {
+      if ids.contains(where: \.isEmpty) {
+        throw LeagueBackupError.importFailed("A \(label) record is missing its ID.")
+      }
+      if Set(ids).count != ids.count {
+        throw LeagueBackupError.importFailed("The backup contains duplicate \(label) records.")
+      }
+    }
+    try requireUniqueIDs(backup.players.map(\.id), "player")
+    try requireUniqueIDs(backup.achievements.map(\.id), "achievement")
+    try requireUniqueIDs(backup.tournaments.map(\.id), "tournament")
+    try requireUniqueIDs(backup.gameResults.map(\.id), "game result")
+  }
+
+  private static func stageInScratchStore(_ backup: LeagueBackupFile) throws {
+    do {
+      let container = try LeagueKeeperModelContainer.make(isStoredInMemoryOnly: true)
+      let scratch = ModelContext(container)
+      insertAll(backup: backup, context: scratch)
+      try scratch.save()
+    } catch {
+      throw LeagueBackupError.importFailed(error.localizedDescription)
+    }
+  }
+
   private static func deleteAll(context: ModelContext) throws {
-    for result in (try? context.fetch(FetchDescriptor<GameResult>())) ?? [] {
+    for result in try context.fetch(FetchDescriptor<GameResult>()) {
       context.delete(result)
     }
-    for tournament in (try? context.fetch(FetchDescriptor<Tournament>())) ?? [] {
+    for tournament in try context.fetch(FetchDescriptor<Tournament>()) {
       context.delete(tournament)
     }
-    for player in (try? context.fetch(FetchDescriptor<Player>())) ?? [] {
+    for player in try context.fetch(FetchDescriptor<Player>()) {
       context.delete(player)
     }
-    for achievement in (try? context.fetch(FetchDescriptor<Achievement>())) ?? [] {
+    for achievement in try context.fetch(FetchDescriptor<Achievement>()) {
       context.delete(achievement)
     }
-    for state in (try? context.fetch(FetchDescriptor<LeagueState>())) ?? [] {
+    for state in try context.fetch(FetchDescriptor<LeagueState>()) {
       context.delete(state)
     }
   }
 
-  private static func insertAll(backup: LeagueBackupFile, context: ModelContext) throws {
+  private static func insertAll(backup: LeagueBackupFile, context: ModelContext) {
     if let stateBackup = backup.leagueState {
       context.insert(stateBackup.makeModel())
     } else {

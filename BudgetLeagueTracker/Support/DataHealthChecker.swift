@@ -30,6 +30,7 @@ enum DataHealthChecker {
         check(tournament.confirmedTableIndicesData, as: Set<Int>.self, field: "confirmed tables", hint: "Re-score tables for the current round.", tournament: tournament, into: &found)
         check(tournament.tableScoringOrdersData, as: [[String]].self, field: "table finish order", hint: "Re-score the current round to restore finish order.", tournament: tournament, into: &found)
         check(tournament.rulesData, as: TournamentRules.self, field: "house rules", hint: "Re-open house rules and save them again.", tournament: tournament, into: &found)
+        check(tournament.placementPointsData, as: [Int].self, field: "placement points", hint: "Export a backup, then contact support if round scores look wrong.", tournament: tournament, into: &found)
 
         return found
     }

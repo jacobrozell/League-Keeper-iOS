@@ -1151,12 +1151,23 @@ struct LeagueEngineTests {
     @Suite("nextRound")
     @MainActor
     struct NextRoundTests {
+
+        private func scoredPlacements(for tournament: Tournament) -> [String: Int] {
+            Dictionary(uniqueKeysWithValues: tournament.presentPlayerIds.enumerated().map { ($1, $0 + 1) })
+        }
+
+        @Test("Does not advance when no table was scored")
+        func refusesEmptyRound() throws {
+            let context = try TestHelpers.contextWithTournament(round: 1)
+            #expect(LeagueEngine.nextRound(context: context) == false)
+            #expect(try TestHelpers.fetchActiveTournament(from: context)?.currentRound == 1)
+        }
         
         @Test("Increments round within week")
         func incrementsRoundWithinWeek() throws {
             let context = try TestHelpers.contextWithTournament(round: 1)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
-            tournament.roundPlacements = [:]  // No placements to finalize
+            tournament.roundPlacements = scoredPlacements(for: tournament)
             try context.save()
             
             LeagueEngine.nextRound(context: context)
@@ -1169,7 +1180,7 @@ struct LeagueEngineTests {
         func transitionsAfterThreeRounds() throws {
             let context = try TestHelpers.contextWithTournament(week: 1, round: 3)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
-            tournament.roundPlacements = [:]
+            tournament.roundPlacements = scoredPlacements(for: tournament)
             try context.save()
             
             LeagueEngine.nextRound(context: context)
@@ -1188,7 +1199,7 @@ struct LeagueEngineTests {
             let context = try TestHelpers.contextWithTournament(week: 6, round: 3)
             let tournament = try TestHelpers.fetchActiveTournament(from: context)!
             tournament.totalWeeks = 6
-            tournament.roundPlacements = [:]
+            tournament.roundPlacements = scoredPlacements(for: tournament)
             try context.save()
             
             LeagueEngine.nextRound(context: context)

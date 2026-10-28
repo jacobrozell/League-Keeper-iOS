@@ -140,7 +140,6 @@ final class AccessibilityAuditTests: XCTestCase {
         if !app.descendants(matching: .any)["tournamentDetailSectionPicker"].waitForExistence(timeout: 2) {
             app.openSeededOngoingTournament()
         }
-        app.openPodsMoreMenu()
         let editRoundButton = app.buttons["Edit Last Round"]
         XCTAssertTrue(editRoundButton.waitForExistence(timeout: 8))
         editRoundButton.tap()
@@ -188,37 +187,29 @@ final class AccessibilityAuditTests: XCTestCase {
     
     // MARK: - Touch Target Size Tests
     
-    /// Verifies interactive elements meet 44pt minimum touch target
-    /// Note: Some system components (toolbars, steppers) may be below 44pt
+    /// Fails when an in-content button is shorter than the 44pt minimum touch target.
+    /// Navigation and tab bar buttons are system chrome with enlarged hit regions and are skipped.
     func testMinimumTouchTargets() {
         app.navigateToTournaments()
-        
-        // Check custom buttons (exclude system toolbar buttons)
+        XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 5))
+
+        let chromeFrames = (app.navigationBars.allElementsBoundByIndex + app.tabBars.allElementsBoundByIndex)
+            .map(\.frame)
         var smallButtons: [String] = []
-        for button in app.buttons.allElementsBoundByIndex {
-            if button.isHittable {
-                let frame = button.frame
-                let label = button.label
-                
-                // Skip system components that we can't control
-                if label.contains("Increment") || label.contains("Decrement") ||
-                   label == "Cancel" || label.isEmpty {
-                    continue
-                }
-                
-                // Allow some tolerance for measurement (36pt minimum with tolerance)
-                if frame.height < 36 {
-                    smallButtons.append("\(label): \(frame.height)pt")
-                }
+        for button in app.buttons.allElementsBoundByIndex where button.isHittable {
+            let frame = button.frame
+            let label = button.label
+            if label.isEmpty || chromeFrames.contains(where: { $0.intersects(frame) }) {
+                continue
+            }
+            if frame.height < 43.5 {
+                smallButtons.append("\(label): \(frame.height)pt")
             }
         }
+
+        XCTAssertTrue(smallButtons.isEmpty, "Buttons below 44pt touch target: \(smallButtons)")
         
-        // Report small buttons but don't fail for minor violations
-        if !smallButtons.isEmpty {
-            print("Warning: Some buttons may be below recommended 44pt: \(smallButtons)")
-        }
-        
-        // Check tab bar items — system tab bars enlarge hit regions beyond reported frames.
+        // Check tab bar items ? system tab bars enlarge hit regions beyond reported frames.
         let tabBar = app.tabBars.firstMatch
         if tabBar.exists {
             for button in tabBar.buttons.allElementsBoundByIndex {
@@ -383,7 +374,7 @@ final class AccessibilityAuditTests: XCTestCase {
         }
         
         // Check toggles in the form (player selection) have accessibility labels
-        // Only assert on our toggles (identifier "toggle-…") to avoid system/off-screen switches
+        // Only assert on our toggles (identifier "toggle-?") to avoid system/off-screen switches
         for toggle in app.switches.allElementsBoundByIndex {
             let id = toggle.identifier
             if id.hasPrefix("toggle-") {

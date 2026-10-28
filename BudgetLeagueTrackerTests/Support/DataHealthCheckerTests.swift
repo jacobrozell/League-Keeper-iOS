@@ -39,6 +39,18 @@ struct DataHealthCheckerTests {
         #expect(issues[0].repairHint.contains("Seat players again"))
     }
 
+    @Test("Corrupt placement points JSON is surfaced")
+    func corruptPlacementPoints() throws {
+        let context = try TestHelpers.contextWithTournament()
+        let tournament = try #require(LeagueEngine.fetchActiveTournament(context: context))
+        tournament.placementPointsData = Data("[4,".utf8)
+        try context.save()
+
+        let issues = DataHealthChecker.scan(context: context)
+        #expect(issues.count == 1)
+        #expect(issues[0].message.contains("placement points"))
+    }
+
     @Test("Empty JSON blobs are ignored")
     func emptyJSONIgnored() throws {
         let context = try TestHelpers.contextWithTournament()

@@ -478,4 +478,117 @@ struct EditRoundSystemTests {
         #expect(snapshot.placements[players[0].id] == 4)
         #expect(snapshot.placements[players[3].id] == 1)
     }
+
+    // MARK: - Prior-week edits
+
+    /// Scores all three rounds of week 1 (player 0 always wins) and starts week 2.
+    private func playWeekOne(context: ModelContext, players: [Player]) throws {
+        LeagueEngine.createTournament(
+            context: context,
+            name: "Prior Week Test",
+            totalWeeks: 4,
+            randomPerWeek: 0,
+            playerIds: players.map(\.id)
+        )
+        LeagueEngine.confirmAttendance(
+            context: context,
+            presentIds: players.map(\.id),
+            achievementsOnThisWeek: false
+        )
+        for _ in 1...AppConstants.League.roundsPerWeek {
+            for (index, player) in players.enumerated() {
+                LeagueEngine.updatePlacement(context: context, playerId: player.id, placement: index + 1)
+            }
+            #expect(LeagueEngine.nextRound(context: context))
+        }
+        let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+        #expect(tournament.currentWeek == 2)
+    }
+
+    @Test("Round history survives week advance and attendance")
+    func historySurvivesWeekAdvance() throws {
+        let context = try TestHelpers.bootstrappedContext()
+        let players = TestFixtures.insertStandardPlayers(into: context)
+        try context.save()
+        try playWeekOne(context: context, players: players)
+
+        LeagueEngine.confirmAttendance(
+            context: context,
+            presentIds: players.map(\.id),
+            achievementsOnThisWeek: true
+        )
+
+        let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+        #expect(tournament.podHistorySnapshots.count == 3)
+        #expect(tournament.podHistorySnapshots.allSatisfy { $0.week == 1 })
+        #expect(tournament.podHistorySnapshots.first?.achievementsOn == false)
+
+        let viewModel = TournamentDetailViewModel(context: context, tournamentId: tournament.id)
+        #expect(viewModel.editableRounds.count == 3)
+        #expect(viewModel.editableRoundsThisWeek.isEmpty)
+        #expect(viewModel.canUndoLastTable == false)
+    }
+
+    @Test("Editing a prior-week round updates totals and results, not this week's points")
+    func editPriorWeekRound() throws {
+        let context = try TestHelpers.bootstrappedContext()
+        let players = TestFixtures.insertStandardPlayers(into: context)
+        try context.save()
+        try playWeekOne(context: context, players: players)
+
+        LeagueEngine.confirmAttendance(
+            context: context,
+            presentIds: players.map(\.id),
+            achievementsOnThisWeek: true
+        )
+        for (index, player) in players.enumerated() {
+            LeagueEngine.updatePlacement(context: context, playerId: player.id, placement: index + 1)
+        }
+        #expect(LeagueEngine.finalizeRound(context: context))
+
+        var tournament = try TestHelpers.fetchActiveTournament(from: context)!
+        let weeklyBefore = tournament.weeklyPointsByPlayer
+        #expect(players[0].wins == 4)
+
+        let swapped: [String: Int] = [
+            players[0].id: 2,
+            players[1].id: 1,
+            players[2].id: 3,
+            players[3].id: 4,
+        ]
+        #expect(LeagueEngine.applyEditedRound(
+            context: context,
+            snapshotIndex: 0,
+            newPlacements: swapped,
+            newAchievementChecks: []
+        ))
+
+        tournament = try TestHelpers.fetchActiveTournament(from: context)!
+        #expect(tournament.weeklyPointsByPlayer == weeklyBefore)
+        #expect(players[0].wins == 3)
+        #expect(players[1].wins == 1)
+        #expect(tournament.podHistorySnapshots[0].week == 1)
+        #expect(tournament.podHistorySnapshots[0].placements[players[1].id] == 1)
+
+        let weekOneRoundOne = try TestHelpers.fetchAll(GameResult.self, from: context).filter {
+            $0.week == 1 && $0.round == 1
+        }
+        #expect(weekOneRoundOne.count == players.count)
+        #expect(weekOneRoundOne.first { $0.playerId == players[1].id }?.placement == 1)
+    }
+
+    @Test("Undo last table ignores prior-week rounds")
+    func undoIgnoresPriorWeek() throws {
+        let context = try TestHelpers.bootstrappedContext()
+        let players = TestFixtures.insertStandardPlayers(into: context)
+        try context.save()
+        try playWeekOne(context: context, players: players)
+
+        let winsBefore = players[0].wins
+        #expect(LeagueEngine.undoLastPod(context: context))
+
+        let tournament = try TestHelpers.fetchActiveTournament(from: context)!
+        #expect(tournament.podHistorySnapshots.count == 3)
+        #expect(players[0].wins == winsBefore)
+    }
 }

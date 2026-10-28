@@ -91,35 +91,54 @@ struct LeagueBackupServiceTests {
         #expect(preview?.successMessage.contains("Tournaments") == true)
     }
 
-    @Test("Context rollback preserves data after unsaved import mutations")
-    func importRollbackPreservesExistingData() throws {
+    @Test("Mid-import failure rolls back to the existing data")
+    func midImportFailureRollsBack() throws {
         let context = try TestHelpers.bootstrappedContext()
-        let player = TestFixtures.player(name: "Rollback Pat")
-        context.insert(player)
+        context.insert(TestFixtures.player(name: "Rollback Pat"))
         try context.save()
 
-        let importData = try LeagueBackupService.exportData(context: context)
-        let playersBefore = try TestHelpers.fetchAll(Player.self, from: context)
-        #expect(playersBefore.contains { $0.name == "Rollback Pat" })
+        struct InjectedFailure: Error {}
+        let templateData = try LeagueBackupService.templateData()
+
+        #expect(throws: LeagueBackupError.self) {
+            try LeagueBackupService.importBackup(templateData, context: context) {
+                throw InjectedFailure()
+            }
+        }
+
+        let players = try TestHelpers.fetchAll(Player.self, from: context)
+        #expect(players.map(\.name) == ["Rollback Pat"])
+        #expect(try TestHelpers.fetchAll(Tournament.self, from: context).isEmpty)
+        #expect(try TestHelpers.fetchAll(LeagueState.self, from: context).count == 1)
+    }
+
+    @Test("Duplicate IDs are rejected before existing data is touched")
+    func rejectsDuplicateIDs() throws {
+        let context = try TestHelpers.bootstrappedContext()
+        context.insert(TestFixtures.player(name: "Keep Me"))
+        try context.save()
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        let backup = try decoder.decode(LeagueBackupFile.self, from: importData)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let template = try decoder.decode(LeagueBackupFile.self, from: LeagueBackupService.templateData())
+        let duplicated = LeagueBackupFile(
+            formatVersion: template.formatVersion,
+            exportedAt: template.exportedAt,
+            appDisplayName: template.appDisplayName,
+            players: template.players + [template.players[0]],
+            achievements: template.achievements,
+            tournaments: template.tournaments,
+            gameResults: template.gameResults,
+            leagueState: template.leagueState
+        )
 
-        // Simulate mid-import failure before save — same pattern as importBackup rollback.
-        for result in (try? context.fetch(FetchDescriptor<GameResult>())) ?? [] {
-            context.delete(result)
+        #expect(throws: LeagueBackupError.self) {
+            try LeagueBackupService.importBackup(try encoder.encode(duplicated), context: context)
         }
-        for tournament in (try? context.fetch(FetchDescriptor<Tournament>())) ?? [] {
-            context.delete(tournament)
-        }
-        for p in (try? context.fetch(FetchDescriptor<Player>())) ?? [] {
-            context.delete(p)
-        }
-        context.rollback()
 
-        let playersAfter = try TestHelpers.fetchAll(Player.self, from: context)
-        #expect(playersAfter.contains { $0.name == "Rollback Pat" })
-        _ = backup // decoded successfully; rollback test does not need to re-import
+        let players = try TestHelpers.fetchAll(Player.self, from: context)
+        #expect(players.map(\.name) == ["Keep Me"])
     }
 }
