@@ -31,7 +31,7 @@ Handoff for a new agent continuing the **App Store reviewer-readiness** effort. 
 ## Environment setup
 
 ```bash
-cd ~/Desktop/personal/League-Keeper-iOS
+cd ~/Desktop/personal/apps/League-Keeper-iOS
 xcodegen generate            # .xcodeproj is generated, not tracked
 ```
 
